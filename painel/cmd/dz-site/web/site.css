@@ -358,3 +358,6 @@ td.ord { color: var(--c); font-weight: 800; }
 .grade-on small { color: var(--fraco); font: 500 11px var(--mono); }
 @media (max-width: 900px) { .grade-on { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .grade-on { grid-template-columns: 1fr; } }
+.heroi-video { position: absolute; inset: 0; z-index: -2; overflow: hidden; opacity: 0; transition: opacity 1.6s ease; pointer-events: none; background: #000; }
+.heroi-video.tocando { opacity: 1; }
+.heroi-video iframe { position: absolute; top: 50%; left: 50%; width: max(100vw, 177.78vh); height: max(56.25vw, 100vh); transform: translate(-50%, -50%) scale(1.18); border: 0; }

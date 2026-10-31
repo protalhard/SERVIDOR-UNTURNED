@@ -56,6 +56,7 @@
       return `
       <section class="heroi-full">
         ${slides(['ponte-por-do-sol', 'farol', 'floresta', 'ponte', 'palmeiras'])}
+        <div class="heroi-video" id="heroi-video"><div id="yt-heroi"></div></div>
         <div class="heroi-veu"></div>
         <div class="envolve heroi-conteudo">
           <span class="pilula">${s.online ? `<i class="ponto"></i> ONLINE <b>|</b> ${st.jogadores}/${s.max || 50} jogando agora` : 'Servidor brasileiro de Unturned'}</span>
@@ -88,7 +89,7 @@
       <section class="secao"><h2>O mapa: <span>California 2</span></h2>
         <div class="galeria">${[['ponte-por-do-sol', 'A ponte ao pôr do sol'], ['farol', 'O farol da costa'], ['mercado', 'Lojas na cidade'], ['palmeiras', 'Praias e palmeiras'], ['ponte', 'San Francisco'], ['floresta', 'Florestas do norte']]
           .map(([f, t]) => `<figure><img src="/img/mapa/${f}.webp" alt="${t}" loading="lazy"><figcaption>${t}</figcaption></figure>`).join('')}</div>
-        <p class="credito">Imagens do mapa California 2, feito pelo California Team (Steam Workshop).</p>
+        <p class="credito">Imagens do mapa California 2, feito pelo California Team (Steam Workshop). Vídeo da capa: California 2 Environmental Teaser, Smartly Dressed Games.</p>
       </section>
 
       <section class="secao"><h2>Top <span>sobreviventes</span></h2>
@@ -278,8 +279,33 @@
     });
   }
 
+  // vídeo de fundo da capa: teaser oficial do California 2 no YouTube, sem som e em loop.
+  // Até começar a tocar, ficam as fotos trocando por baixo.
+  const VIDEO = 'z0D3TqPYQhA', INICIO = 3;
+  function videoHeroi() {
+    const caixa = document.getElementById('heroi-video');
+    if (!caixa || reduzir || innerWidth < 700) return;
+    const criar = () => new YT.Player('yt-heroi', {
+      videoId: VIDEO, host: 'https://www.youtube-nocookie.com',
+      playerVars: { autoplay: 1, mute: 1, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, playsinline: 1, rel: 0, iv_load_policy: 3, start: INICIO },
+      events: {
+        onReady: e => { e.target.mute(); e.target.playVideo(); },
+        onStateChange: e => {
+          if (e.data === 1) caixa.classList.add('tocando');
+          if (e.data === 0) { e.target.seekTo(INICIO); e.target.playVideo(); }
+        },
+      },
+    });
+    if (window.YT && YT.Player) return criar();
+    window.onYouTubeIframeAPIReady = () => { if (document.getElementById('yt-heroi')) criar(); };
+    if (!document.getElementById('yt-api')) {
+      const sc = document.createElement('script'); sc.id = 'yt-api'; sc.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(sc);
+    }
+  }
+
   function efeitos() {
     girarSlides();
+    videoHeroi();
     document.querySelectorAll('#app .botao:not(.fantasma)').forEach(b => b.classList.add('brilho-btn'));
     document.querySelectorAll('#app .secao .painel, #app .grade > .painel, #app .podio > .painel, #app .perguntas details').forEach((el, i) => {
       if (el.classList.contains('visto')) return;
