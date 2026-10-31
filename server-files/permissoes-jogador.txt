@@ -1,0 +1,27 @@
+# Permissoes que todo jogador (grupo default) precisa ter. O aplicar.sh adiciona as que faltarem.
+p
+rules
+saldo
+depositar
+sacar
+loja
+lojas
+comprar
+vender
+vendertudo
+whenairdrop
+safe
+warp
+home
+tpa
+tpaceitar
+tpanegar
+kits
+kit
+perfil
+top
+lojaxp
+vault
+menu
+discord
+site

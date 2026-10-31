@@ -21,7 +21,33 @@ for dll in "$REPO"/server-files/Rocket/Plugins/*.dll; do
   fi
 done
 
-# 2) Pedido de reinício: mudar o número em server-files/REINICIAR força um restart
+# 2) Permissões dos jogadores: garante que o grupo default tem tudo de server-files/permissoes-jogador.txt
+PERM="$INST/Rocket/Permissions.config.xml"
+if [ -f "$PERM" ] && [ -f "$REPO/server-files/permissoes-jogador.txt" ]; then
+  if python3 - "$PERM" "$REPO/server-files/permissoes-jogador.txt" <<'PY'
+import re, sys
+arq, lista = sys.argv[1], sys.argv[2]
+s = open(arq, encoding="utf-8").read()
+quer = [l.strip() for l in open(lista) if l.strip() and not l.startswith("#")]
+m = re.search(r"<Id>default</Id>.*?<Permissions>(.*?)</Permissions>", s, re.S)
+if not m:
+    sys.exit(1)
+tem = set(re.findall(r">([^<]+)</Permission>", m.group(1)))
+falta = [q for q in quer if q not in tem]
+if not falta:
+    sys.exit(1)
+novo = m.group(1).rstrip() + "\n" + "".join('        <Permission Cooldown="0">%s</Permission>\n' % f for f in falta) + "      "
+s = s[:m.start(1)] + novo + s[m.end(1):]
+open(arq, "w", encoding="utf-8").write(s)
+print("permissoes adicionadas: " + ", ".join(falta))
+PY
+  then
+    chown unturned:unturned "$PERM"
+    reiniciar=1
+  fi
+fi
+
+# 3) Pedido de reinício: mudar o número em server-files/REINICIAR força um restart
 if [ -f "$REPO/server-files/REINICIAR" ]; then
   pedido=$(cat "$REPO/server-files/REINICIAR")
   feito=$(cat "$ESTADO/reiniciar" 2>/dev/null || true)

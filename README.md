@@ -66,6 +66,20 @@ Outros comandos de admin: `/delsafe <nome>`, `/delatm <nome>`, `/dardinheiro <jo
 | `/vender <número> [qtd\|tudo]` | Vende pra loja |
 | `/vendertudo` | Vende toda a caça (carne, couro, peixe) |
 | `/whenairdrop` | Tempo até o próximo airdrop |
+| `/menu` | Mostra tudo que o servidor tem |
+| `/safe` ou `/warp safe` | Vai pra safe zone (15 s parado, espera de 30 s) |
+| `/home` | Vai pra sua cama (10 s parado) |
+| `/tpa <nome>`, `/tpaceitar`, `/tpanegar` | Teleporte até um amigo |
+| `/kits`, `/kit <nome>` | Kits com tempo de espera; alguns liberam por abates |
+| `/perfil [nome]` | Patente, nível, XP, abates, mortes, K/D, % na cabeça, zumbis, tempo |
+| `/top [abates\|kd\|xp\|tempo\|zumbis]` | Ranking |
+| `/lojaxp`, `/lojaxp comprar <n>` | Troca XP por equipamento (na safe zone) |
+| `/vault` | Cofre pessoal (na safe zone). 5x5 grátis; maiores com `vault.vip`, `vault.grande`, `vault.ultra` |
+| `/discord`, `/site` | Links |
+
+Também tem: **modo de combate** (20 s depois de dar ou levar tiro, bloqueia teleporte e vault), **limpeza de itens do chão** a cada 30 min com aviso e contagem, **mensagens de morte** com patente e nível, **anúncios** a cada 5 min e **tutorial** pra quem entra pela primeira vez.
+
+Admin: `/darxp <jogador> <qtd>`, `/limparitens [segundos]`. Tudo isso é configurado na seção `Sistemas` do arquivo de configuração do plugin (cores, tempos, XP, patentes, kits, loja de XP, anúncios, tutorial e link do Discord).
 
 ## Mudar preços, itens e kit
 
@@ -96,7 +110,10 @@ cp bin/Release/net48/SobrevivenciaCore.dll ../../server-files/Rocket/Plugins/
 
 ```
 install.sh                       instalador completo
-scripts/                         update, backup e serviço systemd
+scripts/                         update, backup, serviço systemd e sincronizador
+  aplicar.sh                     o que a VPS aplica sozinha a cada commit novo
+  unturned-sync.*                puxa o GitHub a cada 5 min
+  claude-sempre.sh               mantém o Claude ligado na VPS
 server-files/                    configs que vão pro servidor
   Commands.dat.template          nome, mapa, dono, GSLT
   Rocket/Permissions.config.xml  quem pode usar cada comando

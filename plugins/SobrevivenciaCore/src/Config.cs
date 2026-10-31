@@ -69,10 +69,11 @@ namespace SobrevivenciaCore
         public List<Ponto> ZonasSeguras;
         public List<Ponto> Atms;
         public List<Loja> Lojas;
+        public Sistemas Sistemas;
 
         public void LoadDefaults()
         {
-            CorMensagem = "yellow";
+            CorMensagem = "orange";
             BloquearZumbisNaSafe = true;
             AvisarEntradaSafe = true;
             SaldoInicialBanco = 0;
@@ -96,6 +97,8 @@ namespace SobrevivenciaCore
             ZonasSeguras = new List<Ponto>();
             Atms = new List<Ponto>();
             Lojas = LojasPadrao.Criar();
+            Sistemas = new Sistemas();
+            Sistemas.Completar();
         }
     }
 }

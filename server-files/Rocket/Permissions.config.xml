@@ -22,6 +22,21 @@
         <Permission Cooldown="0">vender</Permission>
         <Permission Cooldown="0">vendertudo</Permission>
         <Permission Cooldown="0">whenairdrop</Permission>
+        <Permission Cooldown="0">safe</Permission>
+        <Permission Cooldown="0">warp</Permission>
+        <Permission Cooldown="0">home</Permission>
+        <Permission Cooldown="0">tpa</Permission>
+        <Permission Cooldown="0">tpaceitar</Permission>
+        <Permission Cooldown="0">tpanegar</Permission>
+        <Permission Cooldown="0">kits</Permission>
+        <Permission Cooldown="0">kit</Permission>
+        <Permission Cooldown="0">perfil</Permission>
+        <Permission Cooldown="0">top</Permission>
+        <Permission Cooldown="0">lojaxp</Permission>
+        <Permission Cooldown="0">vault</Permission>
+        <Permission Cooldown="0">menu</Permission>
+        <Permission Cooldown="0">discord</Permission>
+        <Permission Cooldown="0">site</Permission>
       </Permissions>
     </Group>
     <Group>

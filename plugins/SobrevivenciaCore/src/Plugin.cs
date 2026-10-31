@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace SobrevivenciaCore
 {
-    public class Plugin : RocketPlugin<Config>
+    public partial class Plugin : RocketPlugin<Config>
     {
         public static Plugin Instancia;
         public Banco Banco;
@@ -22,6 +22,9 @@ namespace SobrevivenciaCore
         {
             Instancia = this;
             Banco = new Banco(Directory);
+            IniciarSistemas();
+            UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
+            UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
             U.Events.OnPlayerConnected += AoConectar;
             U.Events.OnPlayerDisconnected += AoDesconectar;
@@ -34,6 +37,9 @@ namespace SobrevivenciaCore
         protected override void Unload()
         {
             CancelInvoke(nameof(ChecarZonas));
+            UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;
+            UnturnedPlayerEvents.OnPlayerUpdateStat -= AoMudarStat;
+            PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
             U.Events.OnPlayerConnected -= AoConectar;
             U.Events.OnPlayerDisconnected -= AoDesconectar;
@@ -43,8 +49,8 @@ namespace SobrevivenciaCore
 
         public Color Cor => UnturnedChat.GetColorFromName(Configuration.Instance.CorMensagem, Color.yellow);
 
-        public void Msg(UnturnedPlayer p, string texto) => UnturnedChat.Say(p, texto, Cor);
-        public void Erro(UnturnedPlayer p, string texto) => UnturnedChat.Say(p, texto, Color.red);
+        public void Msg(UnturnedPlayer p, string texto) => Chat.Info(p, Chat.Limpar(texto));
+        public void Erro(UnturnedPlayer p, string texto) => Chat.Erro(p, Chat.Limpar(texto));
 
         // ---------- Zonas ----------
 
@@ -68,6 +74,8 @@ namespace SobrevivenciaCore
 
         void ChecarZonas()
         {
+            try { TickSistemas(); }
+            catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             if (!Configuration.Instance.AvisarEntradaSafe) return;
             foreach (var sp in Provider.clients)
             {
@@ -79,9 +87,9 @@ namespace SobrevivenciaCore
                 zonaAtual[id] = zona;
                 var p = UnturnedPlayer.FromSteamPlayer(sp);
                 if (zona != null)
-                    UnturnedChat.Say(p, $"Voce entrou na SAFE ZONE ({zona}). PvP desligado aqui.", Color.green);
+                    Chat.Ok(p, $"Voce entrou na SAFE ZONE ({Chat.Limpar(zona)}). PvP desligado aqui.");
                 else
-                    UnturnedChat.Say(p, "Voce saiu da safe zone. PvP LIBERADO! Cuidado.", Color.red);
+                    Chat.Erro(p, "Voce saiu da safe zone. PvP LIBERADO! Cuidado.");
             }
         }
 
@@ -101,7 +109,9 @@ namespace SobrevivenciaCore
             if (atacante == null) return;
 
             var atacanteNaSafe = ZonaSeguraEm(atacante.transform.position) != null;
-            if (vitimaNaSafe || atacanteNaSafe) permitir = false;
+            if (vitimaNaSafe || atacanteNaSafe) { permitir = false; return; }
+            MarcarCombate(par.player);
+            MarcarCombate(atacante);
         }
 
         // ---------- Kit inicial ----------
@@ -111,11 +121,16 @@ namespace SobrevivenciaCore
             var id = p.CSteamID.m_SteamID;
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
+            BoasVindas(p);
             if (Banco.PrimeiroKit(id))
                 StartCoroutine(DarKitDepois(p, "Bem-vindo! Voce recebeu o kit inicial."));
         }
 
-        void AoDesconectar(UnturnedPlayer p) => zonaAtual.Remove(p.CSteamID.m_SteamID);
+        void AoDesconectar(UnturnedPlayer p)
+        {
+            zonaAtual.Remove(p.CSteamID.m_SteamID);
+            AoSair(p);
+        }
 
         void AoRenascer(UnturnedPlayer p, Vector3 pos, byte angulo)
         {
