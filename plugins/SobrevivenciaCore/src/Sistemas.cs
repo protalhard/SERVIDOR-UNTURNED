@@ -21,6 +21,8 @@ namespace SobrevivenciaCore
         [XmlAttribute] public int Espera;
         [XmlAttribute] public int Abates;
         [XmlAttribute] public string Permissao = "";
+        [XmlAttribute] public int BonusXp;
+        [XmlAttribute] public string Titulo = "";
         public List<ItemKit> Itens;
     }
 
@@ -79,6 +81,9 @@ namespace SobrevivenciaCore
         // Anúncios
         public int AnuncioSegundos = 300;
         public bool VaultSoNaSafe = true;
+        public bool SafeSemConstrucao = true;
+        public bool SafeProtegeBases = true;
+        public bool SafeProtegeVeiculos = true;
         public bool LojaXpSoNaSafe = true;
 
         public List<Patente> Patentes;
@@ -98,6 +103,15 @@ namespace SobrevivenciaCore
             if (Vaults == null || Vaults.Count == 0) { Vaults = VaultsPadrao(); mudou = true; }
             if (Anuncios == null) { Anuncios = AnunciosPadrao(); mudou = true; }
             if (Tutorial == null) { Tutorial = TutorialPadrao(); mudou = true; }
+            // config antiga sem bônus/título nos kits de rank: copia do padrão
+            var padrao = KitsPadrao();
+            foreach (var k in Kits)
+            {
+                var d = padrao.Find(x => x.Nome == k.Nome);
+                if (d == null) continue;
+                if (k.BonusXp == 0 && d.BonusXp > 0) { k.BonusXp = d.BonusXp; mudou = true; }
+                if (string.IsNullOrEmpty(k.Titulo) && !string.IsNullOrEmpty(d.Titulo)) { k.Titulo = d.Titulo; mudou = true; }
+            }
             return mudou;
         }
 
@@ -124,13 +138,13 @@ namespace SobrevivenciaCore
                 Itens = L(I(474), I(478, 3), I(137)) },
             new Kit { Nome = "construtor", Descricao = "Machado, picareta, pregos e chapas", Espera = 3600,
                 Itens = L(I(16), I(1198), I(71, 4), I(68, 4), I(67, 6)) },
-            new Kit { Nome = "recruta", Descricao = "Cobra com 3 pentes", Espera = 3600, Abates = 10,
+            new Kit { Nome = "recruta", Titulo = "Recruta", Descricao = "Cobra com 3 pentes", Espera = 3600, Abates = 10, BonusXp = 1000,
                 Itens = L(I(99), I(100, 3), I(95, 3)) },
-            new Kit { Nome = "patrulha", Descricao = "Timberwolf, pentes e colete", Espera = 3600, Abates = 25,
+            new Kit { Nome = "patrulha", Titulo = "Patrulheiro", Descricao = "Timberwolf, pentes e colete", Espera = 3600, Abates = 25, BonusXp = 2500,
                 Itens = L(I(18), I(20, 3), I(310)) },
-            new Kit { Nome = "assalto", Descricao = "Maplestrike com 4 pentes militares", Espera = 5400, Abates = 50,
+            new Kit { Nome = "assalto", Titulo = "Operador", Descricao = "Maplestrike com 4 pentes militares", Espera = 5400, Abates = 50, BonusXp = 5000,
                 Itens = L(I(363), I(6, 4), I(15)) },
-            new Kit { Nome = "atirador", Descricao = "Grizzly com 3 pentes", Espera = 7200, Abates = 100,
+            new Kit { Nome = "atirador", Titulo = "Atirador de Elite", Descricao = "Grizzly com 3 pentes", Espera = 7200, Abates = 100, BonusXp = 10000,
                 Itens = L(I(297), I(298, 3), I(333)) },
             new Kit { Nome = "discord", Descricao = "Agradecimento por entrar no Discord", Espera = 86400, Permissao = "kit.discord",
                 Itens = L(I(81, 2), I(15), I(9)) },

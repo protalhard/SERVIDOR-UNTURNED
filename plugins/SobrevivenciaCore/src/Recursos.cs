@@ -214,6 +214,7 @@ namespace SobrevivenciaCore
             if (Provider.clients.Count > 0) Stats.Mudou();
 
             TickLimpeza(agora);
+            TickStatus();
 
             if (S.AnuncioSegundos > 0 && agora >= proximoAnuncio && S.Anuncios.Count > 0)
             {
@@ -286,7 +287,11 @@ namespace SobrevivenciaCore
                         Chat.Cor(S.CorTexto, $" {fm.Abates}/{prox.Abates} abates"));
                 var liberado = S.Kits.FirstOrDefault(k => k.Abates == fm.Abates && k.Abates > 0);
                 if (liberado != null)
-                    Chat.Para(pm, Chat.Cor(S.CorOk, Chat.Forte($"Kit {liberado.Nome} liberado!")) + Chat.Cor(S.CorTexto, $" Use /kit {liberado.Nome}"));
+                {
+                    Chat.Todos(NomeColorido(fm) + Chat.Cor(S.CorOk, $" liberou o kit {liberado.Nome} com {liberado.Abates} abates!"));
+                    Chat.Para(pm, Chat.Cor(S.CorTexto, $"Use /kit {liberado.Nome}"));
+                    if (liberado.BonusXp > 0) DarXp(pm, liberado.BonusXp, "bonus do kit " + liberado.Nome);
+                }
             }
             else if (S.MostrarTodasMortes)
             {

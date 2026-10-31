@@ -23,6 +23,7 @@ namespace SobrevivenciaCore
             Instancia = this;
             Banco = new Banco(Directory);
             IniciarSistemas();
+            LigarSafeZone();
             UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
@@ -39,6 +40,7 @@ namespace SobrevivenciaCore
             CancelInvoke(nameof(ChecarZonas));
             UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat -= AoMudarStat;
+            DesligarSafeZone();
             PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
             U.Events.OnPlayerConnected -= AoConectar;
