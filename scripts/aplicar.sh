@@ -84,7 +84,32 @@ if [ -f "$REPO/painel/bin/dz-site" ]; then
   if [ "$site" = 1 ]; then echo "site atualizado"; systemctl restart dz-site; fi
 fi
 
-if [ "$reiniciar" = 1 ]; then
-  echo "reiniciando o servidor"
-  systemctl restart unturned
+# 6) O próprio sincronizador também se atualiza
+if ! cmp -s "$REPO/scripts/unturned-sync.sh" /usr/local/bin/unturned-sync.sh; then
+  install -m 755 "$REPO/scripts/unturned-sync.sh" /usr/local/bin/unturned-sync.sh
+  echo "sincronizador atualizado"
+fi
+
+# 7) Reinício: só com o servidor vazio. Com gente online, fica pendente e o
+#    sincronizador tenta de novo a cada 5 min (no máximo 6 h esperando).
+PENDENTE="$ESTADO/reiniciar-pendente"
+[ "$reiniciar" = 1 ] && [ ! -f "$PENDENTE" ] && touch "$PENDENTE"
+if [ -f "$PENDENTE" ]; then
+  online=$(python3 - "$INST/Rocket/Plugins/SobrevivenciaCore/status.json" <<'PY'
+import json, sys, time
+try:
+    s = json.load(open(sys.argv[1]))
+    print(len(s.get("jogadores") or []) if time.time() - s.get("atualizado", 0) < 90 else 0)
+except Exception:
+    print(0)
+PY
+)
+  idade=$(( $(date +%s) - $(stat -c %Y "$PENDENTE") ))
+  if [ "$online" -gt 0 ] && [ "$idade" -lt 21600 ]; then
+    echo "reinicio adiado: $online jogador(es) online"
+  else
+    rm -f "$PENDENTE"
+    echo "reiniciando o servidor"
+    systemctl restart unturned
+  fi
 fi
