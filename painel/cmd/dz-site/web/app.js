@@ -14,7 +14,7 @@
   const nomeMapa = m => String(m || '').replace(/([a-z])(\d)/i, '$1 $2').toUpperCase();
   const slides = fotos => `<div class="slides">${fotos.map((f, i) => `<div class="slide${i ? '' : ' ativo'}" style="background-image:url(/img/mapa/${f}.webp)"></div>`).join('')}</div>`;
 
-  function cartaoServidor(st) {
+  function cartaoServidor(st, aberto) {
     const s = st.status, pct = s.max ? Math.round(100 * st.jogadores / s.max) : 0;
     return `<div class="painel destaque cartao-srv">
       <div class="srv-foto">${slides(['farol', 'ponte', 'palmeiras', 'colinas'])}
@@ -27,9 +27,12 @@
         <div class="chips" style="margin:0">${['Loot x10', 'Safe Zone', 'ATM', 'Kits', 'Vault', 'TPA', 'Home', 'Airdrop', 'Mercado negro'].map(c => `<span class="chip">${c}</span>`).join('')}</div>
         <div class="painel jogadores"><div style="display:flex;justify-content:space-between;align-items:center"><span class="rotulo">👥 Jogadores</span><span class="fraco mono" style="font-size:11px">ATUALIZA A CADA 15 S</span></div>
           <div class="numero">${st.jogadores}<small>/${s.max || '–'}</small></div><div class="barra"><i style="width:${pct}%"></i></div></div>
-        ${s.jogadores && s.jogadores.length ? `<div><div class="rotulo" style="margin-bottom:8px">Online agora</div><div class="lista-on">${s.jogadores.map(j =>
-          `<a href="/jogador/${j.id}" data-link><span style="color:${esc(j.cor)}">[${esc(j.patente)}]</span> ${esc(j.nome)}</a>`).join('')}</div></div>` : ''}
       </div>
+      <details class="detalhes-srv"${aberto ? ' open' : ''}><summary>Ver jogadores online (${st.jogadores})</summary>
+        ${s.jogadores && s.jogadores.length ? `<div class="grade-on">${s.jogadores.map(j =>
+          `<a href="/jogador/${j.id}" data-link><i></i><span style="color:${esc(j.cor)}">[${esc(j.patente)}]</span> ${esc(j.nome)}${j.nivel ? ` <small>Lv.${j.nivel}</small>` : ''}</a>`).join('')}</div>`
+          : '<p class="fraco">Ninguém online agora. Seja o primeiro!</p>'}
+      </details>
     </div>`;
   }
 
@@ -121,7 +124,7 @@
 
     async servidores () {
       const st = await api('/api/status');
-      return cabeca('Status em tempo real', 'Servidor <em>ao vivo</em>', 'Status e jogadores online, atualizados pelo plugin do servidor.') + cartaoServidor(st) +
+      return cabeca('Status em tempo real', 'Servidor <em>ao vivo</em>', 'Status e jogadores online, atualizados pelo plugin do servidor.') + cartaoServidor(st, true) +
         `<p class="fraco" style="margin-top:16px;text-align:center">Como conectar: Unturned → Jogar → Servidores → aba Internet → procure <b>DAY Z BRASIL</b>. Ou Conectar pelo IP acima.</p>`;
     },
 
