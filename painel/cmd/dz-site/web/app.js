@@ -19,11 +19,11 @@
       return `
       <section class="heroi">
         <div>
-          <span class="selo">${s.online ? '● Online agora' : 'Servidor brasileiro'}</span>
+          <span class="selo">${s.online ? '<i class="ponto"></i> Online agora' : 'Servidor brasileiro'}</span>
           <img class="logo" src="/img/logo.png?v=2" alt="DAY Z BRASIL OFICIAL" style="margin-top:18px">
           <p class="lead">Sobrevivência <b style="color:var(--c)">PvP estilo DayZ</b> no Unturned. Dinheiro físico, ATM, lojas, mercado negro, caça, airdrops e kits que você libera matando.</p>
           <div class="acoes">
-            <a class="botao" href="steam://connect/${esc(st.ip)}">▶ Jogar agora</a>
+            <a class="botao" href="steam://connect/${esc(st.ip)}">⚡ Jogar agora</a>
             <a class="botao fantasma" href="/servidores" data-link>Ver servidor</a>
           </div>
           <div class="chips">${['Safe Zone', 'ATM', 'Black Market', 'Caça', 'Airdrops', 'Rank Kits', 'Vault', 'TPA'].map(c => `<span class="chip">${c}</span>`).join('')}</div>
@@ -35,7 +35,7 @@
         <div class="painel"><div class="rotulo">Status</div><div class="numero ${s.online ? 'laranja' : ''}">${s.online ? 'ONLINE' : 'OFFLINE'}</div></div>
         <div class="painel"><div class="rotulo">Jogadores</div><div class="numero">${st.jogadores}/${s.max || '–'}</div></div>
         <div class="painel"><div class="rotulo">Mapa</div><div class="numero" style="font-size:26px">${esc(s.mapa || '–')}</div></div>
-        <div class="painel"><div class="rotulo">Sobreviventes</div><div class="numero">${num(rk.total)}</div></div>
+        <div class="painel"><div class="rotulo">Sobreviventes</div><div class="numero" data-conta="${Number(rk.total) || 0}">0</div></div>
       </section>
 
       <section class="secao"><h2>O que tem no <span>servidor</span></h2>
@@ -66,7 +66,7 @@
     async servidores () {
       const st = await api('/api/status'), s = st.status;
       const pct = s.max ? Math.round(100 * st.jogadores / s.max) : 0;
-      return cabeca('Status em tempo real', 'Servidores', 'Status e jogadores online, atualizados pelo plugin do servidor.') + `
+      return cabeca('Status em tempo real', 'Servidor <em>ao vivo</em>', 'Status e jogadores online, atualizados pelo plugin do servidor.') + `
       <div class="painel destaque servidor">
         <div class="foto"></div>
         <div class="info">
@@ -107,7 +107,7 @@
         let t; document.getElementById('busca').oninput = e => { clearTimeout(t); t = setTimeout(() => { busca = e.target.value; desenhar(); }, 250); };
         desenhar();
       });
-      return cabeca('Leaderboard ao vivo', 'Ranking', 'Os melhores sobreviventes do DAY Z BRASIL. Busque por nome ou SteamID.') + `
+      return cabeca('Leaderboard ao vivo', 'Os melhores <em>sobreviventes</em>', 'Os melhores sobreviventes do DAY Z BRASIL. Busque por nome ou SteamID.') + `
         <div class="ferramentas"><input id="busca" placeholder="Buscar por nome ou SteamID..." autocomplete="off">
           <div class="abas">${[['abates', 'Kills'], ['kd', 'K/D'], ['xp', 'XP'], ['zumbis', 'Zumbis'], ['tempo', 'Tempo']].map(([k, t], i) =>
             `<button data-por="${k}" class="${i ? '' : 'ativo'}">${t}</button>`).join('')}</div></div>
@@ -124,7 +124,7 @@
           ${meus !== null && k.abates ? `<div class="progresso">${Math.min(meus, k.abates)}/${k.abates} abates</div><div class="barra"><i style="width:${Math.min(100, 100 * meus / k.abates)}%"></i></div>` : ''}
           <div class="dados"><div><span class="rotulo">Espera</span><b>${espera(k.espera)}</b></div><div><span class="rotulo">Bônus</span><b style="color:var(--c2)">${k.bonusXp ? '+' + num(k.bonusXp) + ' XP' : '–'}</b></div></div>
         </div>`;
-      return cabeca('Kits de progressão', 'Rank Kits', 'Jogue, acumule abates e libere kits melhores automaticamente, sem pagar nada. O bônus de XP cai na hora do desbloqueio.') +
+      return cabeca('Kits de progressão', 'Mate e libere <em>kits melhores</em>', 'Jogue, acumule abates e libere kits melhores automaticamente, sem pagar nada. O bônus de XP cai na hora do desbloqueio.') +
         `<div class="grade g4">${rank.map(cartao).join('')}</div>
          <section class="secao"><h2>Kits <span>livres</span></h2><div class="grade g4">${livres.map(cartao).join('')}</div></section>
          <section class="secao"><h2>Loja de <span>XP</span></h2><p class="fraco" style="margin:-8px 0 16px">Troque XP por equipamento com <b class="mono">/lojaxp</b>, dentro da safe zone.</p>
@@ -141,7 +141,7 @@
         ['Vault Ultra', 'Cofre 15x13.', ['O maior cofre do servidor', 'Tag no chat']],
         ['Kits VIP', 'Kits extras com espera menor.', ['Kits exclusivos', 'Cargo VIP no Discord']],
       ];
-      return cabeca('Loja VIP', 'Apoie o servidor', 'Os pacotes VIP vão abrir em breve, com pagamento por PIX. Todo apoio mantém o servidor online e sem lag.') +
+      return cabeca('Loja VIP', 'Apoie o <em>servidor</em>', 'Os pacotes VIP vão abrir em breve, com pagamento por PIX. Todo apoio mantém o servidor online e sem lag.') +
         `<div class="grade g4">${vips.map(([t, d, l]) => `<div class="painel vip"><span class="em-breve">EM BREVE</span><h3 style="margin-top:8px">${t}</h3>
           <p class="fraco">${d}</p><ul>${l.map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>
          <p class="fraco" style="text-align:center;margin-top:24px">Quer ser avisado quando abrir? Entre no nosso Discord.</p>`;
@@ -155,7 +155,7 @@
         ['/lojas · /loja · /comprar · /vender', 'Lojas de armas, comida, geral, caçador e mercado negro'],
         ['/perfil · /top', 'Suas estatísticas e o ranking'], ['/vault', 'Seu cofre pessoal'], ['/lojaxp', 'Troque XP por equipamento'],
       ];
-      return cabeca('Sobre o servidor', 'Day Z Brasil', 'Um servidor brasileiro de Unturned feito pra quem gosta de sobrevivência de verdade: lootear, negociar, caçar e lutar.') + `
+      return cabeca('Sobre o servidor', 'Sobrevivência <em>de verdade</em>', 'Um servidor brasileiro de Unturned feito pra quem gosta de sobrevivência de verdade: lootear, negociar, caçar e lutar.') + `
         <div class="grade g2">
           <div class="painel"><h3 style="margin-bottom:12px">Como funciona</h3>
             <p>Você nasce com um kit simples. Fora da safe zone o PvP é liberado. O dinheiro são as notas do próprio jogo: quem morre perde o que está no bolso, então guarde no ATM.</p>
@@ -175,17 +175,17 @@
         ['Flood, spam ou correntes', 'mute'], ['Brigar com a staff no chat em vez de abrir ticket', 'aviso'], ['Conteúdo adulto ou violência real', 'perm']];
       const bloco = (t, l) => `<div class="painel" style="padding:8px 4px"><h3 style="padding:12px 16px">${t}</h3>${l.map(([r, p], i) =>
         `<div class="regra"><span class="n">${i + 1}.</span><span class="t">${r}</span><span class="pun ${p}">${leg[p]}</span></div>`).join('')}</div>`;
-      return cabeca('Regras oficiais', 'Regras', 'Ao entrar no servidor ou no Discord você concorda com as regras abaixo. Fora da safe zone, PvP, raid e emboscada fazem parte do jogo.') +
+      return cabeca('Regras oficiais', 'Regras do <em>servidor</em>', 'Ao entrar no servidor ou no Discord você concorda com as regras abaixo. Fora da safe zone, PvP, raid e emboscada fazem parte do jogo.') +
         `<div class="grade g2">${bloco('🎮 Jogo', jogo)}${bloco('💬 Discord', disc)}</div>`;
     },
 
     async perfil () {
       if (!eu || !eu.logado) {
-        return cabeca('Seu perfil', 'Perfil', 'Entre com a sua conta Steam pra ver suas estatísticas, patente e o progresso dos Rank Kits.') +
+        return cabeca('Seu perfil', 'Seu <em>perfil</em>', 'Entre com a sua conta Steam pra ver suas estatísticas, patente e o progresso dos Rank Kits.') +
           `<div style="text-align:center"><a class="botao" href="/entrar">Entrar com Steam</a>
            <p class="fraco" style="margin-top:14px;font-size:13px">O login é feito no site oficial da Steam. Não vemos sua senha.</p></div>`;
       }
-      if (!eu.ficha) return cabeca('Seu perfil', 'Perfil', 'Você ainda não jogou no servidor. Entre uma vez e suas estatísticas aparecem aqui.') +
+      if (!eu.ficha) return cabeca('Seu perfil', 'Seu <em>perfil</em>', 'Você ainda não jogou no servidor. Entre uma vez e suas estatísticas aparecem aqui.') +
         `<div style="text-align:center"><a class="botao" href="/servidores" data-link>Ir pro servidor</a> <a class="botao fantasma" href="/sair">Sair</a></div>`;
       return desenharPerfil(eu.ficha, eu.kits, true);
     },
@@ -218,6 +218,89 @@
       </div>`;
   }
 
+  // ---------- efeitos (os mesmos do site do SnapLag) ----------
+  const reduzir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const olho = 'IntersectionObserver' in window ? new IntersectionObserver(l => l.forEach(x => {
+    if (x.isIntersecting) { x.target.classList.add('visto'); olho.unobserve(x.target); }
+  }), { rootMargin: '0px 0px -8% 0px' }) : null;
+
+  function efeitos() {
+    document.querySelectorAll('#app .botao:not(.fantasma)').forEach(b => b.classList.add('brilho-btn'));
+    document.querySelectorAll('#app .secao .painel, #app .grade > .painel, #app .podio > .painel').forEach((el, i) => {
+      if (el.classList.contains('visto')) return;
+      el.classList.add('revela');
+      el.style.setProperty('--atraso', (i % 6) * 70 + 'ms');
+      if (olho && !reduzir) olho.observe(el); else el.classList.add('visto');
+    });
+    document.querySelectorAll('#app [data-conta]').forEach(el => contar(el, Number(el.dataset.conta)));
+  }
+
+  function contar(el, ate) {
+    if (reduzir || !ate) { el.textContent = num(ate); return; }
+    const t0 = performance.now();
+    const passo = t => { const k = Math.min(1, (t - t0) / 1200), e = 1 - Math.pow(1 - k, 3); el.textContent = num(Math.round(ate * e)); if (k < 1) requestAnimationFrame(passo); };
+    requestAnimationFrame(passo);
+  }
+
+  // céu: estrelas piscando, estrelas cadentes e a luz que segue o mouse
+  (function ceu() {
+    const cv = document.getElementById('estrelas'), ctx = cv.getContext('2d');
+    let w = 0, h = 0, estrelas = [], cadentes = [], proxima = 0, rodando = false;
+    function medir() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = innerWidth; h = innerHeight; cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.min(520, Math.round(w * h / 4200));
+      estrelas = Array.from({ length: n }, () => ({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.1 + 0.25,
+        a: Math.random() * 0.55 + 0.25, f: Math.random() * 1.6 + 0.4, p: Math.random() * 6.3, q: Math.random() < 0.14 }));
+      if (reduzir) quadro(0);
+    }
+    function quadro(t) {
+      ctx.clearRect(0, 0, w, h);
+      for (const s of estrelas) {
+        const a = s.a * (0.5 + 0.5 * Math.sin(t / 1000 * s.f + s.p));
+        ctx.fillStyle = s.q ? 'rgba(255,160,90,' + a + ')' : 'rgba(255,255,255,' + a + ')';
+        if (s.r > 1) { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.283); ctx.fill(); } else ctx.fillRect(s.x, s.y, s.r * 1.6, s.r * 1.6);
+      }
+      if (!reduzir) {
+        if (t > proxima) {
+          const ang = 0.35 + Math.random() * 0.25, vel = 9 + Math.random() * 6;
+          cadentes.push({ x: w * (0.3 + Math.random() * 0.75), y: Math.random() * h * 0.45, vx: -Math.cos(ang) * vel, vy: Math.sin(ang) * vel, vida: 0, fim: 46 + Math.random() * 30 });
+          proxima = t + 2600 + Math.random() * 4800;
+        }
+        cadentes = cadentes.filter(c => c.vida < c.fim);
+        for (const c of cadentes) {
+          c.x += c.vx; c.y += c.vy; c.vida++;
+          const k = Math.sin(Math.PI * c.vida / c.fim), cx = c.x - c.vx * 9, cy = c.y - c.vy * 9;
+          const g = ctx.createLinearGradient(c.x, c.y, cx, cy);
+          g.addColorStop(0, 'rgba(255,240,220,' + 0.95 * k + ')'); g.addColorStop(0.3, 'rgba(255,140,60,' + 0.55 * k + ')'); g.addColorStop(1, 'rgba(255,90,0,0)');
+          ctx.strokeStyle = g; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(cx, cy); ctx.stroke();
+          ctx.fillStyle = 'rgba(255,245,230,' + k + ')'; ctx.beginPath(); ctx.arc(c.x, c.y, 1.6, 0, 6.283); ctx.fill();
+        }
+      }
+      if (rodando) requestAnimationFrame(quadro);
+    }
+    function ligar() { if (!rodando && !reduzir && !document.hidden) { rodando = true; requestAnimationFrame(quadro); } }
+    document.addEventListener('visibilitychange', () => { if (document.hidden) rodando = false; else ligar(); });
+    addEventListener('resize', () => { clearTimeout(medir.t); medir.t = setTimeout(medir, 150); });
+    medir(); ligar();
+
+    const luz = document.getElementById('luz-mouse');
+    let alvo = null, px = 0, py = 0, pendente = false;
+    addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      px = e.clientX; py = e.clientY; alvo = e.target.closest ? e.target.closest('.painel') : null;
+      if (!pendente) { pendente = true; requestAnimationFrame(mover); }
+    }, { passive: true });
+    function mover() {
+      pendente = false;
+      luz.style.transform = 'translate(' + (px - 300) + 'px,' + (py - 300) + 'px)';
+      luz.classList.add('on');
+      if (alvo) { const r = alvo.getBoundingClientRect(); alvo.style.setProperty('--mx', (px - r.left) + 'px'); alvo.style.setProperty('--my', (py - r.top) + 'px'); }
+    }
+    document.addEventListener('pointerleave', () => luz.classList.remove('on'));
+  })();
+
   // ---------- roteador ----------
   async function abrir(caminho, empilhar) {
     const partes = caminho.replace(/^\/+|\/+$/g, '').split('/');
@@ -226,10 +309,11 @@
     document.querySelectorAll('.menu a').forEach(a => a.classList.toggle('ativo', a.getAttribute('href') === '/' + nome));
     document.getElementById('menu').classList.remove('aberto');
     const f = paginas[nome];
-    if (!f) { app.innerHTML = cabeca('404', 'Página não encontrada', 'Volte pro início.'); return; }
+    if (!f) { app.innerHTML = cabeca('404', 'Página <em>não encontrada</em>', 'Volte pro início.'); return; }
     app.innerHTML = '<p class="carregando">Carregando...</p>';
-    try { app.innerHTML = await f(arg); } catch (e) { app.innerHTML = cabeca('Erro', 'Ops', 'Não consegui carregar agora. Tente de novo em alguns segundos.'); }
+    try { app.innerHTML = await f(arg); } catch (e) { app.innerHTML = cabeca('Erro', '<em>Ops</em>', 'Não consegui carregar agora. Tente de novo em alguns segundos.'); }
     window.scrollTo(0, 0);
+    efeitos();
   }
 
   document.addEventListener('click', e => {
