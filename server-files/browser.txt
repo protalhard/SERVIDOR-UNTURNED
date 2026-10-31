@@ -1,7 +1,7 @@
 # Textos da lista de servidores (aplicados no Config.txt do servidor, secao Browser)
 Name: [BR]  DAY Z  BRASIL  OFICIAL  |  CALIFORNIA 2
 Icon: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon.png
-Thumbnail: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/capa.jpg
+Thumbnail: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon.png
 Desc_Server_List: <color=#ff5a00>SAFE ZONE | ATM | BLACK MARKET | CAÇA</color>
 Desc_Hint: <color=#f5f6f7>Sobrevivência</color> <color=#ff5a00>PvP</color> <color=#ffb020>estilo DayZ</color>
 Link: SnapLag - Redutor de ping | https://snaplag.com.br/
