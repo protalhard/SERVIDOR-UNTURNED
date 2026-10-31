@@ -28,7 +28,7 @@
           </div>
           <div class="chips">${['Safe Zone', 'ATM', 'Black Market', 'Caça', 'Airdrops', 'Rank Kits', 'Vault', 'TPA'].map(c => `<span class="chip">${c}</span>`).join('')}</div>
         </div>
-        <div class="capa"><img src="/img/capa.jpg?v=2" alt=""></div>
+        <div><div class="capa"><img src="/img/capa.jpg?v=2" alt=""></div><div class="fio"></div></div>
       </section>
 
       <section class="grade g4">
@@ -60,6 +60,28 @@
             <div class="nome-jog">${nomeJog(f)}</div><div class="numero laranja" style="margin-top:8px">${num(f.abates)}</div><div class="rotulo">abates</div></a>`).join('')}</div>
           <a class="botao fantasma" href="/ranking" data-link>Ranking completo</a>`
           : `<p class="fraco">O ranking começa quando os primeiros jogadores entrarem.</p>`}
+      </section>
+
+      <section class="secao"><h2>Como <span>começar</span></h2>
+        <div class="passos">
+          <div class="passo painel"><h3>Abra o Unturned</h3><p>Na Steam, abra o Unturned e vá em Jogar → Servidores → aba Internet.</p></div>
+          <div class="passo painel"><h3>Ache o DAY Z BRASIL</h3><p>Procure por DAY Z BRASIL ou use o IP <b class="mono">${esc(st.ip)}</b> no Conectar.</p></div>
+          <div class="passo painel"><h3>Sobreviva</h3><p>Pegue o <b class="mono">/kit inicial</b>, leia o <b class="mono">/tutorial</b> e saia da safe zone pra lootear.</p></div>
+        </div>
+      </section>
+
+      <section class="secao"><h2>Perguntas <span>frequentes</span></h2>
+        <div class="perguntas">
+          <details><summary>Precisa pagar pra jogar?</summary><p>Não. O servidor é grátis. Os kits de rank são liberados por abates, sem pagar nada.</p></details>
+          <details><summary>O que acontece com meu dinheiro quando eu morro?</summary><p>As notas no inventário caem com você. Guarde no ATM com /depositar e saque com /sacar quando precisar.</p></details>
+          <details><summary>Como funciona a safe zone?</summary><p>Dentro dela não tem PvP, não dá pra construir e carros e bases ficam protegidos. Use /safe pra voltar (fique parado alguns segundos).</p></details>
+          <details><summary>Como ganho XP e subo de patente?</summary><p>Matando jogadores (mais na cabeça), zumbis e megas, e jogando. Veja com /perfil e gaste XP na /lojaxp.</p></details>
+          <details><summary>Perdi minhas coisas por bug. E agora?</summary><p>Abra um ticket no nosso Discord, no canal de suporte, com print ou vídeo. A staff responde por lá.</p></details>
+        </div>
+        <div class="caixa-final painel">
+          <div><h2>Bora <span class="laranja">sobreviver</span>?</h2><p>Entre no servidor e no nosso Discord pra achar grupo, ver o ranking e saber dos eventos.</p></div>
+          <div class="acoes"><a class="botao" href="steam://connect/${esc(st.ip)}">⚡ Jogar agora</a>${st.discord ? `<a class="botao fantasma" href="${esc(st.discord)}" target="_blank" rel="noopener">Discord</a>` : ''}</div>
+        </div>
       </section>`;
     },
 
@@ -226,7 +248,7 @@
 
   function efeitos() {
     document.querySelectorAll('#app .botao:not(.fantasma)').forEach(b => b.classList.add('brilho-btn'));
-    document.querySelectorAll('#app .secao .painel, #app .grade > .painel, #app .podio > .painel').forEach((el, i) => {
+    document.querySelectorAll('#app .secao .painel, #app .grade > .painel, #app .podio > .painel, #app .perguntas details').forEach((el, i) => {
       if (el.classList.contains('visto')) return;
       el.classList.add('revela');
       el.style.setProperty('--atraso', (i % 6) * 70 + 'ms');
@@ -301,12 +323,21 @@
     document.addEventListener('pointerleave', () => luz.classList.remove('on'));
   })();
 
+  function marcarMenu() {
+    const ativo = document.querySelector('#menu a.ativo'), barra = document.getElementById('menu-luz');
+    if (!barra) return;
+    if (ativo && ativo.offsetWidth) { barra.style.width = ativo.offsetWidth + 'px'; barra.style.transform = 'translateX(' + ativo.offsetLeft + 'px)'; barra.classList.add('on'); }
+    else barra.classList.remove('on');
+  }
+  addEventListener('resize', marcarMenu);
+
   // ---------- roteador ----------
   async function abrir(caminho, empilhar) {
     const partes = caminho.replace(/^\/+|\/+$/g, '').split('/');
     let nome = partes[0], arg = partes[1];
     if (empilhar) history.pushState({}, '', caminho);
     document.querySelectorAll('.menu a').forEach(a => a.classList.toggle('ativo', a.getAttribute('href') === '/' + nome));
+    marcarMenu();
     document.getElementById('menu').classList.remove('aberto');
     const f = paginas[nome];
     if (!f) { app.innerHTML = cabeca('404', 'Página <em>não encontrada</em>', 'Volte pro início.'); return; }
