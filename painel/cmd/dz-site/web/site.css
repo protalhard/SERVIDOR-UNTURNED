@@ -47,6 +47,7 @@ main.envolve { flex: 1; padding: 34px 0 70px; }
 .marca { display: flex; align-items: center; gap: 10px; color: #fff; font: 800 19px var(--sans); letter-spacing: .04em; }
 .marca:hover { color: #fff; }
 .marca b { color: var(--c); }
+.marca span { white-space: nowrap; }
 .marca img { width: 34px; height: 34px; border-radius: 8px; filter: drop-shadow(0 0 12px rgba(255,90,0,.45)); }
 .menu { display: flex; gap: 20px; }
 .menu a { color: var(--texto); font: 600 13px var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: 6px 0; border-bottom: 2px solid transparent; }
@@ -83,6 +84,7 @@ main.envolve { flex: 1; padding: 34px 0 70px; }
 .heroi .logo { width: min(520px, 100%); filter: drop-shadow(0 0 34px rgba(255,90,0,.35)); }
 .heroi .lead { font-size: 18.5px; margin: 18px 0 26px; max-width: 540px; }
 .heroi .acoes { display: flex; flex-wrap: wrap; gap: 12px; }
+.capa img { display: block; width: 100%; height: auto; }
 .capa { border-radius: 18px; border: 1px solid var(--c-40); box-shadow: 0 30px 80px -30px rgba(255,90,0,.6); overflow: hidden; }
 @media (max-width: 900px) { .heroi { grid-template-columns: 1fr; } }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
@@ -99,8 +101,8 @@ main.envolve { flex: 1; padding: 34px 0 70px; }
 .rotulo { font: 700 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fraco); }
 
 /* servidor */
-.servidor { display: grid; grid-template-columns: 420px 1fr; gap: 0; padding: 0; overflow: hidden; }
-.servidor .foto { background: url(/img/capa.jpg) center / cover; min-height: 250px; position: relative; }
+.servidor { display: grid; grid-template-columns: minmax(0, 1.15fr) 1fr; gap: 0; padding: 0; overflow: hidden; align-items: center; }
+.servidor .foto { background: url(/img/capa.jpg?v=2) center / contain no-repeat; aspect-ratio: 16 / 9; width: 100%; position: relative; }
 .servidor .info { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
 @media (max-width: 900px) { .servidor { grid-template-columns: 1fr; } }
 .estado { display: inline-flex; align-items: center; gap: 8px; font: 700 12px var(--mono); letter-spacing: .1em; padding: 5px 10px; border-radius: 8px; }

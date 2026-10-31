@@ -20,7 +20,7 @@
       <section class="heroi">
         <div>
           <span class="selo">${s.online ? '● Online agora' : 'Servidor brasileiro'}</span>
-          <img class="logo" src="/img/logo.png" alt="DAY Z BRASIL OFICIAL" style="margin-top:18px">
+          <img class="logo" src="/img/logo.png?v=2" alt="DAY Z BRASIL OFICIAL" style="margin-top:18px">
           <p class="lead">Sobrevivência <b style="color:var(--c)">PvP estilo DayZ</b> no Unturned. Dinheiro físico, ATM, lojas, mercado negro, caça, airdrops e kits que você libera matando.</p>
           <div class="acoes">
             <a class="botao" href="steam://connect/${esc(st.ip)}">▶ Jogar agora</a>
@@ -28,7 +28,7 @@
           </div>
           <div class="chips">${['Safe Zone', 'ATM', 'Black Market', 'Caça', 'Airdrops', 'Rank Kits', 'Vault', 'TPA'].map(c => `<span class="chip">${c}</span>`).join('')}</div>
         </div>
-        <div class="capa"><img src="/img/capa.jpg" alt=""></div>
+        <div class="capa"><img src="/img/capa.jpg?v=2" alt=""></div>
       </section>
 
       <section class="grade g4">
