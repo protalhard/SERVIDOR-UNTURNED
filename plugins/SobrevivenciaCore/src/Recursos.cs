@@ -267,6 +267,7 @@ namespace SobrevivenciaCore
             var fv = FichaDe(vitima);
             fv.Mortes++;
             Stats.Mudou();
+            if (S.MarcarMorteNoMapa) MarcarMorte(vitima);
 
             var matador = assassino != CSteamID.Nil && assassino != vitima.CSteamID ? PlayerTool.getPlayer(assassino) : null;
             if (matador != null)
@@ -297,6 +298,17 @@ namespace SobrevivenciaCore
             {
                 Chat.Todos(NomeColorido(fv) + Chat.Cor(S.CorApagada, " " + DescreverMorte(causa)));
             }
+        }
+
+        void MarcarMorte(UnturnedPlayer p)
+        {
+            try
+            {
+                p.Player.quests.replicateSetMarker(true, p.Position, "Sua morte");
+                StartCoroutine(Depois(4f, p, () => Chat.Para(p, Chat.Cor(S.CorDestaque, "Sua morte foi marcada no mapa.") +
+                    Chat.Cor(S.CorApagada, " Corra pra pegar suas coisas antes que alguém pegue!"))));
+            }
+            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
 
         static string DescreverMorte(EDeathCause c)
@@ -336,6 +348,14 @@ namespace SobrevivenciaCore
         {
             bool novo = !Stats.Existe(Id(p));
             var f = FichaDe(p);
+            if (novo && S.XpInicial > 0)
+            {
+                // entra como saldo pra gastar, sem subir a patente
+                f.XpGasto -= S.XpInicial;
+                Stats.Mudou();
+                StartCoroutine(Depois(2f, p, () => Chat.Para(p, Chat.Cor(S.CorDestaque, "+" + S.XpInicial + " XP") +
+                    Chat.Cor(S.CorTexto, " de boas-vindas! Gaste na ") + Chat.Cor(S.CorPrincipal, "/lojaxp") + Chat.Cor(S.CorTexto, " dentro da safe zone."))));
+            }
             if (novo) StartCoroutine(Tutorial(p));
             else StartCoroutine(Depois(3f, p, () =>
                 Chat.Para(p, Chat.Cor(S.CorTexto, "Bem-vindo de volta, ") + NomeColorido(f) +

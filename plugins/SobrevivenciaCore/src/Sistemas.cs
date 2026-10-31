@@ -77,6 +77,10 @@ namespace SobrevivenciaCore
         public int XpZumbi = 5;
         public int XpMega = 50;
         public int XpPorMinuto = 5;
+        // XP de boas-vindas pra gastar na /lojaxp (não conta pra patente)
+        public int XpInicial = 1500;
+        // Marca no mapa o lugar onde o jogador morreu
+        public bool MarcarMorteNoMapa = true;
 
         // Anúncios
         public int AnuncioSegundos = 300;
