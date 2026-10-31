@@ -1,0 +1,8 @@
+[Unit]
+Description=Sincroniza o servidor Unturned com o GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/unturned-sync.sh

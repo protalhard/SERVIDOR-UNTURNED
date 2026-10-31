@@ -116,6 +116,14 @@ cp "$REPO_DIR/scripts/unturned.service" /etc/systemd/system/unturned.service
 systemctl daemon-reload
 systemctl enable unturned
 
+verde "Instalando o sincronizador com o GitHub (a cada 5 min)"
+install -m 755 "$REPO_DIR/scripts/unturned-sync.sh" /usr/local/bin/unturned-sync.sh
+cp "$REPO_DIR/scripts/unturned-sync.service" "$REPO_DIR/scripts/unturned-sync.timer" /etc/systemd/system/
+mkdir -p /var/lib/unturned-sync
+cat "$REPO_DIR/server-files/REINICIAR" > /var/lib/unturned-sync/reiniciar 2>/dev/null || true
+systemctl daemon-reload
+systemctl enable --now unturned-sync.timer
+
 verde "Liberando portas no firewall"
 ufw allow OpenSSH >/dev/null
 ufw allow 27015:27017/udp >/dev/null
