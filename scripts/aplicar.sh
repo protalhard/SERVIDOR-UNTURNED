@@ -57,6 +57,19 @@ if [ -f "$REPO/server-files/REINICIAR" ]; then
   fi
 fi
 
+# 4) Bot do Discord (não reinicia o jogo)
+if [ -f "$REPO/painel/bin/dz-bot" ]; then
+  bot=0
+  if ! cmp -s "$REPO/painel/bin/dz-bot" /usr/local/bin/dz-bot; then
+    install -m 755 "$REPO/painel/bin/dz-bot" /usr/local/bin/dz-bot; bot=1
+  fi
+  if ! cmp -s "$REPO/scripts/dz-bot.service" /etc/systemd/system/dz-bot.service; then
+    cp "$REPO/scripts/dz-bot.service" /etc/systemd/system/dz-bot.service
+    systemctl daemon-reload; systemctl enable dz-bot; bot=1
+  fi
+  if [ "$bot" = 1 ]; then echo "bot do discord atualizado"; systemctl restart dz-bot; fi
+fi
+
 if [ "$reiniciar" = 1 ]; then
   echo "reiniciando o servidor"
   systemctl restart unturned

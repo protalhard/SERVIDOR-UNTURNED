@@ -1,0 +1,15 @@
+[Unit]
+Description=Bot do Discord do DAY Z BRASIL OFICIAL
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=unturned
+ExecStart=/usr/local/bin/dz-bot
+# Sem token ainda: tenta de novo a cada 30 s até o arquivo /home/unturned/discord-token existir
+Restart=always
+RestartSec=30
+MemoryMax=80M
+
+[Install]
+WantedBy=multi-user.target
