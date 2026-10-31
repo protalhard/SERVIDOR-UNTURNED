@@ -11,47 +11,81 @@
   const cabeca = (selo, titulo, texto) => `<div class="cabeca"><span class="selo">${selo}</span><h1>${titulo}</h1><p>${texto}</p></div>`;
   const nomeJog = f => `<span class="tag" style="color:${esc(f.corPatente || f.cor)}">[${esc(f.patente)}]</span> ${esc(f.nome)} <span class="fraco">Lv.${f.nivel}</span>`;
 
+  const nomeMapa = m => String(m || '').replace(/([a-z])(\d)/i, '$1 $2').toUpperCase();
+  const slides = fotos => `<div class="slides">${fotos.map((f, i) => `<div class="slide${i ? '' : ' ativo'}" style="background-image:url(/img/mapa/${f}.webp)"></div>`).join('')}</div>`;
+
+  function cartaoServidor(st) {
+    const s = st.status, pct = s.max ? Math.round(100 * st.jogadores / s.max) : 0;
+    return `<div class="painel destaque cartao-srv">
+      <div class="srv-foto">${slides(['farol', 'ponte', 'palmeiras', 'colinas'])}
+        <span class="estado ${s.online ? 'on' : 'off'}">${s.online ? 'ONLINE' : 'OFFLINE'}</span>
+        <div class="srv-base"><h3>${esc(nomeMapa(s.mapa) || 'CALIFORNIA 2')}</h3>
+          <div class="ipbox"><span>${esc(st.ip)}</span><button class="botao pequeno fantasma" onclick="navigator.clipboard.writeText('${esc(st.ip)}');this.textContent='Copiado!'">Copiar</button>
+            <a class="botao pequeno" href="steam://connect/${esc(st.ip)}">⚡ Conectar</a></div></div>
+      </div>
+      <div class="srv-corpo">
+        <div class="chips" style="margin:0">${['Loot x10', 'Safe Zone', 'ATM', 'Kits', 'Vault', 'TPA', 'Home', 'Airdrop', 'Mercado negro'].map(c => `<span class="chip">${c}</span>`).join('')}</div>
+        <div class="painel jogadores"><div style="display:flex;justify-content:space-between;align-items:center"><span class="rotulo">👥 Jogadores</span><span class="fraco mono" style="font-size:11px">ATUALIZA A CADA 15 S</span></div>
+          <div class="numero">${st.jogadores}<small>/${s.max || '–'}</small></div><div class="barra"><i style="width:${pct}%"></i></div></div>
+        ${s.jogadores && s.jogadores.length ? `<div><div class="rotulo" style="margin-bottom:8px">Online agora</div><div class="lista-on">${s.jogadores.map(j =>
+          `<a href="/jogador/${j.id}" data-link><span style="color:${esc(j.cor)}">[${esc(j.patente)}]</span> ${esc(j.nome)}</a>`).join('')}</div></div>` : ''}
+      </div>
+    </div>`;
+  }
+
   // ---------- páginas ----------
   const paginas = {
     async '' () {
       const [st, rk] = await Promise.all([api('/api/status'), api('/api/ranking')]);
       const s = st.status, top = (rk.jogadores || []).slice(0, 3);
+      const ticker = ['Kits de rank grátis', 'Safe zone protegida', 'ATM e dinheiro físico', 'Mercado negro', 'Airdrops pelo mapa', 'Caça e pesca', 'Vault pessoal', 'Ranking ao vivo', 'Mapa California 2'];
+      const recursos = [
+        ['mercado', '🛡', 'Safe Zone', 'Lojas, ATM e nada de PvP. Carros e bases protegidos. Volte com /safe.'],
+        ['lanchonete', '🏧', 'ATM e dinheiro físico', 'As notas do jogo caem quando você morre. Guarde no banco.'],
+        ['bunker', '🏴', 'Mercado Negro', 'Armas militares e equipamento raro, caro e fora da safe.'],
+        ['lago', '🦌', 'Caça e pesca', 'Venda carne, couro e peixe pro caçador e faça dinheiro.'],
+        ['colinas', '📦', 'Airdrops', 'Caixas caindo pelo mapa. Quem chegar primeiro leva.'],
+        ['deserto', '🎖', 'Rank Kits', 'Abates liberam kits melhores e bônus de XP. Sem pagar nada.'],
+        ['torre-noite', '⚔', 'Patentes e XP', 'Suba de Recruta até Lenda e troque XP por equipamento.'],
+        ['vila', '📍', 'Home e TPA', 'Volte pra sua cama ou vá até um amigo.'],
+        ['neblina', '🧰', 'Vault', 'Cofre pessoal pra guardar o que importa.'],
+      ];
       return `
-      <section class="heroi">
-        <div>
-          <span class="selo">${s.online ? '<i class="ponto"></i> Online agora' : 'Servidor brasileiro'}</span>
-          <img class="logo" src="/img/logo.png?v=2" alt="DAY Z BRASIL OFICIAL" style="margin-top:18px">
-          <p class="lead">Sobrevivência <b style="color:var(--c)">PvP estilo DayZ</b> no Unturned. Dinheiro físico, ATM, lojas, mercado negro, caça, airdrops e kits que você libera matando.</p>
+      <section class="heroi-full">
+        ${slides(['ponte-por-do-sol', 'farol', 'floresta', 'ponte', 'palmeiras'])}
+        <div class="heroi-veu"></div>
+        <div class="envolve heroi-conteudo">
+          <span class="pilula">${s.online ? `<i class="ponto"></i> ONLINE <b>|</b> ${st.jogadores}/${s.max || 50} jogando agora` : 'Servidor brasileiro de Unturned'}</span>
+          <h1 class="titulo-heroi"><span>DAY Z</span><em>BRASIL</em></h1>
+          <div class="slogan">Sobrevivência · PvP · ${esc(nomeMapa(s.mapa) || 'California 2')}</div>
+          <p class="lead">Sobrevivência <b>PvP estilo DayZ</b> no Unturned. Dinheiro físico, ATM, lojas, mercado negro, caça, airdrops e kits que você libera matando.</p>
           <div class="acoes">
-            <a class="botao" href="steam://connect/${esc(st.ip)}">⚡ Jogar agora</a>
-            <a class="botao fantasma" href="/servidores" data-link>Ver servidor</a>
+            <a class="botao" href="steam://connect/${esc(st.ip)}">▷ Jogar agora</a>
+            <a class="botao fantasma" href="/kits" data-link>Rank Kits</a>
+            <a class="botao fantasma" href="/sobre" data-link>&gt;_ Comandos</a>
           </div>
-          <div class="chips">${['Safe Zone', 'ATM', 'Black Market', 'Caça', 'Airdrops', 'Rank Kits', 'Vault', 'TPA'].map(c => `<span class="chip">${c}</span>`).join('')}</div>
         </div>
-        <div><div class="capa"><img src="/img/capa.jpg?v=2" alt=""></div><div class="fio"></div></div>
+        <div class="letreiro" aria-hidden="true"><div class="faixa">${[...ticker, ...ticker].map(t => `<span>${t}</span><i>◆</i>`).join('')}</div></div>
       </section>
 
-      <section class="grade g4">
+      <section class="secao"><h2>Nosso <span>servidor</span></h2>${cartaoServidor(st)}</section>
+
+      <section class="grade g4 numeros">
         <div class="painel"><div class="rotulo">Status</div><div class="numero ${s.online ? 'laranja' : ''}">${s.online ? 'ONLINE' : 'OFFLINE'}</div></div>
         <div class="painel"><div class="rotulo">Jogadores</div><div class="numero">${st.jogadores}/${s.max || '–'}</div></div>
-        <div class="painel"><div class="rotulo">Mapa</div><div class="numero" style="font-size:26px">${esc(s.mapa || '–')}</div></div>
+        <div class="painel"><div class="rotulo">Mapa</div><div class="numero" style="font-size:26px">${esc(nomeMapa(s.mapa) || '–')}</div></div>
         <div class="painel"><div class="rotulo">Sobreviventes</div><div class="numero" data-conta="${Number(rk.total) || 0}">0</div></div>
       </section>
 
       <section class="secao"><h2>O que tem no <span>servidor</span></h2>
-        <div class="grade g3">
-          ${[
-            ['🛡', 'Safe Zone', 'Sem PvP, sem zumbi, carros e bases protegidos. Volte com /safe.'],
-            ['🏧', 'ATM e dinheiro físico', 'As notas do jogo caem quando você morre. Guarde no ATM.'],
-            ['🏴', 'Mercado Negro', 'Armas militares e equipamento raro, mais caro e fora da safe.'],
-            ['🦌', 'Caça', 'Venda carne, couro e peixe pro caçador e faça dinheiro.'],
-            ['📦', 'Airdrops', 'Caixas caindo pelo mapa. Quem chegar primeiro leva.'],
-            ['🎖', 'Rank Kits', 'Abates liberam kits melhores e bônus de XP.'],
-            ['🧰', 'Vault', 'Cofre pessoal pra guardar o que importa.'],
-            ['⚔', 'Patentes e XP', 'Suba de Recruta até Lenda. Troque XP por equipamento.'],
-            ['📍', 'Home e TPA', 'Volte pra sua cama ou vá até um amigo.'],
-          ].map(([i, t, d]) => `<div class="painel recurso"><div class="ic">${i}</div><h3>${t}</h3><p>${d}</p></div>`).join('')}
-        </div>
+        <div class="grade g3">${recursos.map(([f, i, t, d]) => `<div class="painel recurso-foto" style="--foto:url(/img/mapa/${f}.webp)">
+          <div class="ic">${i}</div><h3>${t}</h3><p>${d}</p></div>`).join('')}</div>
+      </section>
+
+      <section class="secao"><h2>O mapa: <span>California 2</span></h2>
+        <div class="galeria">${[['ponte-por-do-sol', 'A ponte ao pôr do sol'], ['farol', 'O farol da costa'], ['mercado', 'Lojas na cidade'], ['palmeiras', 'Praias e palmeiras'], ['ponte', 'San Francisco'], ['floresta', 'Florestas do norte']]
+          .map(([f, t]) => `<figure><img src="/img/mapa/${f}.webp" alt="${t}" loading="lazy"><figcaption>${t}</figcaption></figure>`).join('')}</div>
+        <p class="credito">Imagens do mapa California 2, feito pelo California Team (Steam Workshop).</p>
       </section>
 
       <section class="secao"><h2>Top <span>sobreviventes</span></h2>
@@ -78,7 +112,7 @@
           <details><summary>Como ganho XP e subo de patente?</summary><p>Matando jogadores (mais na cabeça), zumbis e megas, e jogando. Veja com /perfil e gaste XP na /lojaxp.</p></details>
           <details><summary>Perdi minhas coisas por bug. E agora?</summary><p>Abra um ticket no nosso Discord, no canal de suporte, com print ou vídeo. A staff responde por lá.</p></details>
         </div>
-        <div class="caixa-final painel">
+        <div class="caixa-final painel com-foto" style="--foto:url(/img/mapa/ponte-por-do-sol.webp)">
           <div><h2>Bora <span class="laranja">sobreviver</span>?</h2><p>Entre no servidor e no nosso Discord pra achar grupo, ver o ranking e saber dos eventos.</p></div>
           <div class="acoes"><a class="botao" href="steam://connect/${esc(st.ip)}">⚡ Jogar agora</a>${st.discord ? `<a class="botao fantasma" href="${esc(st.discord)}" target="_blank" rel="noopener">Discord</a>` : ''}</div>
         </div>
@@ -86,28 +120,9 @@
     },
 
     async servidores () {
-      const st = await api('/api/status'), s = st.status;
-      const pct = s.max ? Math.round(100 * st.jogadores / s.max) : 0;
-      return cabeca('Status em tempo real', 'Servidor <em>ao vivo</em>', 'Status e jogadores online, atualizados pelo plugin do servidor.') + `
-      <div class="painel destaque servidor">
-        <div class="foto"></div>
-        <div class="info">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-            <span class="estado ${s.online ? 'on' : 'off'}">${s.online ? 'ONLINE' : 'OFFLINE'}</span>
-            <span class="fraco mono" style="font-size:12px">atualiza a cada 15 s</span>
-          </div>
-          <h2 style="font:800 28px var(--sans)">DAY Z BRASIL <span style="color:var(--c)">OFICIAL</span></h2>
-          <div class="fraco mono">Mapa: <b style="color:var(--titulo)">${esc(s.mapa || '–')}</b></div>
-          <div class="chips" style="margin:0">${['Loot x10', 'Safe Zone', 'ATM', 'Kits', 'Vault', 'TPA', 'Home', 'Airdrop'].map(c => `<span class="chip">${c}</span>`).join('')}</div>
-          <div><div style="display:flex;justify-content:space-between" class="mono"><span class="rotulo">Jogadores</span><b style="color:var(--titulo)">${st.jogadores}/${s.max || '–'}</b></div>
-            <div class="barra"><i style="width:${pct}%"></i></div></div>
-          <div class="ipbox"><span>${esc(st.ip)}</span><button class="botao pequeno fantasma" onclick="navigator.clipboard.writeText('${esc(st.ip)}');this.textContent='Copiado!'">Copiar</button>
-            <a class="botao pequeno" href="steam://connect/${esc(st.ip)}">Conectar</a></div>
-          ${s.jogadores && s.jogadores.length ? `<div><div class="rotulo" style="margin-bottom:8px">Online agora</div><div class="lista-on">${s.jogadores.map(j =>
-            `<a href="/jogador/${j.id}" data-link><span style="color:${esc(j.cor)}">[${esc(j.patente)}]</span> ${esc(j.nome)}</a>`).join('')}</div></div>` : ''}
-        </div>
-      </div>
-      <p class="fraco" style="margin-top:16px;text-align:center">Como conectar: Unturned → Jogar → Servidores → aba Internet → procure <b>DAY Z BRASIL</b>. Ou Conectar pelo IP acima.</p>`;
+      const st = await api('/api/status');
+      return cabeca('Status em tempo real', 'Servidor <em>ao vivo</em>', 'Status e jogadores online, atualizados pelo plugin do servidor.') + cartaoServidor(st) +
+        `<p class="fraco" style="margin-top:16px;text-align:center">Como conectar: Unturned → Jogar → Servidores → aba Internet → procure <b>DAY Z BRASIL</b>. Ou Conectar pelo IP acima.</p>`;
     },
 
     async ranking () {
@@ -140,7 +155,10 @@
       const d = await api('/api/kits');
       const rank = d.kits.filter(k => k.abates > 0), livres = d.kits.filter(k => !k.abates && !k.permissao);
       const meus = eu && eu.ficha ? eu.ficha.abates : null;
+      const fotosKit = ['deserto', 'lago', 'vila', 'mercado', 'colinas', 'bunker', 'torre-noite', 'farol', 'ponte', 'floresta', 'palmeiras', 'lanchonete'];
+      let nFoto = 0;
       const cartao = k => `<div class="painel kit ${meus !== null && meus >= k.abates ? 'destaque' : ''}">
+          <div class="kit-foto" style="background-image:url(/img/mapa/${fotosKit[nFoto++ % fotosKit.length]}.webp)"><span class="kit-nome">${esc((k.titulo || k.nome).toUpperCase())}</span></div>
           <div class="topo-kit"><span class="req">${k.abates ? `☠ ${k.abates} kills` : 'Livre'}</span><span class="cmd">/kit ${esc(k.nome)}</span></div>
           <h3>${esc(k.titulo || k.nome)}</h3><p class="fraco">${esc(k.descricao)}</p>
           ${meus !== null && k.abates ? `<div class="progresso">${Math.min(meus, k.abates)}/${k.abates} abates</div><div class="barra"><i style="width:${Math.min(100, 100 * meus / k.abates)}%"></i></div>` : ''}
@@ -158,13 +176,13 @@
 
     async loja () {
       const vips = [
-        ['Vault VIP', 'Cofre 7x7 em vez de 5x5.', ['Mais espaço pra guardar', 'Tag no chat']],
-        ['Vault Grande', 'Cofre 11x9.', ['Espaço de base no bolso', 'Tag no chat']],
-        ['Vault Ultra', 'Cofre 15x13.', ['O maior cofre do servidor', 'Tag no chat']],
-        ['Kits VIP', 'Kits extras com espera menor.', ['Kits exclusivos', 'Cargo VIP no Discord']],
+        ['Vault VIP', 'Cofre 7x7 em vez de 5x5.', ['Mais espaço pra guardar', 'Tag no chat'], 'neblina'],
+        ['Vault Grande', 'Cofre 11x9.', ['Espaço de base no bolso', 'Tag no chat'], 'bunker'],
+        ['Vault Ultra', 'Cofre 15x13.', ['O maior cofre do servidor', 'Tag no chat'], 'torre-noite'],
+        ['Kits VIP', 'Kits extras com espera menor.', ['Kits exclusivos', 'Cargo VIP no Discord'], 'ponte-por-do-sol'],
       ];
       return cabeca('Loja VIP', 'Apoie o <em>servidor</em>', 'Os pacotes VIP vão abrir em breve, com pagamento por PIX. Todo apoio mantém o servidor online e sem lag.') +
-        `<div class="grade g4">${vips.map(([t, d, l]) => `<div class="painel vip"><span class="em-breve">EM BREVE</span><h3 style="margin-top:8px">${t}</h3>
+        `<div class="grade g4">${vips.map(([t, d, l, f]) => `<div class="painel vip"><div class="kit-foto" style="background-image:url(/img/mapa/${f}.webp)"></div><span class="em-breve">EM BREVE</span><h3 style="margin-top:8px">${t}</h3>
           <p class="fraco">${d}</p><ul>${l.map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>
          <p class="fraco" style="text-align:center;margin-top:24px">Quer ser avisado quando abrir? Entre no nosso Discord.</p>`;
     },
@@ -246,7 +264,19 @@
     if (x.isIntersecting) { x.target.classList.add('visto'); olho.unobserve(x.target); }
   }), { rootMargin: '0px 0px -8% 0px' }) : null;
 
+  let girando = [];
+  function girarSlides() {
+    girando.forEach(clearInterval); girando = [];
+    if (reduzir) return;
+    document.querySelectorAll('#app .slides').forEach((el, n) => {
+      const l = el.children; if (l.length < 2) return;
+      let i = 0;
+      girando.push(setInterval(() => { l[i].classList.remove('ativo'); i = (i + 1) % l.length; l[i].classList.add('ativo'); }, 6500 + n * 900));
+    });
+  }
+
   function efeitos() {
+    girarSlides();
     document.querySelectorAll('#app .botao:not(.fantasma)').forEach(b => b.classList.add('brilho-btn'));
     document.querySelectorAll('#app .secao .painel, #app .grade > .painel, #app .podio > .painel, #app .perguntas details').forEach((el, i) => {
       if (el.classList.contains('visto')) return;
@@ -344,6 +374,7 @@
     app.innerHTML = '<p class="carregando">Carregando...</p>';
     try { app.innerHTML = await f(arg); } catch (e) { app.innerHTML = cabeca('Erro', '<em>Ops</em>', 'Não consegui carregar agora. Tente de novo em alguns segundos.'); }
     window.scrollTo(0, 0);
+    document.body.classList.toggle('pagina-inicio', nome === '');
     efeitos();
   }
 

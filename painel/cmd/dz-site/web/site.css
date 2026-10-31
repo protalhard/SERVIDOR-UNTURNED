@@ -259,3 +259,86 @@ td.ord { color: var(--c); font-weight: 800; }
 @media (max-width: 900px) { .passos, .caixa-final.painel { grid-template-columns: 1fr; } .caixa-final.painel { padding: 28px 22px; } }
 @media (prefers-reduced-motion: reduce) { .fio::after, .capa img { animation: none; } }
 .caixa-final .acoes { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* ===== visual com imagens do mapa (California 2) ===== */
+.pagina-inicio main.envolve { padding-top: 0; }
+.slides { position: absolute; inset: 0; overflow: hidden; }
+.slide { position: absolute; inset: -2%; background: center / cover no-repeat; opacity: 0; transition: opacity 1.8s ease; transform: scale(1.04); }
+.slide.ativo { opacity: 1; animation: kenburns 11s linear forwards; }
+.slide:nth-child(even).ativo { animation-name: kenburns2; }
+@keyframes kenburns { from { transform: scale(1.04) translate(0, 0); } to { transform: scale(1.17) translate(-2.5%, -1.5%); } }
+@keyframes kenburns2 { from { transform: scale(1.17) translate(2%, 1%); } to { transform: scale(1.04) translate(0, 0); } }
+
+.heroi-full { position: relative; width: 100vw; margin-left: calc(50% - 50vw); min-height: min(calc(100vh - 68px), 860px); display: flex; align-items: center; overflow: hidden; isolation: isolate; }
+.heroi-full .slides { z-index: -2; }
+.heroi-veu { position: absolute; inset: 0; z-index: -1; background:
+  linear-gradient(90deg, rgba(5,5,6,.92) 0%, rgba(5,5,6,.72) 38%, rgba(5,5,6,.15) 70%, rgba(5,5,6,.35) 100%),
+  linear-gradient(0deg, var(--fundo) 0%, transparent 28%),
+  radial-gradient(60% 60% at 75% 40%, rgba(255,90,0,.18), transparent 70%); }
+.heroi-conteudo { padding: 60px 0 120px; }
+.pilula { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; font: 700 12px var(--mono); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ok); background: rgba(5,5,6,.75); border: 1px solid var(--borda2); border-left: 3px solid var(--ok); }
+.pilula b { color: var(--borda2); font-weight: 400; }
+.titulo-heroi { margin: 22px 0 10px; font: 900 clamp(64px, 11vw, 150px)/.86 var(--sans); letter-spacing: -.04em; text-transform: uppercase; }
+.titulo-heroi span { display: block; color: #F6EFE6; text-shadow: 0 6px 0 rgba(0,0,0,.35); }
+.titulo-heroi em { display: block; font-style: normal; background: linear-gradient(100deg, #FF5A00 10%, #FFB020 35%, #FFE2B8 50%, #FFB020 65%, #FF5A00 90%);
+  background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: brilho-txt 7s linear infinite;
+  filter: drop-shadow(0 0 30px rgba(255,90,0,.45)); }
+.slogan { font: 800 clamp(13px, 1.6vw, 17px) var(--mono); letter-spacing: .32em; text-transform: uppercase; color: var(--c2); }
+.heroi-full .lead { font-size: 18.5px; margin: 20px 0 30px; max-width: 560px; color: #E4E1DC; }
+.heroi-full .lead b { color: var(--c); }
+.heroi-full .acoes { display: flex; flex-wrap: wrap; gap: 12px; }
+.heroi-full .botao.fantasma { background: rgba(5,5,6,.6); backdrop-filter: blur(6px); }
+.letreiro { position: absolute; left: 0; right: 0; bottom: 0; overflow: hidden; border-top: 1px solid var(--c-20); background: rgba(5,5,6,.82); backdrop-filter: blur(8px); }
+.faixa { display: flex; width: max-content; animation: rolar 38s linear infinite; }
+.faixa span { padding: 16px 26px; font: 800 13px var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--titulo); white-space: nowrap; }
+.faixa i { align-self: center; font-style: normal; color: var(--c); text-shadow: 0 0 12px var(--c); }
+@keyframes rolar { to { transform: translateX(-50%); } }
+
+/* cartão do servidor com fotos */
+.cartao-srv { padding: 0; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.25fr) 1fr; }
+.srv-foto { position: relative; min-height: 380px; isolation: isolate; }
+.srv-foto .slides { z-index: -2; }
+.srv-foto::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(5,5,6,.92), transparent 55%); }
+.srv-foto .estado { position: absolute; top: 18px; left: 18px; background: rgba(5,5,6,.8); }
+.srv-base { position: absolute; left: 22px; right: 22px; bottom: 20px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; justify-content: space-between; }
+.srv-base h3 { font: 900 clamp(30px, 4vw, 44px)/1 var(--sans); letter-spacing: -.02em; color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.6); }
+.srv-base .ipbox { background: rgba(5,5,6,.82); backdrop-filter: blur(6px); }
+.srv-corpo { padding: 26px; display: flex; flex-direction: column; gap: 18px; justify-content: center; }
+.jogadores { padding: 18px 20px; }
+.jogadores .numero { font-size: 46px; margin: 6px 0 10px; }
+.jogadores .numero small { font-size: 22px; color: var(--fraco); }
+@media (max-width: 900px) { .cartao-srv { grid-template-columns: 1fr; } .srv-foto { min-height: 300px; } }
+
+/* recursos com foto */
+.recurso-foto { min-height: 210px; display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden; }
+.recurso-foto > * { position: relative; z-index: 1; }
+.recurso-foto .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: rgba(5,5,6,.7); border: 1px solid var(--c-40); margin-bottom: auto; }
+.recurso-foto h3 { font: 800 19px var(--sans); text-transform: uppercase; margin: 14px 0 6px; }
+.recurso-foto p { font-size: 14.5px; color: #D9D6D1; }
+.recurso-foto .ic, .recurso-foto h3, .recurso-foto p { z-index: 1; }
+.recurso-foto { background: linear-gradient(0deg, rgba(8,8,10,.96) 25%, rgba(8,8,10,.55) 70%, rgba(8,8,10,.25)), var(--foto) center / cover; }
+.recurso-foto:hover { transform: translateY(-3px); }
+
+/* galeria do mapa */
+.galeria { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 200px; gap: 12px; }
+.galeria figure { margin: 0; position: relative; overflow: hidden; border-radius: 14px; border: 1px solid var(--borda); }
+.galeria figure:first-child { grid-column: span 2; grid-row: span 2; }
+.galeria figure:nth-child(6) { grid-column: 1 / -1; }
+.galeria img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .8s cubic-bezier(.2,.7,.2,1), filter .4s; filter: saturate(1.05); }
+.galeria figure:hover img { transform: scale(1.07); filter: saturate(1.25); }
+.galeria figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 10px; font: 700 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: #fff;
+  background: linear-gradient(0deg, rgba(0,0,0,.8), transparent); }
+.credito { margin-top: 10px; font: 500 12px var(--mono); color: var(--fraco); }
+@media (max-width: 900px) { .galeria { grid-template-columns: 1fr 1fr; grid-auto-rows: 150px; } }
+
+/* fotos nos kits e na loja */
+.kit-foto { position: relative; margin: -22px -22px 6px; height: 130px; border-radius: 18px 18px 0 0; background: center / cover no-repeat; overflow: hidden; }
+.kit-foto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, var(--painel2), transparent 70%); }
+.kit-nome { position: absolute; left: 16px; bottom: 10px; z-index: 1; font: 900 22px var(--sans); color: #fff; letter-spacing: -.01em; text-shadow: 0 2px 12px rgba(0,0,0,.7); }
+.kit .kit-foto + .topo-kit + h3 { display: none; }
+.com-foto { background: linear-gradient(90deg, rgba(10,8,8,.95) 30%, rgba(10,8,8,.55)), var(--foto) center / cover !important; }
+@media (prefers-reduced-motion: reduce) { .slide.ativo, .faixa, .titulo-heroi em { animation: none; } }
+
+.numeros { margin-top: 18px; }
+@media (max-width: 480px) { .topo .marca span { display: none; } .topo .envolve { gap: 12px; } }
