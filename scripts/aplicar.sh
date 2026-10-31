@@ -70,6 +70,20 @@ if [ -f "$REPO/painel/bin/dz-bot" ]; then
   if [ "$bot" = 1 ]; then echo "bot do discord atualizado"; systemctl restart dz-bot; fi
 fi
 
+# 5) Site (porta 80, não reinicia o jogo)
+if [ -f "$REPO/painel/bin/dz-site" ]; then
+  site=0
+  if ! cmp -s "$REPO/painel/bin/dz-site" /usr/local/bin/dz-site; then
+    install -m 755 "$REPO/painel/bin/dz-site" /usr/local/bin/dz-site; site=1
+  fi
+  if ! cmp -s "$REPO/scripts/dz-site.service" /etc/systemd/system/dz-site.service; then
+    cp "$REPO/scripts/dz-site.service" /etc/systemd/system/dz-site.service
+    systemctl daemon-reload; systemctl enable dz-site; site=1
+    command -v ufw >/dev/null && ufw allow 80/tcp >/dev/null 2>&1 || true
+  fi
+  if [ "$site" = 1 ]; then echo "site atualizado"; systemctl restart dz-site; fi
+fi
+
 if [ "$reiniciar" = 1 ]; then
   echo "reiniciando o servidor"
   systemctl restart unturned
