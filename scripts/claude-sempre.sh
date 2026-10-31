@@ -16,4 +16,5 @@ chmod 755 /usr/local/bin/claude-vigia.sh
 ( crontab -l 2>/dev/null | grep -v claude-vigia; echo '*/2 * * * * /usr/local/bin/claude-vigia.sh'; echo '@reboot sleep 30 && /usr/local/bin/claude-vigia.sh' ) | crontab -
 /usr/local/bin/claude-vigia.sh
 sleep 3
+crontab -l 2>/dev/null | grep -q claude-vigia || { echo "ERRO: o cron do vigia nao foi gravado (instale o pacote cron)."; exit 1; }
 pgrep -f 'claude remote-control' >/dev/null && echo "OK: Claude ligado e vigiado." || echo "ERRO: nao ligou. Rode: cd $DIR && claude remote-control"
