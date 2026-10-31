@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RocketPermissions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <DefaultGroup>default</DefaultGroup>
+  <Groups>
+    <Group>
+      <Id>default</Id>
+      <DisplayName>Sobrevivente</DisplayName>
+      <Prefix />
+      <Suffix />
+      <Color>white</Color>
+      <Members />
+      <Priority>100</Priority>
+      <Permissions>
+        <Permission Cooldown="0">p</Permission>
+        <Permission Cooldown="0">rules</Permission>
+        <Permission Cooldown="0">saldo</Permission>
+        <Permission Cooldown="0">depositar</Permission>
+        <Permission Cooldown="0">sacar</Permission>
+        <Permission Cooldown="0">loja</Permission>
+        <Permission Cooldown="0">lojas</Permission>
+        <Permission Cooldown="0">comprar</Permission>
+        <Permission Cooldown="0">vender</Permission>
+        <Permission Cooldown="0">vendertudo</Permission>
+        <Permission Cooldown="0">whenairdrop</Permission>
+      </Permissions>
+    </Group>
+    <Group>
+      <Id>admin</Id>
+      <DisplayName>Admin</DisplayName>
+      <Prefix>[ADM] </Prefix>
+      <Suffix />
+      <Color>red</Color>
+      <Members />
+      <ParentGroup>default</ParentGroup>
+      <Priority>1</Priority>
+      <Permissions>
+        <Permission Cooldown="0">*</Permission>
+      </Permissions>
+    </Group>
+  </Groups>
+</RocketPermissions>

@@ -1,0 +1,16 @@
+[Unit]
+Description=Servidor Unturned (DayZ)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=unturned
+WorkingDirectory=/home/unturned/server
+ExecStart=/home/unturned/server/ServerHelper.sh +SecureServer/dayz
+Restart=always
+RestartSec=15
+LimitNOFILE=100000
+
+[Install]
+WantedBy=multi-user.target
