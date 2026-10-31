@@ -37,8 +37,10 @@ fi
 verde "Instalando pacotes"
 export DEBIAN_FRONTEND=noninteractive
 dpkg --add-architecture i386
-apt-get update -y
-apt-get install -y curl wget unzip tar git ufw ca-certificates screen \
+echo "(se o Ubuntu estiver se atualizando sozinho, espera ele terminar...)"
+APT="apt-get -o DPkg::Lock::Timeout=900"
+$APT update -y
+$APT install -y curl wget unzip tar git ufw ca-certificates screen \
   lib32gcc-s1 lib32stdc++6 libc6-i386 libstdc++6 libgdiplus
 
 verde "Configurando memoria swap (a VPS tem pouca RAM)"
