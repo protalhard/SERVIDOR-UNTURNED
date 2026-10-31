@@ -482,9 +482,10 @@ namespace SobrevivenciaCore
         public override string Help => "Link do Discord do servidor.";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
-            if (string.IsNullOrWhiteSpace(S.LinkDiscord)) { Chat.Info(p, "O Discord ainda vai ser divulgado. Fique ligado!"); return; }
-            p.Player.sendBrowserRequest("Discord do DAY Z BRASIL OFICIAL", S.LinkDiscord);
-            Chat.Info(p, "Discord: " + S.LinkDiscord);
+            var link = S.Discord;
+            if (link == "") { Chat.Info(p, "O Discord ainda vai ser divulgado. Fique ligado!"); return; }
+            p.Player.sendBrowserRequest("Discord do DAY Z BRASIL OFICIAL", link);
+            Chat.Info(p, "Discord: " + link);
         }
     }
 

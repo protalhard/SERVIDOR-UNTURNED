@@ -26,13 +26,14 @@ import (
 var iconePNG []byte
 
 type Estado struct {
-	Guild      string            `json:"guild"`
-	Montado    bool              `json:"montado"`
-	Canais     map[string]string `json:"canais"`
-	Cargos     map[string]string `json:"cargos"`
-	MsgStatus  string            `json:"msgStatus"`
-	MsgTop     string            `json:"msgTop"`
-	AvatarFeito bool             `json:"avatarFeito"`
+	Guild       string            `json:"guild"`
+	Montado     bool              `json:"montado"`
+	Canais      map[string]string `json:"canais"`
+	Cargos      map[string]string `json:"cargos"`
+	MsgStatus   string            `json:"msgStatus"`
+	MsgTop      string            `json:"msgTop"`
+	AvatarFeito bool              `json:"avatarFeito"`
+	Convite     string            `json:"convite"`
 }
 
 var (
@@ -199,6 +200,7 @@ func prepararGuild(s *discordgo.Session, g *discordgo.Guild) {
 		return
 	}
 	estado.Guild = g.ID
+	defer garantirConvite(s)
 	if estado.Montado {
 		return
 	}
@@ -211,6 +213,27 @@ func prepararGuild(s *discordgo.Session, g *discordgo.Guild) {
 	estado.Montado = true
 	salvarEstado()
 	log.Println("servidor montado")
+}
+
+// garantirConvite cria um convite permanente no canal de boas-vindas e grava em
+// convite.txt (o site e o plugin leem de lá quando o LinkDiscord está vazio).
+func garantirConvite(s *discordgo.Session) {
+	arq := filepath.Join(filepath.Dir(arqEstado), "convite.txt")
+	if estado.Convite == "" {
+		ch := estado.Canais["bemvindo"]
+		if ch == "" {
+			return
+		}
+		inv, err := s.ChannelInviteCreate(ch, discordgo.Invite{MaxAge: 0, MaxUses: 0, Unique: false})
+		if err != nil {
+			log.Println("convite:", err)
+			return
+		}
+		estado.Convite = "https://discord.gg/" + inv.Code
+		salvarEstado()
+		log.Println("convite do Discord:", estado.Convite)
+	}
+	_ = os.WriteFile(arq, []byte(estado.Convite+"\n"), 0o644)
 }
 
 func montar(s *discordgo.Session, g *discordgo.Guild) error {
@@ -476,8 +499,10 @@ func manterMensagem(s *discordgo.Session, canal string, msgID *string, e *discor
 	mu.Unlock()
 }
 
-func atualizarStatus(s *discordgo.Session) { manterMensagem(s, "status", &estado.MsgStatus, embedStatus()) }
-func atualizarTop(s *discordgo.Session)    { manterMensagem(s, "top", &estado.MsgTop, embedTop("abates")) }
+func atualizarStatus(s *discordgo.Session) {
+	manterMensagem(s, "status", &estado.MsgStatus, embedStatus())
+}
+func atualizarTop(s *discordgo.Session) { manterMensagem(s, "top", &estado.MsgTop, embedTop("abates")) }
 
 func atualizarContador(s *discordgo.Session) {
 	mu.Lock()

@@ -56,6 +56,24 @@ namespace SobrevivenciaCore
         public string Prefixo = "DZ";
         public string IconeChat = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon64.png";
         public string LinkDiscord = "";
+
+        /// <summary>LinkDiscord da config ou, se vazio, o convite que o bot do Discord criou.</summary>
+        [XmlIgnore]
+        public string Discord
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(LinkDiscord)) return LinkDiscord.Trim();
+                try
+                {
+                    var arq = "/home/unturned/dz-bot/convite.txt";
+                    if (!System.IO.File.Exists(arq)) return "";
+                    var l = System.IO.File.ReadAllText(arq).Trim();
+                    return l.StartsWith("https://discord.gg/") ? l : "";
+                }
+                catch { return ""; }
+            }
+        }
         public string LinkSite = "https://snaplag.com.br/";
 
         // Teleportes

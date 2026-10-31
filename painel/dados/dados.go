@@ -117,7 +117,27 @@ func (f Fonte) LerConfig() Config {
 		c.Patentes = []Patente{{"Recruta", 0, "#8A9099"}}
 	}
 	sort.Slice(c.Kits, func(i, j int) bool { return c.Kits[i].Abates < c.Kits[j].Abates })
+	c.Discord = strings.TrimSpace(c.Discord)
+	if c.Discord == "" {
+		c.Discord = ConviteBot()
+	}
 	return c
+}
+
+// ArqConvite é onde o bot grava o convite permanente do Discord.
+const ArqConvite = "/home/unturned/dz-bot/convite.txt"
+
+// ConviteBot devolve o convite criado pelo bot (ou "").
+func ConviteBot() string {
+	b, err := os.ReadFile(ArqConvite)
+	if err != nil {
+		return ""
+	}
+	l := strings.TrimSpace(string(b))
+	if !strings.HasPrefix(l, "https://discord.gg/") {
+		return ""
+	}
+	return l
 }
 
 func NivelDe(xp int64) int { return 1 + int(math.Floor(math.Sqrt(math.Max(0, float64(xp))/100))) }
