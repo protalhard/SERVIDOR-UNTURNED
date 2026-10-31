@@ -51,13 +51,18 @@ od.rounded_rectangle([70,92,372,138],radius=23,fill=(255,90,0,28),outline=(255,9
 im.alpha_composite(ov); d=ImageDraw.Draw(im)
 d.ellipse([88,108,102,122],fill=(91,227,125))
 d.text((114,115),"[BR] ONLINE 24/7",font=fm,fill=C2,anchor="lm")
-fT=ImageFont.truetype(INTER,170)
-glow_text(im,(62,265),"DAY Z",fT,C,radius=22)
-fB=ImageFont.truetype(INTER,84)
+lg=Image.open(OUT+"logo.png").convert("RGBA")
+# make logo background transparent (keep only bright pixels)
+px=lg.load()
+bgless=Image.new("RGBA",lg.size,(0,0,0,0))
+import numpy as np
+a=np.array(lg).astype(int); lum=a[...,:3].max(axis=2)
+alpha=np.clip((lum-40)*2,0,255).astype("uint8"); a[...,3]=alpha
+lg=Image.fromarray(a.astype("uint8"),"RGBA").resize((760,330),Image.LANCZOS)
+im.alpha_composite(lg,(10,110))
 d=ImageDraw.Draw(im,"RGBA")
-d.text((70,395),"BRASIL OFICIAL",font=fB,fill=TIT,anchor="lm")
 fM=ImageFont.truetype(MONO,38)
-d.text((72,470),"// CALIFORNIA 2",font=fM,fill=C2,anchor="lm")
+d.text((72,478),"// CALIFORNIA 2",font=fM,fill=C2,anchor="lm")
 # feature chips
 feats=["SAFE ZONE","ATM","BLACK MARKET","CAÇA","AIRDROPS","PVP"]
 fF=ImageFont.truetype(INTERB,26)
