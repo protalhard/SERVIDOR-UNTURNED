@@ -20,7 +20,7 @@ Ele pede o token **GSLT** (gere em https://steamcommunity.com/dev/managegameserv
 Dá pra mudar nome, mapa e vagas assim:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/install.sh | SERVER_NAME="Meu Server" MAP=Russia MAX_PLAYERS=24 bash
+curl -fsSL https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/install.sh | SERVER_NAME="Meu Server" MAP=California2 MAX_PLAYERS=50 bash
 ```
 
 O que o instalador faz: instala dependências, cria swap de 4 GB, cria o usuário `unturned`, baixa o jogo pelo SteamCMD, instala o RocketModFix, os plugins, cria o serviço `unturned` (liga sozinho com a VPS) e libera as portas 27015-27017.

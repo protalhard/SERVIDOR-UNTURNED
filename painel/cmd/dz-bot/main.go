@@ -201,6 +201,7 @@ func prepararGuild(s *discordgo.Session, g *discordgo.Guild) {
 	}
 	estado.Guild = g.ID
 	defer garantirConvite(s)
+	defer atualizarComoJogar(s)
 	if estado.Montado {
 		return
 	}
@@ -217,6 +218,38 @@ func prepararGuild(s *discordgo.Session, g *discordgo.Guild) {
 
 // garantirConvite cria um convite permanente no canal de boas-vindas e grava em
 // convite.txt (o site e o plugin leem de lá quando o LinkDiscord está vazio).
+// atualizarComoJogar edita a mensagem "Como jogar" já postada quando o texto muda (ex.: IP novo).
+// Roda com mu travado, dentro de prepararGuild.
+func atualizarComoJogar(s *discordgo.Session) {
+	ch := estado.Canais["comojogar"]
+	if ch == "" || s.State == nil || s.State.User == nil {
+		return
+	}
+	msgs, err := s.ChannelMessages(ch, 20, "", "", "")
+	if err != nil {
+		log.Println("como jogar:", err)
+		return
+	}
+	for _, m := range msgs {
+		if m.Author == nil || m.Author.ID != s.State.User.ID || len(m.Embeds) == 0 || m.Embeds[0].Title != "Como jogar" {
+			continue
+		}
+		if m.Embeds[0].Description == textoComoJogar {
+			return
+		}
+		embeds := []*discordgo.MessageEmbed{{
+			Title: "Como jogar", Description: textoComoJogar, Color: corLaranja,
+			Thumbnail: &discordgo.MessageEmbedThumbnail{URL: iconeURL}, Footer: &discordgo.MessageEmbedFooter{Text: rodape},
+		}}
+		if _, err := s.ChannelMessageEditComplex(&discordgo.MessageEdit{ID: m.ID, Channel: ch, Embeds: &embeds}); err != nil {
+			log.Println("como jogar:", err)
+		} else {
+			log.Println("mensagem Como jogar atualizada")
+		}
+		return
+	}
+}
+
 func garantirConvite(s *discordgo.Session) {
 	arq := filepath.Join(filepath.Dir(arqEstado), "convite.txt")
 	if estado.Convite == "" {

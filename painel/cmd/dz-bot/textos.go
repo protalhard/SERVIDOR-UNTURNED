@@ -3,14 +3,14 @@ package main
 // Textos fixos que o bot posta quando monta o servidor.
 
 const (
-	corLaranja = 0xFF5A00
-	corAmbar   = 0xFFB020
-	corVerde   = 0x5BE37D
+	corLaranja  = 0xFF5A00
+	corAmbar    = 0xFFB020
+	corVerde    = 0x5BE37D
 	corVermelho = 0xFF4D4D
-	corCinza   = 0x16171A
+	corCinza    = 0x16171A
 
 	nomeServidor = "DAY Z BRASIL OFICIAL"
-	ipServidor   = "216.128.168.254:27015"
+	ipServidor   = "54.94.93.87:27015"
 	site         = "https://snaplag.com.br/"
 	iconeURL     = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon.png"
 	capaURL      = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/capa.jpg"
@@ -44,7 +44,7 @@ const textoRegrasDiscord = `**1.** Respeito acima de tudo. Sem discriminação, 
 Ao entrar no servidor do jogo ou no Discord você concorda com estas regras.`
 
 const textoComoJogar = `**Conectar:** Unturned → Jogar → Servidores → aba **Internet** → procure **DAY Z BRASIL**.
-Ou: Conectar → IP ` + "`216.128.168.254`" + ` porta ` + "`27015`" + `.
+Ou: Conectar → IP ` + "`54.94.93.87`" + ` porta ` + "`27015`" + `.
 
 **Dentro do jogo, digite no chat:**
 ` + "`/menu`" + ` tudo que o servidor tem

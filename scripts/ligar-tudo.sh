@@ -16,4 +16,4 @@ bash "$R/scripts/claude-sempre.sh"
 echo
 for s in unturned unturned-sync.timer dz-bot dz-site; do printf '%-22s %s\n' "$s" "$(systemctl is-active $s)"; done
 crontab -l | grep -q claude-vigia && echo "vigia do Claude: ok"
-echo "PRONTO. Site: http://$(curl -fsS4 ifconfig.me 2>/dev/null || echo 216.128.168.254)"
+echo "PRONTO. Site: http://$(curl -fsS4 ifconfig.me 2>/dev/null || hostname -I | cut -d" " -f1)"

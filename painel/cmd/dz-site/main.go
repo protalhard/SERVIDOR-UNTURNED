@@ -37,7 +37,7 @@ func main() {
 	addr := flag.String("addr", ":80", "endereço")
 	pasta := flag.String("dados", dados.PastaPadrao, "pasta do plugin SobrevivenciaCore")
 	arqSegredo := flag.String("segredo", "/home/unturned/dz-site/segredo", "arquivo com a chave dos cookies")
-	flag.StringVar(&ip, "ip", "216.128.168.254:27015", "IP:porta do servidor do jogo")
+	flag.StringVar(&ip, "ip", "54.94.93.87:27015", "IP:porta do servidor do jogo")
 	flag.Parse()
 	fonte = dados.Fonte{Pasta: *pasta}
 	segredo = carregarSegredo(*arqSegredo)
