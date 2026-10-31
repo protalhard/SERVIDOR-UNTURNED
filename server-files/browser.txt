@@ -1,0 +1,6 @@
+# Textos da lista de servidores (aplicados no Config.txt do servidor, secao Browser)
+Name: [BR] DAY Z BRASIL OFICIAL | CALIFORNIA 2
+Icon: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon.png
+Thumbnail: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/capa.jpg
+Desc_Server_List: <color=#00e65a>SAFE ZONE | ATM | BLACK MARKET | CAÇA</color>
+Desc_Hint: <color=#ffffff>Sobrevivência</color> <color=#e61414>PvP</color> <color=#ffdf00>estilo DayZ</color>
