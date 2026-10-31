@@ -68,7 +68,9 @@ Outros comandos de admin: `/delsafe <nome>`, `/delatm <nome>`, `/dardinheiro <jo
 | `/whenairdrop` | Tempo até o próximo airdrop |
 | `/menu` | Mostra tudo que o servidor tem |
 | `/safe` ou `/warp safe` | Vai pra safe zone (15 s parado, espera de 30 s) |
-| `/home` | Vai pra sua cama (10 s parado) |
+| `/home [nome]` | Vai pra sua cama ou pra uma home com nome (10 s parado) |
+| `/sethome <nome>`, `/homes`, `/renamehome <nome> <novo>`, `/delhome <nome>` | Homes com nome (fique do lado de uma cama sua). 2 livres, 5 com `home.vip` |
+| `/tutorial [assunto]` | Guia: safe, atm, lojas, kits, xp, homes, vault |
 | `/tpa <nome>`, `/tpaceitar`, `/tpanegar` | Teleporte até um amigo |
 | `/kits`, `/kit <nome>` | Kits com tempo de espera; alguns liberam por abates |
 | `/perfil [nome]` | Patente, nível, XP, abates, mortes, K/D, % na cabeça, zumbis, tempo |

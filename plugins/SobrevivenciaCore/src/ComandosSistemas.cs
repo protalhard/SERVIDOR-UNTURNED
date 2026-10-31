@@ -67,15 +67,185 @@ namespace SobrevivenciaCore
     public class CmdHome : ComandoSistema
     {
         public override string Name => "home";
-        public override string Help => "Teleporta pra sua cama (fique parado).";
+        public override string Help => "Teleporta pra sua cama ou pra uma home com nome (fique parado).";
+        public override string Syntax => "[nome]";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
-            if (!BarricadeManager.tryGetBed(p.CSteamID, out var cama, out _))
-            { Chat.Erro(p, "Voce nao tem cama. Coloque uma cama e deite nela pra marcar."); return; }
+            var id = Plugin.Id(p);
+            var minhas = P.Homes.De(id);
+            Casa casa = null;
+            if (a.Length > 0)
+            {
+                casa = P.Homes.Achar(id, string.Join(" ", a));
+                if (casa == null) { Chat.Erro(p, "Home nao encontrada. Veja as suas com /homes."); return; }
+            }
+            else if (minhas.Count == 1) casa = minhas[0];
+            else if (minhas.Count > 1) { CmdHomes.Listar(P, S, p); Chat.Info(p, "Use /home nome"); return; }
+
+            if (casa == null)
+            {
+                if (!BarricadeManager.tryGetBed(p.CSteamID, out _, out _))
+                { Chat.Erro(p, "Voce nao tem home. Coloque uma cama, fique do lado e use /sethome nome."); return; }
+                if (!ForaDeCombate(p) || !SemIntervalo(p, "home")) return;
+                P.AgendarTeleporte(p, "sua cama", S.HomeEspera,
+                    () => BarricadeManager.tryGetBed(p.CSteamID, out var c, out _) ? c : (Vector3?)null,
+                    () => P.IniciarIntervalo(p, "home", S.HomeIntervalo));
+                return;
+            }
             if (!ForaDeCombate(p) || !SemIntervalo(p, "home")) return;
-            P.AgendarTeleporte(p, "sua cama", S.HomeEspera,
-                () => BarricadeManager.tryGetBed(p.CSteamID, out var c, out _) ? c : (Vector3?)null,
+            var alvo = casa;
+            ulong grupo = p.Player.quests.groupID.m_SteamID;
+            P.AgendarTeleporte(p, "home " + Chat.Limpar(alvo.Nome), S.HomeEspera,
+                () =>
+                {
+                    var cama = Casas.CamaPerto(alvo.Pos, id, grupo);
+                    if (cama != null) return cama.model.position;
+                    minhas.Remove(alvo);
+                    P.Homes.Salvar();
+                    Chat.Aviso(p, "A cama da home " + Chat.Limpar(alvo.Nome) + " foi destruida. Home apagada.");
+                    return null;
+                },
                 () => P.IniciarIntervalo(p, "home", S.HomeIntervalo));
+        }
+    }
+
+    public class CmdSetHome : ComandoSistema
+    {
+        public override string Name => "sethome";
+        public override string Help => "Cria uma home com nome na cama do seu lado.";
+        public override string Syntax => "<nome>";
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (a.Length < 1) { Chat.Info(p, "Fique do lado da sua cama e use: /sethome nome"); return; }
+            var nome = Chat.Limpar(string.Join(" ", a)).Replace('\t', ' ');
+            if (nome.Length > 20) nome = nome.Substring(0, 20);
+            var id = Plugin.Id(p);
+            var cama = Casas.CamaPerto(p.Position, id, p.Player.quests.groupID.m_SteamID);
+            if (cama == null) { Chat.Erro(p, "Fique do lado de uma cama sua (ate 4 m)."); return; }
+            if (NaSafe(p)) { Chat.Erro(p, "Nao da pra criar home na safe zone."); return; }
+            var minhas = P.Homes.De(id);
+            var existente = P.Homes.Achar(id, nome);
+            if (existente != null) { existente.Pos = cama.model.position; P.Homes.Salvar(); Chat.Ok(p, $"Home {nome} atualizada."); return; }
+            int max = P.TemPermissao(p, "home.vip") ? S.HomesVip : S.HomesMax;
+            if (minhas.Count >= max) { Chat.Erro(p, $"Voce ja tem {minhas.Count}/{max} homes. Apague uma com /delhome nome."); return; }
+            if (minhas.Any(c => Vector3.Distance(c.Pos, cama.model.position) < 1f))
+            { Chat.Erro(p, "Essa cama ja e uma home sua."); return; }
+            minhas.Add(new Casa { Nome = nome, Pos = cama.model.position });
+            P.Homes.Salvar();
+            Chat.Ok(p, $"Home {nome} criada ({minhas.Count}/{max}). Va com /home {nome}");
+        }
+    }
+
+    public class CmdHomes : ComandoSistema
+    {
+        public override string Name => "homes";
+        public override string Help => "Lista suas homes.";
+        protected override void Rodar(UnturnedPlayer p, string[] a) => Listar(P, S, p);
+
+        internal static void Listar(Plugin P, Sistemas S, UnturnedPlayer p)
+        {
+            var minhas = P.Homes.De(Plugin.Id(p));
+            int max = P.TemPermissao(p, "home.vip") ? S.HomesVip : S.HomesMax;
+            if (minhas.Count == 0) { Chat.Info(p, $"Voce nao tem homes (0/{max}). Fique do lado da sua cama e use /sethome nome."); return; }
+            Chat.Para(p, Cor(S.CorTexto, Chat.Forte($"SUAS HOMES ({minhas.Count}/{max})")));
+            foreach (var c in minhas)
+            {
+                int dist = Mathf.RoundToInt(Vector3.Distance(p.Position, c.Pos));
+                Chat.Para(p, Cor(S.CorPrincipal, "/home " + c.Nome) + Cor(S.CorApagada, $"  a {dist}m"));
+            }
+            Chat.Para(p, Cor(S.CorApagada, "/renamehome nome novo   /delhome nome"));
+        }
+    }
+
+    public class CmdDelHome : ComandoSistema
+    {
+        public override string Name => "delhome";
+        public override string Help => "Apaga uma home (a cama continua la).";
+        public override string Syntax => "<nome>";
+        public override List<string> Aliases => new List<string> { "destroyhome" };
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (a.Length < 1) { Chat.Info(p, "Use: /delhome nome"); return; }
+            var id = Plugin.Id(p);
+            var c = P.Homes.Achar(id, string.Join(" ", a));
+            if (c == null) { Chat.Erro(p, "Home nao encontrada. Veja com /homes."); return; }
+            P.Homes.De(id).Remove(c);
+            P.Homes.Salvar();
+            Chat.Ok(p, $"Home {c.Nome} apagada.");
+        }
+    }
+
+    public class CmdRenameHome : ComandoSistema
+    {
+        public override string Name => "renamehome";
+        public override string Help => "Renomeia uma home.";
+        public override string Syntax => "<nome> <novo>";
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (a.Length < 2) { Chat.Info(p, "Use: /renamehome nome novo"); return; }
+            var id = Plugin.Id(p);
+            var c = P.Homes.Achar(id, a[0]);
+            if (c == null) { Chat.Erro(p, "Home nao encontrada. Veja com /homes."); return; }
+            var novo = Chat.Limpar(string.Join(" ", a.Skip(1))).Replace('\t', ' ');
+            if (novo.Length > 20) novo = novo.Substring(0, 20);
+            if (P.Homes.Achar(id, novo) != null) { Chat.Erro(p, "Voce ja tem uma home com esse nome."); return; }
+            var antigo = c.Nome;
+            c.Nome = novo;
+            P.Homes.Salvar();
+            Chat.Ok(p, $"Home {antigo} agora se chama {novo}.");
+        }
+    }
+
+    public class CmdTutorial : ComandoSistema
+    {
+        public override string Name => "tutorial";
+        public override string Help => "Guia do servidor por assunto.";
+        public override string Syntax => "[assunto]";
+        public override List<string> Aliases => new List<string> { "ajuda", "guia" };
+
+        static readonly (string chave, string titulo, string[] linhas)[] Paginas =
+        {
+            ("safe", "SAFE ZONE", new[] {
+                "Dentro da safe zone nao tem PvP, nao da pra construir e carros e bases ficam protegidos.",
+                "Fora dela o PvP e liberado. Use /safe pra voltar (fique parado; cancela se mexer).",
+                "Se levar ou der tiro, entra em modo de combate e nao pode teleportar por alguns segundos." }),
+            ("atm", "DINHEIRO E ATM", new[] {
+                "O dinheiro e fisico: as notas ficam no inventario e caem quando voce morre.",
+                "Perto de um ATM: /depositar valor guarda no banco, /sacar valor tira, /saldo mostra.",
+                "Dinheiro no banco nao se perde. Deposite antes de sair pra lootear." }),
+            ("lojas", "LOJAS", new[] {
+                "Use /lojas pra ver as lojas e /loja nome pra ver os itens e precos.",
+                "Compre com /comprar e venda com /vender. As lojas ficam na safe zone.",
+                "O mercado negro paga mais por itens raros." }),
+            ("kits", "KITS", new[] {
+                "/kits mostra seus kits. /kit nome pega um.",
+                "Kits livres tem tempo de espera. Kits de rank sao liberados por abates e dao bonus de XP.",
+                "Membros do Discord tem /kit discord." }),
+            ("xp", "XP, NIVEL E PATENTE", new[] {
+                "Voce ganha XP matando jogadores (mais na cabeca), zumbis, megas e jogando.",
+                "Sua patente sobe com o XP total. Veja com /perfil e o ranking com /top.",
+                "Gaste XP em equipamento na /lojaxp (dentro da safe zone). Novatos ganham XP de boas-vindas." }),
+            ("homes", "HOMES E TELEPORTE", new[] {
+                "Coloque uma cama, fique do lado e use /sethome nome. Depois /home nome te leva la.",
+                "/homes lista, /renamehome muda o nome, /delhome apaga.",
+                "/tpa nome pede pra ir ate um amigo; ele aceita com /tpaceitar." }),
+            ("vault", "VAULT", new[] {
+                "/vault abre seu cofre pessoal (dentro da safe zone).",
+                "O que fica no vault nao se perde quando voce morre. VIPs tem vault maior." }),
+        };
+
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (a.Length == 0)
+            {
+                Chat.Para(p, Cor(S.CorTexto, Chat.Forte("TUTORIAL - DAY Z BRASIL OFICIAL")));
+                Chat.Para(p, Cor(S.CorApagada, "Escolha: ") + string.Join(" ", Paginas.Select(x => Cor(S.CorPrincipal, "/tutorial " + x.chave))));
+                return;
+            }
+            var pg = Paginas.FirstOrDefault(x => x.chave.Equals(a[0], StringComparison.OrdinalIgnoreCase));
+            if (pg.linhas == null) { Chat.Erro(p, "Assunto nao encontrado. Use /tutorial"); return; }
+            Chat.Para(p, Cor(S.CorPrincipal, Chat.Forte(pg.titulo)));
+            foreach (var l in pg.linhas) Chat.Para(p, Cor(S.CorTexto, l));
         }
     }
 
@@ -300,9 +470,9 @@ namespace SobrevivenciaCore
             Chat.Para(p, Cor(S.CorTexto, Chat.Forte("MENU - DAY Z BRASIL OFICIAL")));
             Chat.Para(p, T("Kits: ") + C("/kits") + " " + C("/kit nome") + T("   Loja de XP: ") + C("/lojaxp"));
             Chat.Para(p, T("Dinheiro: ") + C("/saldo") + " " + C("/depositar") + " " + C("/sacar") + T("   Lojas: ") + C("/lojas") + " " + C("/loja"));
-            Chat.Para(p, T("Teleporte: ") + C("/safe") + " " + C("/home") + " " + C("/tpa nome") + " " + C("/tpaceitar"));
+            Chat.Para(p, T("Teleporte: ") + C("/safe") + " " + C("/home") + " " + C("/homes") + " " + C("/tpa nome") + " " + C("/tpaceitar"));
             Chat.Para(p, T("Voce: ") + C("/perfil") + " " + C("/top") + " " + C("/vault") + T("   Airdrop: ") + C("/whenairdrop"));
-            Chat.Para(p, T("Comunidade: ") + C("/discord") + " " + C("/site"));
+            Chat.Para(p, T("Comunidade: ") + C("/discord") + " " + C("/site") + T("   Guia: ") + C("/tutorial"));
         }
     }
 

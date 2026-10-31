@@ -27,6 +27,7 @@ namespace SobrevivenciaCore
         public Sistemas S => Configuration.Instance.Sistemas;
         public Estatisticas Stats;
         public Vaults Cofres;
+        public Casas Homes;
 
         readonly Dictionary<ulong, float> combateAte = new Dictionary<ulong, float>();
         readonly Dictionary<ulong, Teleporte> teleportes = new Dictionary<ulong, Teleporte>();
@@ -43,6 +44,7 @@ namespace SobrevivenciaCore
             if (S.Completar()) Configuration.Save();
             Stats = new Estatisticas(Directory);
             Cofres = new Vaults(Directory);
+            Homes = new Casas(Directory);
             proximaLimpeza = S.LimpezaMinutos > 0 ? Time.realtimeSinceStartup + S.LimpezaMinutos * 60 : float.MaxValue;
             proximoAnuncio = Time.realtimeSinceStartup + S.AnuncioSegundos;
             ValidarItens();
@@ -298,6 +300,26 @@ namespace SobrevivenciaCore
             {
                 Chat.Todos(NomeColorido(fv) + Chat.Cor(S.CorApagada, " " + DescreverMorte(causa)));
             }
+        }
+
+        // Chat global com [Patente] Nome Lv.X na frente
+        void AoFalar(SteamPlayer sp, EChatMode modo, ref Color cor, ref bool rico, string texto, ref bool visivel)
+        {
+            if (!S.PatenteNoChat || !visivel || modo != EChatMode.GLOBAL || sp?.player == null) return;
+            if (string.IsNullOrWhiteSpace(texto) || texto.StartsWith("/") || texto.StartsWith("@")) return;
+            try
+            {
+                var p = UnturnedPlayer.FromSteamPlayer(sp);
+                var f = FichaDe(p);
+                var pat = PatenteDe(f.Xp);
+                string nome = Chat.Limpar(sp.playerID.characterName);
+                string tag = Chat.Cor(pat.Cor, "[" + pat.Nome + "]") + " " +
+                             Chat.Cor(sp.isAdmin ? S.CorPrincipal : S.CorTexto, nome) + " " + Chat.Cor(S.CorApagada, "Lv." + f.Nivel);
+                visivel = false;
+                ChatManager.serverSendMessage(tag + Chat.Cor(S.CorApagada, ": ") + Chat.Cor("#FFFFFF", Chat.Limpar(texto)),
+                    Color.white, sp, null, EChatMode.GLOBAL, null, true);
+            }
+            catch (Exception e) { visivel = true; Rocket.Core.Logging.Logger.LogException(e); }
         }
 
         void MarcarMorte(UnturnedPlayer p)

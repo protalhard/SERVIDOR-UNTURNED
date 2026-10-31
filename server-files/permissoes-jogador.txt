@@ -25,3 +25,8 @@ vault
 menu
 discord
 site
+sethome
+homes
+delhome
+renamehome
+tutorial

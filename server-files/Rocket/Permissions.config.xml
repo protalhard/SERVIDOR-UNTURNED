@@ -37,6 +37,11 @@
         <Permission Cooldown="0">menu</Permission>
         <Permission Cooldown="0">discord</Permission>
         <Permission Cooldown="0">site</Permission>
+        <Permission Cooldown="0">sethome</Permission>
+        <Permission Cooldown="0">homes</Permission>
+        <Permission Cooldown="0">delhome</Permission>
+        <Permission Cooldown="0">renamehome</Permission>
+        <Permission Cooldown="0">tutorial</Permission>
       </Permissions>
     </Group>
     <Group>

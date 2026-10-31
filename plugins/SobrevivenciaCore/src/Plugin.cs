@@ -30,6 +30,7 @@ namespace SobrevivenciaCore
             U.Events.OnPlayerConnected += AoConectar;
             U.Events.OnPlayerDisconnected += AoDesconectar;
             UnturnedPlayerEvents.OnPlayerRevive += AoRenascer;
+            ChatManager.onChatted += AoFalar;
             InvokeRepeating(nameof(ChecarZonas), 1f, 1f);
             Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore carregado: {Configuration.Instance.Lojas.Count} lojas, " +
                 $"{Configuration.Instance.Atms.Count} ATMs, {Configuration.Instance.ZonasSeguras.Count} safe zones.");
@@ -46,6 +47,7 @@ namespace SobrevivenciaCore
             U.Events.OnPlayerConnected -= AoConectar;
             U.Events.OnPlayerDisconnected -= AoDesconectar;
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
+            ChatManager.onChatted -= AoFalar;
             Instancia = null;
         }
 

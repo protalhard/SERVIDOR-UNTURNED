@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
@@ -81,6 +82,11 @@ namespace SobrevivenciaCore
         public int XpInicial = 1500;
         // Marca no mapa o lugar onde o jogador morreu
         public bool MarcarMorteNoMapa = true;
+        // Homes com nome (cama do lado). VIP = permissão home.vip
+        public int HomesMax = 2;
+        public int HomesVip = 5;
+        // Mostra [Patente] Lv.X antes do nome no chat global
+        public bool PatenteNoChat = true;
 
         // Anúncios
         public int AnuncioSegundos = 300;
@@ -96,6 +102,8 @@ namespace SobrevivenciaCore
         public List<TamanhoVault> Vaults;
         public List<string> Anuncios;
         public List<string> Tutorial;
+        // Versão dos padrões já aplicada (pra adicionar kits/pacotes novos em config antiga)
+        public int VersaoPadroes = 0;
 
         /// <summary>Preenche o que estiver faltando (config antiga). Devolve true se mudou algo.</summary>
         public bool Completar()
@@ -107,6 +115,16 @@ namespace SobrevivenciaCore
             if (Vaults == null || Vaults.Count == 0) { Vaults = VaultsPadrao(); mudou = true; }
             if (Anuncios == null) { Anuncios = AnunciosPadrao(); mudou = true; }
             if (Tutorial == null) { Tutorial = TutorialPadrao(); mudou = true; }
+            // padrões novos (v2): adiciona kits e pacotes que ainda não existem, sem mexer nos que o admin editou
+            if (VersaoPadroes < 2)
+            {
+                foreach (var k in KitsPadrao())
+                    if (!Kits.Exists(x => x.Nome.Equals(k.Nome, StringComparison.OrdinalIgnoreCase))) Kits.Add(k);
+                foreach (var pc in LojaXpPadrao())
+                    if (!LojaXp.Exists(x => x.Nome.Equals(pc.Nome, StringComparison.OrdinalIgnoreCase))) LojaXp.Add(pc);
+                VersaoPadroes = 2;
+                mudou = true;
+            }
             // config antiga sem bônus/título nos kits de rank: copia do padrão
             var padrao = KitsPadrao();
             foreach (var k in Kits)
@@ -152,6 +170,36 @@ namespace SobrevivenciaCore
                 Itens = L(I(297), I(298, 3), I(333)) },
             new Kit { Nome = "discord", Descricao = "Agradecimento por entrar no Discord", Espera = 86400, Permissao = "kit.discord",
                 Itens = L(I(81, 2), I(15), I(9)) },
+
+            // livres por tema
+            new Kit { Nome = "fazendeiro", Descricao = "Sementes, fertilizante, rastelo e agua", Espera = 1800,
+                Itens = L(I(330, 2), I(336, 2), I(343, 2), I(345, 2), I(332, 2), I(142), I(14)) },
+            new Kit { Nome = "camper", Descricao = "MREs, cantil, fogueira e saco de dormir", Espera = 1800,
+                Itens = L(I(81, 2), I(337), I(362), I(288), I(14, 2)) },
+            new Kit { Nome = "rush", Descricao = "Ace com 3 pentes e bandagens", Espera = 3600,
+                Itens = L(I(107), I(108, 3), I(95, 3)) },
+            new Kit { Nome = "base", Descricao = "Porta e paredes de metal, chapas, bau e bandeira", Espera = 7200,
+                Itens = L(I(378), I(370), I(371, 2), I(1092, 4), I(366), I(1158)) },
+            new Kit { Nome = "airdrop", Descricao = "Binoculo, sinalizador, radio e MRE", Espera = 7200,
+                Itens = L(I(333), I(255, 2), I(1445), I(81)) },
+
+            // por abates
+            new Kit { Nome = "sentinela", Titulo = "Sentinela", Descricao = "Yuri com 3 pentes", Espera = 3600, Abates = 5, BonusXp = 500,
+                Itens = L(I(1041), I(1042, 3), I(95, 2)) },
+            new Kit { Nome = "comando", Titulo = "Comando", Descricao = "Kryzkarek, 3 pentes e capacete militar", Espera = 5400, Abates = 75, BonusXp = 7500,
+                Itens = L(I(1039), I(1040, 3), I(309), I(15)) },
+            new Kit { Nome = "ceifador", Titulo = "Ceifador", Descricao = "Dragonfang, roupa anti-radiacao e mascara", Espera = 7200, Abates = 150, BonusXp = 15000,
+                Itens = L(I(132), I(133, 2), I(1015), I(1016), I(1017), I(1270), I(1271, 2)) },
+            new Kit { Nome = "imortal", Titulo = "Imortal", Descricao = "Nykorev, colete, Alicepack e 2 medkits", Espera = 10800, Abates = 250, BonusXp = 25000,
+                Itens = L(I(126), I(127, 2), I(310), I(253), I(15, 2)) },
+
+            // VIP (dar a permissao no grupo VIP)
+            new Kit { Nome = "vip", Descricao = "Maplestrike, 4 pentes, colete e Alicepack", Espera = 7200, Permissao = "kit.vip",
+                Itens = L(I(363), I(6, 4), I(310), I(253)) },
+            new Kit { Nome = "vipbase", Descricao = "Kit de base reforcado com gerador", Espera = 14400, Permissao = "kit.vip",
+                Itens = L(I(378, 2), I(371, 4), I(1091, 4), I(328), I(458), I(1158)) },
+            new Kit { Nome = "vipelite", Descricao = "Grizzly, 3 pentes, farda do deserto e 2 medkits", Espera = 14400, Permissao = "kit.vipelite",
+                Itens = L(I(297), I(298, 3), I(1011), I(1012), I(1013), I(1010), I(15, 2)) },
         };
 
         static List<PacoteXp> LojaXpPadrao() => new List<PacoteXp>
@@ -166,6 +214,14 @@ namespace SobrevivenciaCore
                 Itens = L(I(122), I(123, 4), I(1169), I(1170)) },
             new PacoteXp { Nome = "Lenda", Descricao = "Grizzly, 3 pentes, colete militar e 2 medkits", Preco = 30000,
                 Itens = L(I(297), I(298, 3), I(1336), I(15, 2)) },
+            new PacoteXp { Nome = "SWAT", Descricao = "Farda policial, PDW, 3 pentes, flashbangs e fumaca", Preco = 8500,
+                Itens = L(I(223), I(224), I(225), I(10), I(116), I(6, 3), I(1346, 2), I(266, 2)) },
+            new PacoteXp { Nome = "Ghillie", Descricao = "Roupa ghillie completa e Snayperskya com 3 pentes", Preco = 10000,
+                Itens = L(I(235), I(236), I(237), I(238), I(129), I(130, 3)) },
+            new PacoteXp { Nome = "Cientista", Descricao = "Roupa anti-radiacao, mascara, 3 filtros e medkit (pra deadzone)", Preco = 15000,
+                Itens = L(I(1015), I(1016), I(1017), I(1270), I(1271, 3), I(15)) },
+            new PacoteXp { Nome = "Engenheiro", Descricao = "3 sentinelas automaticas com Maplestrike e pentes", Preco = 55000,
+                Itens = L(I(1372, 3), I(363, 3), I(6, 6)) },
         };
 
         static List<TamanhoVault> VaultsPadrao() => new List<TamanhoVault>
