@@ -76,7 +76,8 @@ sudo -u "$USUARIO" bash "$REPO_DIR/scripts/update.sh"
 verde "Configurando o servidor ($SERVER_ID)"
 sudo -u "$USUARIO" mkdir -p "$INST_DIR/Server" "$INST_DIR/Rocket/Plugins" "$INST_DIR/Rocket/Libraries"
 
-sed -e "s|__NAME__|$SERVER_NAME|" -e "s|__MAP__|$MAP|" -e "s|__MAXPLAYERS__|$MAX_PLAYERS|" \
+NAME_ESC=$(printf '%s' "$SERVER_NAME" | sed 's/[\\&|]/\\&/g')
+sed -e "s|__NAME__|$NAME_ESC|" -e "s|__MAP__|$MAP|" -e "s|__MAXPLAYERS__|$MAX_PLAYERS|" \
     -e "s|__OWNER__|$OWNER_STEAMID|" -e "s|__GSLT__|${GSLT:-}|" \
     "$REPO_DIR/server-files/Commands.dat.template" > "$INST_DIR/Server/Commands.dat"
 [ -n "${GSLT:-}" ] || sed -i '/^GSLT/d' "$INST_DIR/Server/Commands.dat"
@@ -105,6 +106,10 @@ unzip -o -q "$TMP/airdrop.zip" -d "$INST_DIR/Rocket/"
 rm -rf "$TMP"
 
 chown -R "$USUARIO:$USUARIO" "$HOME_DIR"
+
+# Impede que as atualizacoes automaticas reiniciem o servidor no meio do jogo
+mkdir -p /etc/needrestart/conf.d
+echo '$nrconf{override_rc}{qr(^unturned\.service$)} = 0;' > /etc/needrestart/conf.d/unturned.conf
 
 verde "Criando o servico (liga sozinho quando a VPS reinicia)"
 cp "$REPO_DIR/scripts/unturned.service" /etc/systemd/system/unturned.service

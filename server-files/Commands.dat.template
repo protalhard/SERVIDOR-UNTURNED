@@ -4,8 +4,7 @@ Port 27015
 MaxPlayers __MAXPLAYERS__
 Perspective Both
 Mode Normal
-PvP
 Cycle 3600
 Owner __OWNER__
-Welcome Bem-vindo! Va ate a safe zone: ATM, lojas e cacador. Fora dela o PvP e liberado. Use /lojas
+Welcome Bem-vindo! Va ate a safe zone: ATM, lojas e cacador. Fora dela o PvP e liberado. Comandos: lojas, loja, saldo
 GSLT __GSLT__
