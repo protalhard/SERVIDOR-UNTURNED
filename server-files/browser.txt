@@ -2,5 +2,7 @@
 Name: [BR]  DAY Z  BRASIL  OFICIAL  |  CALIFORNIA 2
 Icon: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon.png
 Thumbnail: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/capa.jpg
-Desc_Server_List: <color=#ff5f1f>SAFE ZONE | ATM | BLACK MARKET | CAÇA</color>
-Desc_Hint: <color=#ffffff>Sobrevivência</color> <color=#e61414>PvP</color> <color=#ffdf00>estilo DayZ</color>
+Desc_Server_List: <color=#ff5a00>SAFE ZONE | ATM | BLACK MARKET | CAÇA</color>
+Desc_Hint: <color=#f5f6f7>Sobrevivência</color> <color=#ff5a00>PvP</color> <color=#ffb020>estilo DayZ</color>
+Link: SnapLag - Redutor de ping | https://snaplag.com.br/
+# Paleta (igual ao site snaplag.com.br): laranja #FF5A00, amarelo #FFB020, laranja forte #FF7A2E, fundo #050506, titulo #F5F6F7, texto #C9CDD3, verde ok #5BE37D
