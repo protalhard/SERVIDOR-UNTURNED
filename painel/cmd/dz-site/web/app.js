@@ -165,9 +165,10 @@
       const fotosKit = ['deserto', 'lago', 'vila', 'mercado', 'colinas', 'bunker', 'torre-noite', 'farol', 'ponte', 'floresta', 'palmeiras', 'lanchonete'];
       let nFoto = 0;
       const cartao = k => `<div class="painel kit ${meus !== null && meus >= k.abates ? 'destaque' : ''}">
-          <div class="kit-foto" style="background-image:url(/img/mapa/${fotosKit[nFoto++ % fotosKit.length]}.webp)"><span class="kit-nome">${esc((k.titulo || k.nome).toUpperCase())}</span></div>
+          <div class="kit-foto" style="background-image:url(/img/mapa/${fotosKit[nFoto++ % fotosKit.length]}.webp)">${(k.itens || []).length ? `<img class="kit-arma" src="/icones/${k.itens[0].id}.png" alt="" loading="lazy">` : ''}<span class="kit-nome">${esc((k.titulo || k.nome).toUpperCase())}</span></div>
           <div class="topo-kit"><span class="req">${k.abates ? `☠ ${k.abates} kills` : 'Livre'}</span><span class="cmd">/kit ${esc(k.nome)}</span></div>
           <h3>${esc(k.titulo || k.nome)}</h3><p class="fraco">${esc(k.descricao)}</p>
+          ${(k.itens || []).length ? `<div class="vip-itens kit-itens">${k.itens.map(i => `<span class="vip-item" title="ID ${i.id}"><img src="/icones/${i.id}.png" alt="" loading="lazy">${i.quantidade > 1 ? `<small>x${i.quantidade}</small>` : ''}</span>`).join('')}</div>` : ''}
           ${meus !== null && k.abates ? `<div class="progresso">${Math.min(meus, k.abates)}/${k.abates} abates</div><div class="barra"><i style="width:${Math.min(100, 100 * meus / k.abates)}%"></i></div>` : ''}
           <div class="dados"><div><span class="rotulo">Espera</span><b>${espera(k.espera)}</b></div><div><span class="rotulo">Bônus</span><b style="color:var(--c2)">${k.bonusXp ? '+' + num(k.bonusXp) + ' XP' : '–'}</b></div></div>
         </div>`;
