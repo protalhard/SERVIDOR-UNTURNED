@@ -105,6 +105,20 @@ namespace SobrevivenciaCore
             return 0;
         }
 
+        /// <summary>Todos os ids de estrutura que existem no servidor pra essa peça, na ordem da config.</summary>
+        List<ushort> IdsEstrutura(string peca)
+        {
+            var r = new List<ushort>();
+            foreach (var s in S.MontarPecas ?? new List<string>())
+            {
+                var i = s.IndexOf('=');
+                if (i <= 0 || !s.Substring(0, i).Trim().Equals(peca, StringComparison.OrdinalIgnoreCase)) continue;
+                foreach (var x in s.Substring(i + 1).Split('|'))
+                    if (ushort.TryParse(x.Trim(), out var id) && Assets.find(EAssetType.ITEM, id) is ItemStructureAsset && !r.Contains(id)) r.Add(id);
+            }
+            return r;
+        }
+
         StructureDrop ColocarEstrutura(ushort id, Vector3 pos, float yaw, ulong dono, float rotX = -90f)
         {
             if (id == 0 || !(Assets.find(EAssetType.ITEM, id) is ItemStructureAsset asset)) return null;
@@ -114,32 +128,63 @@ namespace SobrevivenciaCore
             return reg.drops.Count > antes ? reg.drops[reg.drops.Count - 1] : null;
         }
 
-        /// <summary>Mede uma estrutura de teste (largura ao longo do yaw, e alturas do topo e da base em relação ao ponto). Tira ela depois.</summary>
-        bool MedirEstrutura(ushort id, Vector3 onde, float yaw, ulong dono, out float largura, out float topo, out float baseY, float rotX = -90f)
+        /// <summary>Cantos de um colisor no mundo (funciona mesmo com o colisor desligado, quando bounds vem vazio).</summary>
+        static IEnumerable<Vector3> Cantos(Collider col)
         {
-            largura = 0; topo = 0; baseY = 0;
-            var d = ColocarEstrutura(id, onde, yaw, dono, rotX);
-            if (d?.model == null) return false;
-            try
+            Vector3 c, t;
+            if (col is BoxCollider bc) { c = bc.center; t = bc.size / 2f; }
+            else if (col is MeshCollider mc && mc.sharedMesh != null) { c = mc.sharedMesh.bounds.center; t = mc.sharedMesh.bounds.extents; }
+            else
             {
-                var eixo = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
-                float min = float.MaxValue, max = float.MinValue, yMin = float.MaxValue, yMax = float.MinValue;
-                foreach (var col in d.model.GetComponentsInChildren<Collider>(true))
+                var b = col.bounds;
+                for (int i = 0; i < 8; i++)
+                    yield return b.center + new Vector3((i & 1) == 0 ? -b.extents.x : b.extents.x, (i & 2) == 0 ? -b.extents.y : b.extents.y, (i & 4) == 0 ? -b.extents.z : b.extents.z);
+                yield break;
+            }
+            var tr = col.transform;
+            for (int i = 0; i < 8; i++)
+                yield return tr.TransformPoint(c + new Vector3((i & 1) == 0 ? -t.x : t.x, (i & 2) == 0 ? -t.y : t.y, (i & 4) == 0 ? -t.z : t.z));
+        }
+
+        /// <summary>Mede uma estrutura de teste (largura ao longo do yaw, e alturas do topo e da base em relação ao ponto). Tira ela depois.
+        /// Tenta no ar (longe de tudo) e, se não der, debaixo do chão. erro diz o que falhou.</summary>
+        bool MedirEstrutura(ushort id, Vector3 onde, float yaw, ulong dono, out float largura, out float topo, out float baseY, out string erro, float rotX = -90f)
+        {
+            largura = 0; topo = 0; baseY = 0; erro = "";
+            foreach (var ponto in new[] { onde + Vector3.up * 200f, onde + Vector3.down * 40f })
+            {
+                StructureDrop d = null;
+                try
                 {
-                    if (col.isTrigger) continue;
-                    var b = col.bounds;
-                    float c = Vector3.Dot(b.center, eixo), meia = Mathf.Abs(eixo.x) * b.extents.x + Mathf.Abs(eixo.z) * b.extents.z;
-                    min = Mathf.Min(min, c - meia); max = Mathf.Max(max, c + meia);
-                    yMin = Mathf.Min(yMin, b.min.y); yMax = Mathf.Max(yMax, b.max.y);
+                    d = ColocarEstrutura(id, ponto, yaw, dono, rotX);
+                    if (d == null) { erro = "o jogo nao deixou colocar a peca de teste"; continue; }
+                    if (d.model == null) { erro = "a peca de teste nao tem modelo"; continue; }
+                    Physics.SyncTransforms();
+                    var eixo = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
+                    float min = float.MaxValue, max = float.MinValue, yMin = float.MaxValue, yMax = float.MinValue;
+                    foreach (var col in d.model.GetComponentsInChildren<Collider>(true))
+                    {
+                        if (col.isTrigger) continue;
+                        foreach (var v in Cantos(col))
+                        {
+                            float c = Vector3.Dot(v, eixo);
+                            min = Mathf.Min(min, c); max = Mathf.Max(max, c);
+                            yMin = Mathf.Min(yMin, v.y); yMax = Mathf.Max(yMax, v.y);
+                        }
+                    }
+                    if (max <= min) { erro = "a peca de teste nao tem colisor"; continue; }
+                    largura = max - min; topo = yMax - ponto.y; baseY = yMin - ponto.y;
+                    if (largura > .5f && largura < 20f) return true;
+                    erro = $"largura medida {largura:0.0} m";
                 }
-                if (max <= min) return false;
-                largura = max - min; topo = yMax - onde.y; baseY = yMin - onde.y;
-                return largura > .5f && largura < 20f;
+                catch (Exception e) { erro = e.Message; Rocket.Core.Logging.Logger.LogException(e); }
+                finally
+                {
+                    if (d?.model != null && StructureManager.tryGetRegion(d.model, out var x, out var y, out _)) StructureManager.destroyStructure(d, x, y, Vector3.zero);
+                }
             }
-            finally
-            {
-                if (StructureManager.tryGetRegion(d.model, out var x, out var y, out _)) StructureManager.destroyStructure(d, x, y, Vector3.zero);
-            }
+            Rocket.Core.Logging.Logger.Log($"[Montar] medir estrutura {id} rot {rotX}: {erro}");
+            return false;
         }
 
         static float Chao(Vector3 pos)
@@ -413,21 +458,28 @@ namespace SobrevivenciaCore
             ulong donoP = Id(adm);
             if (nivelar)
             {
-                ushort idPiso = IdEstrutura("piso"), idPilar = IdEstrutura("pilar");
-                if (idPiso == 0) return "Nao achei a peca de piso no servidor (config MontarPecas: piso=ID).";
+                ushort idPilar = IdEstrutura("pilar");
+                var idsPiso = IdsEstrutura("piso");
+                if (idsPiso.Count == 0) return "Nao achei a peca de piso no servidor (config MontarPecas: piso=ID).";
                 float yawPiso = Yaw(0, 1);
-                // o piso tem que ficar deitado (fino); se medir alto, a rotação certa é a outra
-                float rotPiso = S.MontarRotacaoX;
-                if (!MedirEstrutura(idPiso, centro + Vector3.down * 40f, yawPiso, donoP, out var lado, out var topoPiso, out var basePiso, rotPiso))
-                    return "Nao consegui medir a peca de piso.";
-                if (topoPiso - basePiso > 1.5f)
+                // o piso tem que ficar deitado (fino): tenta cada piso da config nas duas rotações
+                ushort idPiso = 0;
+                float rotPiso = S.MontarRotacaoX, lado = 0, topoPiso = 0, basePiso = 0;
+                string erroPiso = "";
+                foreach (var idp in idsPiso)
                 {
-                    rotPiso = rotPiso == 0f ? -90f : 0f;
-                    if (!MedirEstrutura(idPiso, centro + Vector3.down * 40f, yawPiso, donoP, out lado, out topoPiso, out basePiso, rotPiso) || topoPiso - basePiso > 1.5f)
-                        return "A peca de piso nao fica deitada; confira o id do piso.";
+                    foreach (var rot in new[] { S.MontarRotacaoX, S.MontarRotacaoX == 0f ? -90f : 0f })
+                    {
+                        if (!MedirEstrutura(idp, centro, yawPiso, donoP, out var l, out var tp0, out var bp0, out var er, rot)) { erroPiso = er; continue; }
+                        if (tp0 - bp0 > 1.5f) { erroPiso = $"a peca {idp} fica em pe"; continue; }
+                        idPiso = idp; rotPiso = rot; lado = l; topoPiso = tp0; basePiso = bp0;
+                        break;
+                    }
+                    if (idPiso != 0) break;
                 }
+                if (idPiso == 0) return $"Nao consegui medir a peca de piso ({erroPiso}).";
                 float altPilar = 0, basePilar = 0;
-                if (idPilar != 0 && MedirEstrutura(idPilar, centro + Vector3.down * 40f, yawPiso, donoP, out _, out var tp, out var bp, rotPiso)) { altPilar = tp - bp; basePilar = bp; }
+                if (idPilar != 0 && MedirEstrutura(idPilar, centro, yawPiso, donoP, out _, out var tp, out var bp, out _, rotPiso)) { altPilar = tp - bp; basePilar = bp; }
                 // retângulo do modelo (com 3 m de folga), em coordenadas do modelo
                 float x0 = float.MaxValue, x1 = float.MinValue, y0 = float.MaxValue, y1 = float.MinValue;
                 foreach (var pc in pecas)
