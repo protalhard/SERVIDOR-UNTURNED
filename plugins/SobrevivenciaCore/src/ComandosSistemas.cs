@@ -494,7 +494,7 @@ namespace SobrevivenciaCore
             if (S.VaultSoNaSafe && P.ZonaSeguraEm(p.Position) == null) { Chat.Erro(p, "O cofre so abre dentro da safe zone."); return; }
             if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
             if (p.Player.movement.getVehicle() != null) { Chat.Erro(p, "Saia do veiculo pra abrir o cofre."); return; }
-            if (!P.TemVault(p, tam)) { Chat.Erro(p, "Voce nao tem esse cofre. Compre no NPC Vault da safe."); return; }
+            if (!P.TemVault(p, tam)) { Chat.Erro(p, "Voce nao tem esse cofre. Compre na aba VAULTS do /menu."); return; }
             P.Cofres.Abrir(p, tam);
             Chat.Ok(p, $"{tam.Nome} aberto ({tam.Largura}x{tam.Altura}).");
         }

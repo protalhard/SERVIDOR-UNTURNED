@@ -546,7 +546,7 @@ namespace SobrevivenciaCore
         {
             if (TemVault(p, v)) { msg = "Voce ja tem esse cofre."; return false; }
             if (v.Preco <= 0) { msg = "Esse cofre e so pra VIP."; return false; }
-            if (ZonaSeguraEm(p.Position) == null) { msg = "Compre o cofre na safe zone, no NPC Vault."; return false; }
+            if (ZonaSeguraEm(p.Position) == null) { msg = "Compre o cofre dentro da safe zone (aba VAULTS do /menu)."; return false; }
             long bolso = Dinheiro.NoBolso(p);
             if (bolso < v.Preco || !Dinheiro.Pagar(p, v.Preco)) { msg = $"Custa $ {v.Preco:N0}. Voce tem $ {bolso:N0} no bolso."; return false; }
             if (!vaultsComprados.TryGetValue(Id(p), out var s)) vaultsComprados[Id(p)] = s = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
