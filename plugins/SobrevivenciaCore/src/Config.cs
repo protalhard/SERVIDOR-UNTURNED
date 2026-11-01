@@ -92,6 +92,7 @@ namespace SobrevivenciaCore
         // Versão das lojas padrão já aplicada (2 = lojas com NPC e itens do California 2)
         public int VersaoLojas;
         public int VersaoCatalogo;
+        public int VersaoEconomia;
 
         public void LoadDefaults()
         {

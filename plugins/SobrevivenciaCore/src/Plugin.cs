@@ -25,7 +25,6 @@ namespace SobrevivenciaCore
             IniciarSistemas();
             LigarSafeZone();
             MigrarLojas();
-            Invoke(nameof(CompletarLojasDepois), 5f);
             CarregarStaff();
             CarregarClaims();
             LigarMenu();

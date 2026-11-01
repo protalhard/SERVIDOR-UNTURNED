@@ -59,6 +59,7 @@ namespace SobrevivenciaCore
             if (menuConferido || !Level.isLoaded) return;
             menuConferido = true;
             ValidarItens();
+            CompletarLojasDepois(); // itens do Workshop (California 2) só existem depois do mapa abrir
             foreach (var sp in Provider.clients)
                 if (sp?.player != null) MostrarHud(UnturnedPlayer.FromSteamPlayer(sp));
             if (MenuDisponivel) Rocket.Core.Logging.Logger.Log("SobrevivenciaCore: menu com janela (efeito 51231) pronto.");

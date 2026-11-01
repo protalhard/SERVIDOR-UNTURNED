@@ -11,7 +11,7 @@ namespace SobrevivenciaCore
     /// Itens que já estão em alguma loja ficam como estão (preço editado não muda). Roda uma vez por versão do catálogo.</summary>
     public partial class Plugin
     {
-        public const int VersaoCatalogo = 3;
+        public const int VersaoCatalogo = 4;
 
         // raridade a partir da qual a arma vai pro mercado negro
         const EItemRarity RaridadeNegro = EItemRarity.EPIC;
@@ -135,6 +135,71 @@ namespace SobrevivenciaCore
         void CompletarLojasDepois()
         {
             try { CompletarLojas(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { AjustarEconomia(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+        }
+
+        public const int VersaoEconomia = 1;
+
+        static int Subir(int atual, int minimo) => Math.Max(atual, minimo);
+
+        /// <summary>Deixa a economia mais dura: armas mais caras por raridade, itens dos kits top (VIP, por abates altos
+        /// e os pacotes da loja de XP) bem mais caros, helicópteros mais caros e revenda menor (20% na safe, 10% no negro).
+        /// Só sobe preço, nunca baixa. Roda uma vez por versão.</summary>
+        public void AjustarEconomia(bool forcar = false)
+        {
+            var cfg = Configuration.Instance;
+            if (!forcar && cfg.VersaoEconomia >= VersaoEconomia) return;
+            if (cfg.VersaoCatalogo < VersaoCatalogo) return;
+
+            // itens dos kits top: pagos (permissão VIP), por 50+ abates e os pacotes da loja de XP
+            var top = new HashSet<ushort>();
+            foreach (var k in S.Kits ?? new List<Kit>())
+                if ((k.Permissao ?? "").IndexOf("vip", StringComparison.OrdinalIgnoreCase) >= 0 || k.Abates >= 50)
+                    foreach (var i in k.Itens ?? new List<ItemKit>()) top.Add(i.Id);
+            foreach (var pc in S.LojaXp ?? new List<PacoteXp>())
+                foreach (var i in pc.Itens ?? new List<ItemKit>()) top.Add(i.Id);
+
+            int armas = 0, kits = 0, helis = 0;
+            foreach (var l in cfg.Lojas)
+            {
+                bool negro = l.Tipo == "negro";
+                foreach (var i in l.Itens)
+                {
+                    if (i.Compra <= 0) continue;
+                    if (i.Veiculo)
+                    {
+                        if (Assets.find(EAssetType.VEHICLE, i.Id) is VehicleAsset v && v.engine == EEngine.HELICOPTER)
+                        {
+                            int antes = i.Compra;
+                            i.Compra = Subir(i.Compra * 5 / 2, 150000);
+                            if (i.Compra != antes) helis++;
+                        }
+                        continue;
+                    }
+                    var a = Assets.find(EAssetType.ITEM, i.Id) as ItemAsset;
+                    if (a == null) continue;
+                    var r = a.rarity;
+                    bool arma = a is ItemGunAsset || a.type == EItemType.GUN;
+                    bool explosivo = a is ItemChargeAsset || a is ItemSentryAsset || (a is ItemThrowableAsset t && t.isExplosive);
+                    int antesC = i.Compra;
+                    // armas por raridade (a loja normal só tem até rara)
+                    if (arma) i.Compra = Subir(i.Compra, negro ? Preco(r, 8000, 10000, 12000, 15000, 30000, 50000) : Preco(r, 600, 1500, 3000, 6000));
+                    // itens dos kits top: bem mais caros pra comprar com dinheiro
+                    if (top.Contains(i.Id) && !(a is ItemFoodAsset || a is ItemWaterAsset || a is ItemMedicalAsset || a is ItemMagazineAsset || a is ItemSupplyAsset))
+                    {
+                        i.Compra = Subir(i.Compra * 5 / 2, arma || explosivo ? 30000 : 3000);
+                        kits++;
+                    }
+                    else if (arma && i.Compra != antesC) armas++;
+                    // revenda: 20% na safe, 10% no mercado negro e nos itens de kit top
+                    int maxVenda = i.Compra * (negro || top.Contains(i.Id) ? 10 : 20) / 100;
+                    if (i.Venda > maxVenda) i.Venda = Math.Max(1, maxVenda);
+                }
+            }
+            // a revenda do caçador (o que o jogador caça) fica como está: é a renda de quem joga limpo
+            cfg.VersaoEconomia = VersaoEconomia;
+            Configuration.Save();
+            Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: economia v{VersaoEconomia}: {armas} armas mais caras, {kits} itens de kit top mais caros, {helis} helicopteros mais caros, revenda 20%/10%.");
         }
 
         /// <summary>Põe nas lojas todo item do servidor que ainda não está em nenhuma. Devolve quantos entraram.</summary>
@@ -144,7 +209,7 @@ namespace SobrevivenciaCore
             if (!forcar && cfg.VersaoCatalogo >= VersaoCatalogo) return 0;
             var todos = new List<ItemAsset>();
             Assets.find(todos);
-            if (todos.Count < 100) return 0; // itens ainda não carregaram
+            if (todos.Count < 100 || !Level.isLoaded) return 0; // itens ainda não carregaram
 
             var notas = new HashSet<ushort>((cfg.Notas ?? new List<Nota>()).Select(n => n.Id));
             var jaTem = new HashSet<ushort>(cfg.Lojas.SelectMany(l => l.Itens).Where(i => !i.Veiculo).Select(i => i.Id));
