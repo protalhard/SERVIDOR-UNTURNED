@@ -97,7 +97,9 @@ namespace SobrevivenciaCore
         public int TpaExpira = 30;
 
         // Combate e limpeza
-        public int CombateSegundos = 20;
+        public int CombateSegundos = 120;
+        // Quem sai do jogo em combate morre e deixa as coisas no chão
+        public bool PunirDeslogarEmCombate = true;
         public int LimpezaMinutos = 30;
         public bool MostrarTodasMortes = true;
 
@@ -154,6 +156,13 @@ namespace SobrevivenciaCore
                 foreach (var pc in LojaXpPadrao())
                     if (!LojaXp.Exists(x => x.Nome.Equals(pc.Nome, StringComparison.OrdinalIgnoreCase))) LojaXp.Add(pc);
                 VersaoPadroes = 3;
+                mudou = true;
+            }
+            // v4: combate de 2 minutos (era 20s)
+            if (VersaoPadroes < 4)
+            {
+                if (CombateSegundos == 20) CombateSegundos = 120;
+                VersaoPadroes = 4;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

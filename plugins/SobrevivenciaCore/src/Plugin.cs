@@ -133,6 +133,7 @@ namespace SobrevivenciaCore
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
             BoasVindas(p);
             BuscarAvatar(id);
+            StartCoroutine(Depois(3f, p, () => MostrarHud(p)));
             if (Banco.PrimeiroKit(id))
                 StartCoroutine(DarKitDepois(p, "Bem-vindo! Voce recebeu o kit inicial."));
         }
@@ -145,6 +146,7 @@ namespace SobrevivenciaCore
 
         void AoRenascer(UnturnedPlayer p, Vector3 pos, byte angulo)
         {
+            StartCoroutine(Depois(1f, p, () => MostrarHud(p)));
             if (Configuration.Instance.KitAoRenascer)
                 StartCoroutine(DarKitDepois(p, "Voce renasceu com o kit inicial."));
         }

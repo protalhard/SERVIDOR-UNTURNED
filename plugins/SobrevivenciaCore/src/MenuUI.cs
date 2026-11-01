@@ -59,6 +59,8 @@ namespace SobrevivenciaCore
             if (menuConferido || !Level.isLoaded) return;
             menuConferido = true;
             ValidarItens();
+            foreach (var sp in Provider.clients)
+                if (sp?.player != null) MostrarHud(UnturnedPlayer.FromSteamPlayer(sp));
             if (MenuDisponivel) Rocket.Core.Logging.Logger.Log("SobrevivenciaCore: menu com janela (efeito 51231) pronto.");
             else Rocket.Core.Logging.Logger.LogWarning("SobrevivenciaCore: efeito do menu (51231) nao carregou. Falta o mod 3831267100 no WorkshopDownloadConfig? /menu fica so no chat.");
         }
@@ -438,6 +440,7 @@ namespace SobrevivenciaCore
                 if (kv.Value.Aba == "Kits") AtualizarContagemKits(UnturnedPlayer.FromSteamPlayer(sp), kv.Value);
             }
             TickAdmin();
+            TickHud();
         }
     }
 }

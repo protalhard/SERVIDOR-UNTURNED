@@ -32,3 +32,5 @@ renamehome
 tutorial
 adm
 staff
+hud
+statsui

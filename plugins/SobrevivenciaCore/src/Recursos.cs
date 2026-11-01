@@ -137,7 +137,8 @@ namespace SobrevivenciaCore
             var p = UnturnedPlayer.FromPlayer(pl);
             if (teleportes.Remove(id)) Chat.Erro(p, "Teleporte cancelado: voce entrou em combate.");
             if (novo) Chat.Para(p, Chat.Cor(S.CorPerigo, Chat.Forte("Modo de combate ATIVADO")) +
-                Chat.Cor(S.CorApagada, " (" + S.CombateSegundos + "s sem /safe, /home, /tpa e /vault)"));
+                Chat.Cor(S.CorApagada, " (" + Chat.Tempo(S.CombateSegundos) + " sem /safe, /home, /tpa e /vault)") +
+                (S.PunirDeslogarEmCombate ? Chat.Cor(S.CorPerigo, " Se sair do jogo agora, voce morre e deixa suas coisas.") : ""));
             if (Cofres.Aberto(id)) Cofres.Fechar(p);
         }
 
@@ -398,6 +399,19 @@ namespace SobrevivenciaCore
             }
         }
 
+        /// <summary>Saiu do jogo em combate: morre na hora e deixa as coisas no chão.</summary>
+        void PunirSeEmCombate(UnturnedPlayer p)
+        {
+            try
+            {
+                if (!S.PunirDeslogarEmCombate || p?.Player == null || p.Dead || !EmCombate(p, out _)) return;
+                p.Player.life.askDamage(byte.MaxValue, Vector3.up, EDeathCause.KILL, ELimb.SKULL, CSteamID.Nil, out _);
+                Chat.Todos(Chat.Cor(S.CorTexto, Chat.Limpar(p.CharacterName)) + Chat.Cor(S.CorPerigo, " saiu do jogo em combate e morreu. As coisas dele ficaram no chao!"));
+                Rocket.Core.Logging.Logger.Log($"[COMBATE] {p.CharacterName} ({Id(p)}) deslogou em combate e foi morto.");
+            }
+            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+        }
+
         IEnumerator Depois(float s, UnturnedPlayer p, Action a)
         {
             yield return new WaitForSeconds(s);
@@ -407,6 +421,8 @@ namespace SobrevivenciaCore
         void AoSair(UnturnedPlayer p)
         {
             var id = Id(p);
+            PunirSeEmCombate(p);
+            hudEnviado.Remove(id);
             menus.Remove(id);
             LimparAdmin(p);
             Cofres.Fechar(p, false);
