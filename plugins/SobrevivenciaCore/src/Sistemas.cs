@@ -85,7 +85,7 @@ namespace SobrevivenciaCore
         }
         public string LinkSite = "https://snaplag.com.br/";
         // Site do servidor (ranking, perfil). Usado pelos botões do menu.
-        public string LinkSiteServidor = "http://54.94.93.87";
+        public string LinkSiteServidor = "https://dayz.snaplag.com.br";
         // Donos: Steam IDs separados por vírgula. Veem a aba ADM inteira e montam a staff.
         public string Donos = "76561198168015168";
 
@@ -309,6 +309,14 @@ namespace SobrevivenciaCore
                     if (i >= 0 && MontarPecas[i] == "bomba=51266") MontarPecas[i] = "bomba=51266|6173";
                 }
                 VersaoPadroes = 13;
+                mudou = true;
+            }
+            // v14: site com endereço próprio e cadeado
+            if (VersaoPadroes < 14)
+            {
+                if (string.IsNullOrWhiteSpace(LinkSiteServidor) || LinkSiteServidor.TrimEnd('/') == "http://54.94.93.87")
+                    LinkSiteServidor = "https://dayz.snaplag.com.br";
+                VersaoPadroes = 14;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

@@ -15,7 +15,7 @@ import (
 	"github.com/protalhard/servidor-unturned/painel/dados"
 )
 
-const siteURL = "http://54.94.93.87"
+const siteURL = "https://dayz.snaplag.com.br"
 
 var chaveVinculo []byte
 
