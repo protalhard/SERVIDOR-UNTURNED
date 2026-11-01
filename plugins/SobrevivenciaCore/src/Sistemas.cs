@@ -35,6 +35,13 @@ namespace SobrevivenciaCore
         public List<ItemKit> Itens;
     }
 
+    /// <summary>Conteúdo de airdrop que o admin escolhe no menu (Comida, Armas, ...).</summary>
+    public class KitAirdrop
+    {
+        [XmlAttribute] public string Nome;
+        public List<ItemKit> Itens;
+    }
+
     public class TamanhoVault
     {
         [XmlAttribute] public string Nome;
@@ -75,6 +82,10 @@ namespace SobrevivenciaCore
             }
         }
         public string LinkSite = "https://snaplag.com.br/";
+        // Site do servidor (ranking, perfil). Usado pelos botões do menu.
+        public string LinkSiteServidor = "http://54.94.93.87";
+        // Donos: Steam IDs separados por vírgula. Veem a aba ADM inteira e montam a staff.
+        public string Donos = "76561198168015168";
 
         // Teleportes
         public int WarpEspera = 15;
@@ -118,6 +129,7 @@ namespace SobrevivenciaCore
         public List<Kit> Kits;
         public List<PacoteXp> LojaXp;
         public List<TamanhoVault> Vaults;
+        public List<KitAirdrop> AirdropKits;
         public List<string> Anuncios;
         public List<string> Tutorial;
         // Versão dos padrões já aplicada (pra adicionar kits/pacotes novos em config antiga)
@@ -132,6 +144,7 @@ namespace SobrevivenciaCore
             if (LojaXp == null) { LojaXp = LojaXpPadrao(); mudou = true; }
             if (Vaults == null || Vaults.Count == 0) { Vaults = VaultsPadrao(); mudou = true; }
             if (Anuncios == null) { Anuncios = AnunciosPadrao(); mudou = true; }
+            if (AirdropKits == null || AirdropKits.Count == 0) { AirdropKits = AirdropPadrao(); mudou = true; }
             if (Tutorial == null) { Tutorial = TutorialPadrao(); mudou = true; }
             // padrões novos (v2): adiciona kits e pacotes que ainda não existem, sem mexer nos que o admin editou
             if (VersaoPadroes < 2)
@@ -248,6 +261,15 @@ namespace SobrevivenciaCore
             new TamanhoVault { Nome = "Vault VIP", Permissao = "vault.vip", Largura = 7, Altura = 7 },
             new TamanhoVault { Nome = "Vault Grande", Permissao = "vault.grande", Largura = 11, Altura = 9 },
             new TamanhoVault { Nome = "Vault Ultra", Permissao = "vault.ultra", Largura = 15, Altura = 13 },
+        };
+
+        static List<KitAirdrop> AirdropPadrao() => new List<KitAirdrop>
+        {
+            new KitAirdrop { Nome = "Comida", Itens = L(I(81, 4), I(13, 3), I(14, 4), I(15, 2), I(95, 5)) },
+            new KitAirdrop { Nome = "Armas", Itens = L(I(363), I(6, 4), I(297), I(298, 3), I(18), I(20, 3)) },
+            new KitAirdrop { Nome = "Equipamentos", Itens = L(I(310), I(253), I(309), I(333), I(15, 2)) },
+            new KitAirdrop { Nome = "Completo", Itens = L(I(363), I(6, 4), I(310), I(253), I(309), I(15, 2), I(81, 2), I(14, 2)) },
+            new KitAirdrop { Nome = "Base", Itens = L(I(378, 2), I(370, 2), I(371, 4), I(1092, 8), I(366, 2), I(1158)) },
         };
 
         static List<string> AnunciosPadrao() => new List<string>

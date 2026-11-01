@@ -92,7 +92,16 @@ namespace SobrevivenciaCore
                     () => P.IniciarIntervalo(p, "home", S.HomeIntervalo));
                 return;
             }
-            if (!ForaDeCombate(p) || !SemIntervalo(p, "home")) return;
+            IrPara(P, S, p, casa);
+        }
+
+        /// <summary>Teleporta pra uma home com nome (checa combate e intervalo). Usado pelo /home e pelo menu.</summary>
+        internal static void IrPara(Plugin P, Sistemas S, UnturnedPlayer p, Casa casa)
+        {
+            if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
+            if (P.EmIntervalo(p, "home", out var ri)) { Chat.Erro(p, $"Espere {Chat.Tempo(ri)} pra usar de novo."); return; }
+            var id = Plugin.Id(p);
+            var minhas = P.Homes.De(id);
             var alvo = casa;
             ulong grupo = p.Player.quests.groupID.m_SteamID;
             P.AgendarTeleporte(p, "home " + Chat.Limpar(alvo.Nome), S.HomeEspera,
@@ -337,16 +346,23 @@ namespace SobrevivenciaCore
             if (a.Length < 1) { Chat.Info(p, "Use: /kit nome. Veja os kits com /kits."); return; }
             var k = S.Kits.FirstOrDefault(x => x.Nome.Equals(a[0], StringComparison.OrdinalIgnoreCase));
             if (k == null) { Chat.Erro(p, "Kit nao encontrado. Veja /kits."); return; }
+            if (Pegar(P, p, k, out var msg)) Chat.Ok(p, msg); else Chat.Erro(p, msg);
+        }
+
+        /// <summary>Entrega o kit se puder. Usado pelo /kit e pelo menu.</summary>
+        internal static bool Pegar(Plugin P, UnturnedPlayer p, Kit k, out string msg)
+        {
             var f = P.FichaDe(p);
-            if (!P.TemPermissao(p, k.Permissao)) { Chat.Erro(p, "Esse kit e VIP."); return; }
-            if (f.Abates < k.Abates) { Chat.Erro(p, $"Precisa de {k.Abates} abates. Voce tem {f.Abates}."); return; }
+            if (!P.TemPermissao(p, k.Permissao)) { msg = "Esse kit e VIP."; return false; }
+            if (f.Abates < k.Abates) { msg = $"Precisa de {k.Abates} abates. Voce tem {f.Abates}."; return false; }
             var resta = P.Stats.UltimoUsoKit(f.Id, k.Nome) + k.Espera - Estatisticas.Agora;
-            if (resta > 0) { Chat.Erro(p, $"Espere {Chat.Tempo(resta)} pra pegar de novo."); return; }
+            if (resta > 0) { msg = $"Espere {Chat.Tempo(resta)} pra pegar de novo."; return false; }
             foreach (var i in k.Itens ?? new List<ItemKit>())
                 if (Itens.Existe(i.Id)) Itens.Dar(p, i.Id, i.Quantidade);
             P.Stats.MarcarKit(f.Id, k.Nome);
             P.Stats.Salvar();
-            Chat.Ok(p, $"Voce recebeu o kit {k.Nome}.");
+            msg = $"Voce recebeu o kit {k.Nome}.";
+            return true;
         }
     }
 
@@ -412,16 +428,8 @@ namespace SobrevivenciaCore
             var f = P.FichaDe(p);
             if (a.Length >= 2 && a[0].Equals("comprar", StringComparison.OrdinalIgnoreCase))
             {
-                if (!int.TryParse(a[1], out var n) || n < 1 || n > S.LojaXp.Count) { Chat.Erro(p, "Numero invalido. Veja /lojaxp."); return; }
-                if (S.LojaXpSoNaSafe && !NaSafe(p)) { Chat.Erro(p, "A loja de XP so funciona dentro da safe zone."); return; }
-                var pac = S.LojaXp[n - 1];
-                if (f.XpSaldo < pac.Preco) { Chat.Erro(p, $"Voce tem {f.XpSaldo} XP. Precisa de {pac.Preco}."); return; }
-                f.XpGasto += pac.Preco;
-                P.Stats.Mudou();
-                P.Stats.Salvar();
-                foreach (var i in pac.Itens ?? new List<ItemKit>())
-                    if (Itens.Existe(i.Id)) Itens.Dar(p, i.Id, i.Quantidade);
-                Chat.Ok(p, $"Voce comprou o pacote {pac.Nome}. Sobrou {f.XpSaldo} XP.");
+                if (!int.TryParse(a[1], out var n)) n = 0;
+                if (Comprar(P, p, n, out var msg)) Chat.Ok(p, msg); else Chat.Erro(p, msg);
                 return;
             }
             Chat.Para(p, Cor(S.CorPrincipal, Chat.Forte("LOJA DE XP")) + Cor(S.CorApagada, $"  voce tem ") +
@@ -434,6 +442,24 @@ namespace SobrevivenciaCore
                     Cor(cor, pac.Preco + " XP") + Cor(S.CorApagada, " " + Chat.Limpar(pac.Descricao)));
             }
         }
+
+        /// <summary>Compra o pacote n (1..). Usado pelo /lojaxp e pelo menu.</summary>
+        internal static bool Comprar(Plugin P, UnturnedPlayer p, int n, out string msg)
+        {
+            var S = P.S;
+            if (n < 1 || n > S.LojaXp.Count) { msg = "Numero invalido. Veja /lojaxp."; return false; }
+            if (S.LojaXpSoNaSafe && P.ZonaSeguraEm(p.Position) == null) { msg = "A loja de XP so funciona dentro da safe zone."; return false; }
+            var f = P.FichaDe(p);
+            var pac = S.LojaXp[n - 1];
+            if (f.XpSaldo < pac.Preco) { msg = $"Voce tem {f.XpSaldo} XP. Precisa de {pac.Preco}."; return false; }
+            f.XpGasto += pac.Preco;
+            P.Stats.Mudou();
+            P.Stats.Salvar();
+            foreach (var i in pac.Itens ?? new List<ItemKit>())
+                if (Itens.Existe(i.Id)) Itens.Dar(p, i.Id, i.Quantidade);
+            msg = $"Voce comprou o pacote {pac.Nome}. Sobrou {f.XpSaldo} XP.";
+            return true;
+        }
     }
 
     // ---------------- Vault ----------------
@@ -445,13 +471,20 @@ namespace SobrevivenciaCore
         public override List<string> Aliases => new List<string> { "cofre" };
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
-            if (p.Dead) return;
-            if (S.VaultSoNaSafe && !NaSafe(p)) { Chat.Erro(p, "O cofre so abre dentro da safe zone."); return; }
-            if (!ForaDeCombate(p)) return;
-            if (p.Player.movement.getVehicle() != null) { Chat.Erro(p, "Saia do veiculo pra abrir o cofre."); return; }
             var tam = S.Vaults.Where(v => P.TemPermissao(p, v.Permissao))
                 .OrderByDescending(v => v.Largura * v.Altura).FirstOrDefault();
             if (tam == null) { Chat.Erro(p, "Voce nao tem cofre."); return; }
+            Abrir(P, S, p, tam);
+        }
+
+        /// <summary>Abre o cofre do tamanho pedido (checa safe, combate e veiculo). Usado pelo /vault e pelo menu.</summary>
+        internal static void Abrir(Plugin P, Sistemas S, UnturnedPlayer p, TamanhoVault tam)
+        {
+            if (p.Dead) return;
+            if (S.VaultSoNaSafe && P.ZonaSeguraEm(p.Position) == null) { Chat.Erro(p, "O cofre so abre dentro da safe zone."); return; }
+            if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
+            if (p.Player.movement.getVehicle() != null) { Chat.Erro(p, "Saia do veiculo pra abrir o cofre."); return; }
+            if (!P.TemPermissao(p, tam.Permissao)) { Chat.Erro(p, "Esse cofre e VIP."); return; }
             P.Cofres.Abrir(p, tam);
             Chat.Ok(p, $"{tam.Nome} aberto ({tam.Largura}x{tam.Altura}).");
         }
@@ -465,6 +498,8 @@ namespace SobrevivenciaCore
         public override string Help => "Mostra tudo que o servidor tem.";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
+            // menu com janela (mod do Workshop); "/menu chat" mostra a versao em texto
+            if (!(a.Length > 0 && a[0].Equals("chat", StringComparison.OrdinalIgnoreCase)) && P.AbrirMenu(p)) return;
             string C(string cmd) => Cor(S.CorPrincipal, cmd);
             string T(string t) => Cor(S.CorApagada, t);
             Chat.Para(p, Cor(S.CorTexto, Chat.Forte("MENU - DAY Z BRASIL OFICIAL")));

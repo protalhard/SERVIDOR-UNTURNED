@@ -262,6 +262,7 @@ namespace SobrevivenciaCore
         void AoMorrer(UnturnedPlayer vitima, EDeathCause causa, ELimb parte, CSteamID assassino)
         {
             var id = Id(vitima);
+            if (MenuAberto(vitima)) FecharMenu(vitima);
             combateAte.Remove(id);
             teleportes.Remove(id);
             if (Cofres.Aberto(id)) Cofres.Fechar(vitima, false);
@@ -378,7 +379,9 @@ namespace SobrevivenciaCore
                 StartCoroutine(Depois(2f, p, () => Chat.Para(p, Chat.Cor(S.CorDestaque, "+" + S.XpInicial + " XP") +
                     Chat.Cor(S.CorTexto, " de boas-vindas! Gaste na ") + Chat.Cor(S.CorPrincipal, "/lojaxp") + Chat.Cor(S.CorTexto, " dentro da safe zone."))));
             }
-            if (novo) StartCoroutine(Tutorial(p));
+            // jogador novo: guia com janela (se o mod do menu estiver no servidor); senão, o tutorial no chat
+            if (novo && MenuDisponivel) StartCoroutine(Depois(6f, p, () => { if (!AbrirGuia(p)) StartCoroutine(Tutorial(p)); }));
+            else if (novo) StartCoroutine(Tutorial(p));
             else StartCoroutine(Depois(3f, p, () =>
                 Chat.Para(p, Chat.Cor(S.CorTexto, "Bem-vindo de volta, ") + NomeColorido(f) +
                     Chat.Cor(S.CorTexto, ". Digite ") + Chat.Cor(S.CorPrincipal, "/menu") + Chat.Cor(S.CorTexto, " pra ver tudo."))));
@@ -404,6 +407,8 @@ namespace SobrevivenciaCore
         void AoSair(UnturnedPlayer p)
         {
             var id = Id(p);
+            menus.Remove(id);
+            LimparAdmin(p);
             Cofres.Fechar(p, false);
             teleportes.Remove(id);
             pedidosTpa.Remove(id);

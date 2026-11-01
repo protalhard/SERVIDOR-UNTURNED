@@ -30,3 +30,5 @@ homes
 delhome
 renamehome
 tutorial
+adm
+staff

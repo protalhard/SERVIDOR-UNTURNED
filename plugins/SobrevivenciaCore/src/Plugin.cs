@@ -24,6 +24,8 @@ namespace SobrevivenciaCore
             Banco = new Banco(Directory);
             IniciarSistemas();
             LigarSafeZone();
+            CarregarStaff();
+            LigarMenu();
             UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
@@ -39,6 +41,7 @@ namespace SobrevivenciaCore
         protected override void Unload()
         {
             CancelInvoke(nameof(ChecarZonas));
+            DesligarMenu();
             UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat -= AoMudarStat;
             DesligarSafeZone();
@@ -80,6 +83,8 @@ namespace SobrevivenciaCore
         {
             try { TickSistemas(); }
             catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickMenus(); }
+            catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             if (!Configuration.Instance.AvisarEntradaSafe) return;
             foreach (var sp in Provider.clients)
             {
@@ -100,6 +105,7 @@ namespace SobrevivenciaCore
         void AoDanoNoJogador(ref DamagePlayerParameters par, ref bool permitir)
         {
             if (!permitir || par.player == null) return;
+            if (EhImortal(par.player)) { permitir = false; return; }
             var vitimaNaSafe = ZonaSeguraEm(par.player.transform.position) != null;
 
             if (par.cause == EDeathCause.ZOMBIE || par.cause == EDeathCause.ANIMAL)
@@ -126,6 +132,7 @@ namespace SobrevivenciaCore
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
             BoasVindas(p);
+            BuscarAvatar(id);
             if (Banco.PrimeiroKit(id))
                 StartCoroutine(DarKitDepois(p, "Bem-vindo! Voce recebeu o kit inicial."));
         }

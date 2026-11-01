@@ -34,6 +34,7 @@ type Estado struct {
 	MsgTop      string            `json:"msgTop"`
 	AvatarFeito bool              `json:"avatarFeito"`
 	Convite     string            `json:"convite"`
+	LogAdminPos *int64            `json:"logAdminPos,omitempty"`
 }
 
 var (
@@ -75,6 +76,7 @@ func main() {
 	go laco(dg, 60*time.Second, atualizarStatus)
 	go laco(dg, 10*time.Minute, atualizarTop)
 	go laco(dg, 10*time.Minute, atualizarContador)
+	go laco(dg, 20*time.Second, enviarLogsAdmin)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
