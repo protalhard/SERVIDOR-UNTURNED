@@ -141,6 +141,7 @@ namespace SobrevivenciaCore
             }
 
             var cfg = Configuration.Instance;
+            var antes = FotoConfig(cfg);
             var colocados = new List<uint>();
             ulong dono = Id(adm);
             int nPecas = 0, nNpcs = 0, nExpostos = 0;
@@ -275,7 +276,7 @@ namespace SobrevivenciaCore
             try
             {
                 File.AppendAllText(ArqMontagens, $"{DateTime.Now:yyyy-MM-dd HH:mm}\t{area}{modelo}\t{string.Join(",", colocados)}\t" +
-                    $"{centro.x:0.0} {centro.y:0.0} {centro.z:0.0}{Environment.NewLine}");
+                    $"{centro.x:0.0} {centro.y:0.0} {centro.z:0.0}\t{DiffConfig(antes, cfg)}{Environment.NewLine}");
             }
             catch { }
             LogAdmin(adm, $"MONTOU {area} modelo {modelo} em {centro.x:0} {centro.z:0}: {nPecas} pecas, {nNpcs} NPCs, {nExpostos} itens expostos");
@@ -325,7 +326,8 @@ namespace SobrevivenciaCore
             linhas.RemoveAt(linhas.Count - 1);
             pecasMontadas = null;
             File.WriteAllLines(ArqMontagens, linhas);
-            return $"Desfeito: {tirados} pecas tiradas ({ult[1]}). A zona/ATM registrados continuam; use /delsafe se precisar.";
+            string extra = DesfazerConfig(ult);
+            return $"Desfeito: {tirados} pecas tiradas ({ult[1]}){extra}.";
         }
     }
 
@@ -375,6 +377,84 @@ namespace SobrevivenciaCore
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
             Chat.Info(p, P.ColocarBomba(p));
+        }
+    }
+
+    public partial class Plugin
+    {
+        // ---------- desfazer o que o /montar registrou no config ----------
+
+        class FotoCfg { public HashSet<Ponto> Zonas, Atms; public HashSet<Vaga> Vagas; public Dictionary<string, string> Lojas; }
+
+        static string PosLoja(Loja l) => string.Join(",", new[] { l.X, l.Y, l.Z, l.Raio, l.VX, l.VY, l.VZ, l.AX, l.AY, l.AZ, l.AR }
+            .Select(v => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)));
+
+        static FotoCfg FotoConfig(Config cfg) => new FotoCfg
+        {
+            Zonas = new HashSet<Ponto>(cfg.ZonasSeguras),
+            Atms = new HashSet<Ponto>(cfg.Atms),
+            Vagas = new HashSet<Vaga>(cfg.Vagas ?? new List<Vaga>()),
+            Lojas = cfg.Lojas.Where(l => l.Id != null).GroupBy(l => l.Id).ToDictionary(g => g.Key, g => PosLoja(g.First())),
+        };
+
+        static string F(float v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+
+        /// <summary>O que mudou: "z=Safe 1|a=ATM 1|v=carro:x:z|l=armas:posAntiga" separado por ';'.</summary>
+        static string DiffConfig(FotoCfg a, Config cfg)
+        {
+            var r = new List<string>();
+            r.AddRange(cfg.ZonasSeguras.Where(z => !a.Zonas.Contains(z)).Select(z => "z=" + z.Nome));
+            r.AddRange(cfg.Atms.Where(x => !a.Atms.Contains(x)).Select(x => "a=" + x.Nome));
+            r.AddRange((cfg.Vagas ?? new List<Vaga>()).Where(v => !a.Vagas.Contains(v)).Select(v => $"v={v.Tipo}:{F(v.X)}:{F(v.Z)}"));
+            foreach (var l in cfg.Lojas)
+                if (l.Id != null && a.Lojas.TryGetValue(l.Id, out var pos) && pos != PosLoja(l)) r.Add($"l={l.Id}:{pos}");
+            return string.Join(";", r.Select(x => x.Replace("\t", " ").Replace(";", ",")));
+        }
+
+        string DesfazerConfig(string[] linha)
+        {
+            var cfg = Configuration.Instance;
+            int zonas = 0, atms = 0, vagas = 0, lojas = 0;
+            if (linha.Length > 4 && linha[4].Trim() != "")
+            {
+                foreach (var it in linha[4].Split(';'))
+                {
+                    int eq = it.IndexOf('='); if (eq < 1) continue;
+                    var tipo = it.Substring(0, eq); var val = it.Substring(eq + 1);
+                    if (tipo == "z") zonas += cfg.ZonasSeguras.RemoveAll(z => z.Nome == val);
+                    else if (tipo == "a") atms += cfg.Atms.RemoveAll(x => x.Nome == val);
+                    else if (tipo == "v" && cfg.Vagas != null)
+                    {
+                        var p = val.Split(':');
+                        if (p.Length == 3 && float.TryParse(p[1], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var vx)
+                            && float.TryParse(p[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var vz))
+                            vagas += cfg.Vagas.RemoveAll(v => v.Tipo == p[0] && Mathf.Abs(v.X - vx) < 0.01f && Mathf.Abs(v.Z - vz) < 0.01f);
+                    }
+                    else if (tipo == "l")
+                    {
+                        int dp = val.IndexOf(':'); if (dp < 1) continue;
+                        var l = cfg.Lojas.FirstOrDefault(x => x.Id == val.Substring(0, dp));
+                        var n = val.Substring(dp + 1).Split(',').Select(x => float.TryParse(x, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) ? f : 0f).ToArray();
+                        if (l == null || n.Length < 11) continue;
+                        l.X = n[0]; l.Y = n[1]; l.Z = n[2]; l.Raio = n[3]; l.VX = n[4]; l.VY = n[5]; l.VZ = n[6]; l.AX = n[7]; l.AY = n[8]; l.AZ = n[9]; l.AR = n[10];
+                        lojas++;
+                    }
+                }
+            }
+            else if (linha.Length > 3 && linha[1].StartsWith("safe"))
+            {
+                // montagem antiga (sem registro): tira a safe zone criada no mesmo centro
+                var c = linha[3].Split(' ').Select(x => float.TryParse(x, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var f) ? f : float.NaN).ToArray();
+                if (c.Length == 3) zonas += cfg.ZonasSeguras.RemoveAll(z => Mathf.Abs(z.X - c[0]) < 0.2f && Mathf.Abs(z.Z - c[2]) < 0.2f);
+            }
+            if (zonas + atms + vagas + lojas == 0) return "";
+            Configuration.Save();
+            var partes = new List<string>();
+            if (zonas > 0) partes.Add(zonas + " safe zone");
+            if (atms > 0) partes.Add(atms + " ATM");
+            if (vagas > 0) partes.Add(vagas + " vagas");
+            if (lojas > 0) partes.Add(lojas + " lojas voltaram pro lugar antigo");
+            return ", removido: " + string.Join(", ", partes);
         }
     }
 }

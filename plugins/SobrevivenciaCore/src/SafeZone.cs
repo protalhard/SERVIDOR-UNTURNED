@@ -45,6 +45,91 @@ namespace SobrevivenciaCore
 
         bool NaSafe(Vector3 pos) => ZonaSeguraEm(pos) != null;
 
+        // ---------- entrar / sair da safe (contagem de saída + escudo na tela) ----------
+
+        /// <summary>Escudo da safe no canto esquerdo (efeito DZ_Safe do mod; se ainda não existir, só usa o aviso do jogo).</summary>
+        public const ushort SafeHudId = 51295;
+        public const short SafeHudKey = 5128;
+        readonly Dictionary<ulong, float> saiuSafeEm = new Dictionary<ulong, float>();
+        readonly HashSet<ulong> escudoNaTela = new HashSet<ulong>();
+
+        /// <summary>Dentro da safe ou ainda na contagem de saída.</summary>
+        public bool ProtegidoSafe(Player pl)
+        {
+            if (pl == null) return false;
+            if (ZonaSeguraEm(pl.transform.position) != null) return true;
+            return saiuSafeEm.TryGetValue(pl.channel.owner.playerID.steamID.m_SteamID, out var t)
+                && Time.realtimeSinceStartup - t < S.SafeSaidaSegundos;
+        }
+
+        void Escudo(SteamPlayer sp, string texto)
+        {
+            var id = sp.playerID.steamID.m_SteamID;
+            if (texto == null)
+            {
+                if (escudoNaTela.Remove(id)) EffectManager.askEffectClearByID(SafeHudId, sp.transportConnection);
+                return;
+            }
+            if (!(Assets.find(EAssetType.EFFECT, SafeHudId) is EffectAsset efeito)) return;
+            if (escudoNaTela.Add(id)) EffectManager.SendUIEffect(efeito, SafeHudKey, sp.transportConnection, true);
+            EffectManager.sendUIEffectText(SafeHudKey, sp.transportConnection, true, "Safe_Texto", texto);
+        }
+
+        void TickSafe()
+        {
+            bool avisar = Configuration.Instance.AvisarEntradaSafe;
+            foreach (var sp in Provider.clients)
+            {
+                if (sp?.player == null) continue;
+                var id = sp.playerID.steamID.m_SteamID;
+                var zona = ZonaSeguraEm(sp.player.transform.position)?.Nome;
+                zonaAtual.TryGetValue(id, out var antes);
+                var p = UnturnedPlayer.FromSteamPlayer(sp);
+                if (zona != antes)
+                {
+                    zonaAtual[id] = zona;
+                    if (zona != null)
+                    {
+                        bool voltou = saiuSafeEm.Remove(id);
+                        Escudo(sp, "SAFE ZONE");
+                        if (!avisar) continue;
+                        if (voltou && antes == null)
+                        {
+                            sp.player.ServerShowHint("<color=#55E07A><b>DE VOLTA NA SAFE ZONE</b></color>\nContagem cancelada.", 3f);
+                            continue;
+                        }
+                        Chat.Ok(p, $"Voce entrou na SAFE ZONE ({Chat.Limpar(zona)}). PvP desligado aqui.");
+                        Chat.Erro(p, "Regra da safe: proibido mexer nos carros e itens de outro jogador. Quem fizer leva ban.");
+                        sp.player.ServerShowHint("<color=#55E07A><b>VOCE ENTROU NA SAFE ZONE</b></color>\nPvP desligado aqui.\n\n<color=#FF6A00><b>REGRA:</b></color> proibido mexer nos carros\ne itens de outro jogador.", S.SafeAvisoSegundos);
+                        continue;
+                    }
+                    // saiu: começa a contagem (se estava na safe de verdade)
+                    if (antes != null && S.SafeSaidaSegundos > 0) saiuSafeEm[id] = Time.realtimeSinceStartup;
+                    else { PvpLiberado(sp, p, avisar); continue; }
+                }
+                if (zona != null || !saiuSafeEm.TryGetValue(id, out var t)) continue;
+                int resta = S.SafeSaidaSegundos - Mathf.FloorToInt(Time.realtimeSinceStartup - t);
+                if (resta > 0)
+                {
+                    Escudo(sp, $"SAINDO {resta}s");
+                    if (avisar) sp.player.ServerShowHint($"<color=#FFB020><b>SAINDO DA SAFE ZONE</b></color>\nProtecao acaba em <b>{resta}s</b>\nVolte pra dentro pra cancelar.", 1.3f);
+                }
+                else
+                {
+                    saiuSafeEm.Remove(id);
+                    PvpLiberado(sp, p, avisar);
+                }
+            }
+        }
+
+        void PvpLiberado(SteamPlayer sp, UnturnedPlayer p, bool avisar)
+        {
+            Escudo(sp, null);
+            if (!avisar) return;
+            Chat.Erro(p, "Voce saiu da safe zone. PvP LIBERADO! Cuidado.");
+            sp.player.ServerShowHint("<color=#FF4040><b>VOCE SAIU DA SAFE ZONE</b></color>\nPvP liberado. Cuidado!", 4f);
+        }
+
         // ---- regra da safe: ninguém mexe no carro dos outros ----
         static bool DonoDoVeiculo(InteractableVehicle v, Player p)
         {

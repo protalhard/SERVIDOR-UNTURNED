@@ -243,8 +243,15 @@ namespace SobrevivenciaCore
         public override string Syntax => "<nome>";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
-            if (a.Length < 1) { P.Erro(p, "Use: /delatm <nome>"); return; }
-            int n = C.Atms.RemoveAll(x => x.Nome.Equals(a[0], StringComparison.OrdinalIgnoreCase));
+            // sem nome: tira o ATM mais perto (até 10 m)
+            var nome = string.Join(" ", a).Trim().Trim('"').Trim();
+            if (nome == "")
+            {
+                var perto = C.Atms.OrderBy(x => Vector3.Distance(p.Position, new Vector3(x.X, x.Y, x.Z))).FirstOrDefault();
+                if (perto == null || Vector3.Distance(p.Position, new Vector3(perto.X, perto.Y, perto.Z)) > 10f) { P.Erro(p, "Use: /delatm <nome> (ou fique do lado do ATM)"); return; }
+                nome = perto.Nome;
+            }
+            int n = C.Atms.RemoveAll(x => x.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
             Salvar();
             P.Msg(p, n > 0 ? "ATM removido." : "ATM nao encontrado.");
         }
@@ -272,8 +279,15 @@ namespace SobrevivenciaCore
         public override string Syntax => "<nome>";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
-            if (a.Length < 1) { P.Erro(p, "Use: /delsafe <nome>"); return; }
-            int n = C.ZonasSeguras.RemoveAll(x => x.Nome.Equals(a[0], StringComparison.OrdinalIgnoreCase));
+            // sem nome: tira a safe zone onde você está
+            var nome = string.Join(" ", a).Trim().Trim('"').Trim();
+            if (nome == "")
+            {
+                var aqui = P.ZonaSeguraEm(p.Position);
+                if (aqui == null) { P.Erro(p, "Use: /delsafe <nome> (ou fique dentro da safe)"); return; }
+                nome = aqui.Nome;
+            }
+            int n = C.ZonasSeguras.RemoveAll(x => x.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
             Salvar();
             P.Msg(p, n > 0 ? "Safe zone removida." : "Safe zone nao encontrada.");
         }

@@ -96,36 +96,14 @@ namespace SobrevivenciaCore
             try { TickLimiteVeiculos(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickMenus(); }
             catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
-            if (!Configuration.Instance.AvisarEntradaSafe) return;
-            foreach (var sp in Provider.clients)
-            {
-                if (sp?.player == null) continue;
-                var id = sp.playerID.steamID.m_SteamID;
-                var zona = ZonaSeguraEm(sp.player.transform.position)?.Nome;
-                zonaAtual.TryGetValue(id, out var antes);
-                if (zona == antes) continue;
-                zonaAtual[id] = zona;
-                var p = UnturnedPlayer.FromSteamPlayer(sp);
-                if (zona != null)
-                {
-                    Chat.Ok(p, $"Voce entrou na SAFE ZONE ({Chat.Limpar(zona)}). PvP desligado aqui.");
-                    Chat.Erro(p, "Regra da safe: proibido mexer nos carros e itens de outro jogador. Quem fizer leva ban.");
-                    // aviso grande na tela, some sozinho
-                    sp.player.ServerShowHint("<color=#55E07A><b>VOCE ENTROU NA SAFE ZONE</b></color>\nPvP desligado aqui.\n\n<color=#FF6A00><b>REGRA:</b></color> proibido mexer nos carros\ne itens de outro jogador.", S.SafeAvisoSegundos);
-                }
-                else
-                {
-                    Chat.Erro(p, "Voce saiu da safe zone. PvP LIBERADO! Cuidado.");
-                    sp.player.ServerShowHint("<color=#FF4040><b>VOCE SAIU DA SAFE ZONE</b></color>\nPvP liberado. Cuidado!", 4f);
-                }
-            }
+            try { TickSafe(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
 
         void AoDanoNoJogador(ref DamagePlayerParameters par, ref bool permitir)
         {
             if (!permitir || par.player == null) return;
             if (EhImortal(par.player)) { permitir = false; return; }
-            var vitimaNaSafe = ZonaSeguraEm(par.player.transform.position) != null;
+            var vitimaNaSafe = ProtegidoSafe(par.player);
 
             if (par.cause == EDeathCause.ZOMBIE || par.cause == EDeathCause.ANIMAL)
             {
@@ -137,7 +115,7 @@ namespace SobrevivenciaCore
             var atacante = PlayerTool.getPlayer(par.killer);
             if (atacante == null) return;
 
-            var atacanteNaSafe = ZonaSeguraEm(atacante.transform.position) != null;
+            var atacanteNaSafe = ProtegidoSafe(atacante);
             if (vitimaNaSafe || atacanteNaSafe) { permitir = false; return; }
             MarcarCombate(par.player);
             MarcarCombate(atacante);
@@ -162,6 +140,7 @@ namespace SobrevivenciaCore
         void AoDesconectar(UnturnedPlayer p)
         {
             zonaAtual.Remove(p.CSteamID.m_SteamID);
+            saiuSafeEm.Remove(p.CSteamID.m_SteamID);
             guard.Remove(p.CSteamID.m_SteamID);
             espioes.Remove(p.CSteamID.m_SteamID);
             AoSair(p);

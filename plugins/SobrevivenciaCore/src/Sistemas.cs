@@ -134,6 +134,8 @@ namespace SobrevivenciaCore
         public bool AtmSoNaSafe = true;
         // segundos que o aviso grande de entrada na safe fica na tela
         public float SafeAvisoSegundos = 8f;
+        /// <summary>Depois de sair da safe, continua protegido por X segundos (contagem na tela). Voltou pra dentro, cancela.</summary>
+        public int SafeSaidaSegundos = 10;
         // foto dos itens na loja ({id} = ID do item). Os PNGs ficam na pasta icones do site do servidor.
         public string IconeUrl = "http://54.94.93.87/icones/{id}.png";
         public string IconeVeiculoUrl = "http://54.94.93.87/icones/v{id}.png";
