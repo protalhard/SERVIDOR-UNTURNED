@@ -21,6 +21,8 @@ namespace SobrevivenciaCore
     {
         [XmlAttribute] public ushort Id;
         [XmlAttribute] public int Valor;
+        // true = só aceita como pagamento, não é usada pra dar troco (maços de $1000/$5000/$10000)
+        [XmlAttribute] public bool SoAceita;
         public Nota() { }
         public Nota(ushort id, int valor) { Id = id; Valor = valor; }
     }
@@ -40,6 +42,10 @@ namespace SobrevivenciaCore
         [XmlAttribute] public ushort Id;
         [XmlAttribute] public int Compra;
         [XmlAttribute] public int Venda;
+        // Categoria na janela da loja (Enlatados, Rifles...). Vazio = "Geral".
+        [XmlAttribute] public string Categoria = "";
+        // true = Id é de veículo (aparece do lado do vendedor, trancado pro comprador)
+        [XmlAttribute] public bool Veiculo;
         public ItemLoja() { }
         public ItemLoja(ushort id, int compra, int venda = 0) { Id = id; Compra = compra; Venda = venda; }
     }
@@ -52,6 +58,12 @@ namespace SobrevivenciaCore
         [XmlAttribute] public float Y;
         [XmlAttribute] public float Z;
         [XmlAttribute] public float Raio = 6;
+        // safe, negro, cacador ou garagem (só muda o texto da janela)
+        [XmlAttribute] public string Tipo = "safe";
+        // onde os veículos comprados aparecem (0,0,0 = na frente do jogador)
+        [XmlAttribute] public float VX;
+        [XmlAttribute] public float VY;
+        [XmlAttribute] public float VZ;
         public List<ItemLoja> Itens = new List<ItemLoja>();
         public bool Definido => !(X == 0 && Y == 0 && Z == 0);
     }
@@ -70,6 +82,8 @@ namespace SobrevivenciaCore
         public List<Ponto> Atms;
         public List<Loja> Lojas;
         public Sistemas Sistemas;
+        // Versão das lojas padrão já aplicada (2 = lojas com NPC e itens do California 2)
+        public int VersaoLojas;
 
         public void LoadDefaults()
         {
@@ -91,12 +105,15 @@ namespace SobrevivenciaCore
             // Dinheiro vanilla do Unturned (notas e moedas canadenses)
             Notas = new List<Nota>
             {
+                // notas do California 2 primeiro (é com elas que o troco é dado)
+                new Nota(4258, 500), new Nota(4257, 100), new Nota(4256, 50), new Nota(4255, 10), new Nota(4254, 5),
                 new Nota(1055, 100), new Nota(1054, 50), new Nota(1053, 20),
                 new Nota(1052, 10), new Nota(1051, 5), new Nota(1057, 2), new Nota(1056, 1),
             };
             ZonasSeguras = new List<Ponto>();
             Atms = new List<Ponto>();
             Lojas = LojasPadrao.Criar();
+            VersaoLojas = LojasPadrao.Versao;
             Sistemas = new Sistemas();
             Sistemas.Completar();
         }

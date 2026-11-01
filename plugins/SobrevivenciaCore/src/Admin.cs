@@ -18,14 +18,14 @@ namespace SobrevivenciaCore
 
         /// <summary>Permissões que o dono marca pra cada staff.</summary>
         public static readonly string[] PermissoesAdmin =
-            { "Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar" };
+            { "Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos" };
 
         // botão -> permissão
         static readonly Dictionary<string, string> BotaoPermissao = new Dictionary<string, string>
         {
             { "Adm_Kick", "Kick" }, { "Adm_Ban", "Ban" }, { "Adm_IrAte", "Tp" }, { "Adm_Trazer", "Trazer" },
             { "Adm_Curar", "Curar" }, { "Adm_Matar", "Matar" }, { "Adm_Congelar", "Congelar" }, { "Adm_Spy", "Spy" },
-            { "Adm_Reiniciar", "Reiniciar" }, { "Adm_Visao", "Visao" }, { "Adm_Deus", "Deus" },
+            { "Adm_Reiniciar", "Reiniciar" }, { "Adm_Visao", "Visao" }, { "Adm_Deus", "Deus" }, { "Adm_Precos", "Precos" },
         };
 
         class EstadoAdmin
@@ -36,6 +36,10 @@ namespace SobrevivenciaCore
             public string Motivo = "", BanHoras = "", ItemId = "", ItemQtd = "1", Anuncio = "";
             public int KitDrop;
             public bool StaffAberto;
+            public bool PrecosAberto;
+            public int PrecoLoja, PrecoPagina;
+            public string PrecoBusca = "", PrecoCompra = "", PrecoVenda = "", PrecoPorc = "";
+            public ItemLoja PrecoSel;
             public float ProximaLista;
         }
 
@@ -131,6 +135,8 @@ namespace SobrevivenciaCore
             PreencherAlvo(p, e);
             V(p, "Adm_Staff_Area", e.StaffAberto && EhDono(p));
             if (e.StaffAberto && EhDono(p)) PreencherStaff(p, e);
+            V(p, "Adm_Precos_Area", e.PrecosAberto && Pode(p, "Precos"));
+            if (e.PrecosAberto && Pode(p, "Precos")) PreencherPrecos(p, e);
         }
 
         KitAirdrop KitDropAtual(EstadoAdmin e)
@@ -238,6 +244,10 @@ namespace SobrevivenciaCore
                 case "Adm_ItemId": e.ItemId = texto; break;
                 case "Adm_ItemQtd": e.ItemQtd = texto; break;
                 case "Adm_Anuncio": e.Anuncio = texto; break;
+                case "Preco_Busca": e.PrecoBusca = texto; e.PrecoPagina = 0; PreencherPrecos(p, e); break;
+                case "Preco_Compra": e.PrecoCompra = texto; break;
+                case "Preco_Venda": e.PrecoVenda = texto; break;
+                case "Preco_Porcento": e.PrecoPorc = texto; break;
             }
         }
 
@@ -260,6 +270,7 @@ namespace SobrevivenciaCore
                 return;
             }
             if (botao.StartsWith("Adm_P_")) { AlternarPermissao(p, e, botao.Substring(6)); return; }
+            if (botao.StartsWith("Preco_")) { if (Pode(p, "Precos")) CliquePreco(p, e, botao); return; }
             if (BotaoPermissao.TryGetValue(botao, out var perm) && !Pode(p, perm)) { AvisoAdm(p, "Voce nao tem permissao pra isso.", false); return; }
 
             var a = AlvoDe(e);
@@ -431,8 +442,16 @@ namespace SobrevivenciaCore
                     AvisoAdm(p, "Reinicio em 60 segundos.", true);
                     break;
 
+                case "Adm_Precos":
+                    e.PrecosAberto = !e.PrecosAberto;
+                    if (e.PrecosAberto) { e.StaffAberto = false; V(p, "Adm_Staff_Area", false); }
+                    V(p, "Adm_Precos_Area", e.PrecosAberto);
+                    if (e.PrecosAberto) PreencherPrecos(p, e);
+                    break;
+
                 case "Adm_Staff":
                     if (!EhDono(p)) return;
+                    e.PrecosAberto = false; V(p, "Adm_Precos_Area", false);
                     e.StaffAberto = !e.StaffAberto;
                     V(p, "Adm_Staff_Area", e.StaffAberto);
                     if (e.StaffAberto) PreencherStaff(p, e);
@@ -447,6 +466,87 @@ namespace SobrevivenciaCore
                     AtualizarAcessoAdmin(a);
                     PreencherStaff(p, e);
                     PreencherListaAdmin(p, e);
+                    break;
+            }
+        }
+
+        // ---------- Editor de preços ----------
+
+        List<Loja> LojasCfg => Configuration.Instance.Lojas;
+        Loja LojaPreco(EstadoAdmin e) => LojasCfg.Count == 0 ? null : LojasCfg[((e.PrecoLoja % LojasCfg.Count) + LojasCfg.Count) % LojasCfg.Count];
+
+        List<ItemLoja> ItensPreco(EstadoAdmin e)
+        {
+            var loja = LojaPreco(e);
+            if (loja == null) return new List<ItemLoja>();
+            return loja.Itens.Where(i => e.PrecoBusca == "" || i.Id.ToString() == e.PrecoBusca ||
+                NomeDe(i).IndexOf(e.PrecoBusca, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+        }
+
+        void PreencherPrecos(UnturnedPlayer p, EstadoAdmin e)
+        {
+            var loja = LojaPreco(e);
+            if (loja == null) { T(p, "Preco_Loja_Texto", "SEM LOJAS"); return; }
+            T(p, "Preco_Loja_Texto", Chat.Limpar(loja.Nome).ToUpperInvariant());
+            var lista = ItensPreco(e);
+            int paginas = Math.Max(1, (lista.Count + 7) / 8);
+            e.PrecoPagina = Mathf.Clamp(e.PrecoPagina, 0, paginas - 1);
+            for (int i = 0; i < 8; i++)
+            {
+                int idx = e.PrecoPagina * 8 + i;
+                string n = "Preco_Item_" + (i + 1);
+                if (idx >= lista.Count) { V(p, n, false); continue; }
+                var it = lista[idx];
+                V(p, n, true);
+                T(p, n + "_Nome", (it == e.PrecoSel ? C(Laranja, "> ") : "") + Chat.Limpar(NomeDe(it)) + C(Cinza, " #" + it.Id));
+                T(p, n + "_Compra", it.Compra > 0 ? "$ " + it.Compra.ToString("N0") : C(Cinza, "-"));
+                T(p, n + "_Venda", it.Venda > 0 ? "$ " + it.Venda.ToString("N0") : C(Cinza, "-"));
+            }
+            T(p, "Preco_Pagina", $"{e.PrecoPagina + 1}/{paginas}");
+            T(p, "Preco_Sel_Nome", e.PrecoSel == null ? C(Cinza, "Clique num item") :
+                Chat.Limpar(NomeDe(e.PrecoSel)) + C(Cinza, $"  compra $ {e.PrecoSel.Compra:N0} | venda $ {e.PrecoSel.Venda:N0}"));
+        }
+
+        static int AplicarPorcento(int v, double porc) => v <= 0 ? v : Math.Max(1, (int)Math.Round(v * (1 + porc / 100.0)));
+
+        void CliquePreco(UnturnedPlayer p, EstadoAdmin e, string botao)
+        {
+            if (botao.StartsWith("Preco_Item_") && int.TryParse(botao.Substring(11), out var n))
+            {
+                var lista = ItensPreco(e);
+                int idx = e.PrecoPagina * 8 + n - 1;
+                if (idx < lista.Count) e.PrecoSel = lista[idx];
+                PreencherPrecos(p, e);
+                return;
+            }
+            switch (botao)
+            {
+                case "Preco_Loja": e.PrecoLoja++; e.PrecoPagina = 0; e.PrecoSel = null; PreencherPrecos(p, e); break;
+                case "Preco_Anterior": e.PrecoPagina--; PreencherPrecos(p, e); break;
+                case "Preco_Proximo": e.PrecoPagina++; PreencherPrecos(p, e); break;
+                case "Preco_Salvar":
+                    if (e.PrecoSel == null) { AvisoAdm(p, "Escolha um item na lista.", false); return; }
+                    bool mudou = false;
+                    if (int.TryParse(e.PrecoCompra, out var c) && c >= 0) { e.PrecoSel.Compra = c; mudou = true; }
+                    if (int.TryParse(e.PrecoVenda, out var v) && v >= 0) { e.PrecoSel.Venda = v; mudou = true; }
+                    if (!mudou) { AvisoAdm(p, "Digite o novo preco (compra e/ou venda) e aperte Enter.", false); return; }
+                    Configuration.Save();
+                    LogAdmin(p, $"PRECO {NomeDe(e.PrecoSel)} ({e.PrecoSel.Id}): compra {e.PrecoSel.Compra}, venda {e.PrecoSel.Venda}");
+                    AvisoAdm(p, "Preco salvo. 0 = nao vende/nao compra.", true);
+                    PreencherPrecos(p, e);
+                    break;
+                case "Preco_AplicarLoja":
+                case "Preco_AplicarTodas":
+                    if (!double.TryParse(e.PrecoPorc.Replace("%", "").Replace(',', '.'), System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out var porc) || porc == 0 || porc <= -95 || porc > 1000)
+                    { AvisoAdm(p, "Digite a porcentagem (ex.: 10 ou -15) e aperte Enter.", false); return; }
+                    var lojas = botao == "Preco_AplicarTodas" ? LojasCfg : new List<Loja> { LojaPreco(e) };
+                    foreach (var l in lojas.Where(x => x != null))
+                        foreach (var it in l.Itens) { it.Compra = AplicarPorcento(it.Compra, porc); it.Venda = AplicarPorcento(it.Venda, porc); }
+                    Configuration.Save();
+                    LogAdmin(p, $"PRECOS {porc:+0.#;-0.#}% em {(lojas.Count == 1 ? lojas[0]?.Nome : "todas as lojas")}");
+                    AvisoAdm(p, $"Precos ajustados em {porc:+0.#;-0.#}%.", true);
+                    PreencherPrecos(p, e);
                     break;
             }
         }

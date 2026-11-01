@@ -65,6 +65,7 @@ namespace SobrevivenciaCore
 
         void AoDanoBarricada(CSteamID quem, Transform t, ref ushort dano, ref bool permitir, EDamageOrigin origem)
         {
+            if (permitir && t != null && (BarricadaEhNpc(t) || PecaMontada(t))) { permitir = false; return; }
             if (permitir && S.SafeProtegeBases && t != null && NaSafe(t.position)) permitir = false;
         }
 

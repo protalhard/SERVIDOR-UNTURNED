@@ -207,7 +207,7 @@ namespace SobrevivenciaCore
     {
         public override string Name => "setloja";
         public override string Help => "Coloca a loja na sua posicao atual.";
-        public override string Syntax => "<armas|comida|geral|caca|mercadonegro> [raio]";
+        public override string Syntax => "<armas|comida|roupas|remedios|equipamentos|garagem|cacador|negro> [raio]";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (a.Length < 1) { P.Erro(p, "Use: /setloja <id> [raio]. Ids: " + string.Join(", ", C.Lojas.Select(l => l.Id))); return; }

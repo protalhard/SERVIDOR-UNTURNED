@@ -34,3 +34,5 @@ adm
 staff
 hud
 statsui
+montar
+desmontar

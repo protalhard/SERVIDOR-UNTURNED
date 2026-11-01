@@ -57,7 +57,7 @@ namespace SobrevivenciaCore
         /// <summary>Entrega o valor em notas/moedas (o que não couber cai no chão).</summary>
         public static void Dar(UnturnedPlayer p, long valor)
         {
-            foreach (var n in Notas.OrderByDescending(n => n.Valor))
+            foreach (var n in Notas.Where(n => !n.SoAceita).OrderByDescending(n => n.Valor))
             {
                 while (valor >= n.Valor)
                 {

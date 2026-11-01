@@ -48,6 +48,8 @@ namespace SobrevivenciaCore
         [XmlAttribute] public string Permissao = "";
         [XmlAttribute] public byte Largura;
         [XmlAttribute] public byte Altura;
+        // Preço pra comprar com dinheiro do jogo no NPC Vault (0 = só por permissão/VIP)
+        [XmlAttribute] public int Preco;
     }
 
     /// <summary>Configuração dos sistemas estilo DayZ (warp, combate, XP, kits, vault...).</summary>
@@ -126,6 +128,13 @@ namespace SobrevivenciaCore
         public bool SafeProtegeBases = true;
         public bool SafeProtegeVeiculos = true;
         public bool LojaXpSoNaSafe = true;
+        // ATM só funciona dentro da safe zone (no mercado negro e no caçador não tem)
+        public bool AtmSoNaSafe = true;
+        // /montar: barricada da cerca (7200 = Hatched Metal Wall do California 2), distância entre peças, largura da entrada
+        public ushort MontarCercaId = 7200;
+        public float MontarCercaEspaco = 3.5f;
+        public float MontarEntrada = 6f;
+        public float MontarRotacaoX = -90f;
 
         public List<Patente> Patentes;
         public List<Kit> Kits;
@@ -158,11 +167,21 @@ namespace SobrevivenciaCore
                 VersaoPadroes = 3;
                 mudou = true;
             }
+            // v5: vaults maiores podem ser comprados com dinheiro do jogo
+            if (VersaoPadroes < 5)
+            {
+                foreach (var v in Vaults)
+                    if (v.Preco == 0 && v.Largura * v.Altura > 25) v.Preco = v.Largura * v.Altura >= 150 ? 40000 : v.Largura * v.Altura >= 90 ? 15000 : 5000;
+            }
             // v4: combate de 2 minutos (era 20s)
             if (VersaoPadroes < 4)
             {
                 if (CombateSegundos == 20) CombateSegundos = 120;
                 VersaoPadroes = 4;
+            }
+            if (VersaoPadroes < 5)
+            {
+                VersaoPadroes = 5;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

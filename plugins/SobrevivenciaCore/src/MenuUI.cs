@@ -84,6 +84,7 @@ namespace SobrevivenciaCore
         {
             if (!MenuDisponivel || p?.Player == null) return false;
             if (MenuAberto(p)) { FecharMenu(p); return true; }
+            FecharLoja(p);
             var e = new EstadoMenu();
             menus[Id(p)] = e;
             EffectManager.SendUIEffect((EffectAsset)Assets.find(EAssetType.EFFECT, MenuId), MenuKey, Con(p), true);
@@ -236,12 +237,12 @@ namespace SobrevivenciaCore
             {
                 var v = S.Vaults[i];
                 string n = "Vault_" + (i + 1);
-                bool liberado = TemPermissao(p, v.Permissao);
+                bool liberado = TemVault(p, v);
                 T(p, n + "_Nome", Chat.Limpar(v.Nome).ToUpperInvariant());
                 T(p, n + "_Tamanho", $"{v.Largura} x {v.Altura}");
                 T(p, n + "_Status", liberado ? C(Verde, "LIBERADO") : C(Vermelho, "BLOQUEADO"));
-                T(p, n + "_Preco", liberado ? (string.IsNullOrEmpty(v.Permissao) ? "GRATIS" : "VIP") : "VIP EM BREVE");
-                T(p, n + "_Abrir_Texto", liberado ? "ABRIR" : "VER VIP");
+                T(p, n + "_Preco", liberado ? (string.IsNullOrEmpty(v.Permissao) && v.Preco == 0 ? "GRATIS" : "SEU") : v.Preco > 0 ? "$ " + v.Preco.ToString("N0") : "SO VIP");
+                T(p, n + "_Abrir_Texto", liberado ? "ABRIR" : v.Preco > 0 ? "COMPRAR" : "VER VIP");
             }
             T(p, "Vaults_Dica", S.VaultSoNaSafe ? "O cofre abre dentro da safe zone. O que fica nele nao se perde quando voce morre." : "O que fica no cofre nao se perde quando voce morre.");
         }
@@ -319,7 +320,9 @@ namespace SobrevivenciaCore
             try
             {
                 var p = UnturnedPlayer.FromPlayer(pl);
-                if (p == null || !menus.TryGetValue(Id(p), out var e)) return;
+                if (p == null) return;
+                if (CliqueLoja(p, botao)) return;
+                if (!menus.TryGetValue(Id(p), out var e)) return;
                 if (botao.StartsWith("Adm_")) { CliqueAdmin(p, e, botao); return; }
                 if (botao.StartsWith("Aba_")) { MostrarAba(p, e, botao.Substring(4)); return; }
                 if (botao.StartsWith("Kit_") && int.TryParse(botao.Substring(4), out var nk)) { CliqueKit(p, e, nk); return; }
@@ -379,7 +382,14 @@ namespace SobrevivenciaCore
             var partes = botao.Split('_'); // Vault_N_Abrir
             if (partes.Length < 3 || partes[2] != "Abrir" || !int.TryParse(partes[1], out var n) || n < 1 || n > S.Vaults.Count) return;
             var tam = S.Vaults[n - 1];
-            if (!TemPermissao(p, tam.Permissao)) { Aviso(p, "Esse cofre e VIP. Os pacotes VIP abrem em breve, fique de olho no Discord.", false); return; }
+            if (!TemVault(p, tam))
+            {
+                if (tam.Preco <= 0) { Aviso(p, "Esse cofre e so VIP. Os pacotes VIP abrem em breve, fique de olho no Discord.", false); return; }
+                bool ok = ComprarVault(p, tam, out var msg);
+                Aviso(p, msg, ok);
+                if (ok) { Chat.Ok(p, msg); PreencherVaults(p); }
+                return;
+            }
             FecharMenu(p);
             CmdVault.Abrir(this, S, p, tam);
         }
@@ -421,7 +431,7 @@ namespace SobrevivenciaCore
             try
             {
                 var p = UnturnedPlayer.FromPlayer(pl);
-                if (p == null || !menus.ContainsKey(Id(p))) return;
+                if (p == null || DigitouLoja(p, campo, texto) || !menus.ContainsKey(Id(p))) return;
                 if (campo.StartsWith("Adm_")) DigitouAdmin(p, campo, texto);
             }
             catch (Exception ex) { Rocket.Core.Logging.Logger.LogException(ex); }

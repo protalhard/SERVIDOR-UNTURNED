@@ -245,6 +245,7 @@ namespace SobrevivenciaCore
 
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
+            if (a.Length == 0 && P.AbrirGuia(p)) return;
             if (a.Length == 0)
             {
                 Chat.Para(p, Cor(S.CorTexto, Chat.Forte("TUTORIAL - DAY Z BRASIL OFICIAL")));
@@ -471,8 +472,7 @@ namespace SobrevivenciaCore
         public override List<string> Aliases => new List<string> { "cofre" };
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
-            var tam = S.Vaults.Where(v => P.TemPermissao(p, v.Permissao))
-                .OrderByDescending(v => v.Largura * v.Altura).FirstOrDefault();
+            var tam = P.MaiorVault(p);
             if (tam == null) { Chat.Erro(p, "Voce nao tem cofre."); return; }
             Abrir(P, S, p, tam);
         }
@@ -484,7 +484,7 @@ namespace SobrevivenciaCore
             if (S.VaultSoNaSafe && P.ZonaSeguraEm(p.Position) == null) { Chat.Erro(p, "O cofre so abre dentro da safe zone."); return; }
             if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
             if (p.Player.movement.getVehicle() != null) { Chat.Erro(p, "Saia do veiculo pra abrir o cofre."); return; }
-            if (!P.TemPermissao(p, tam.Permissao)) { Chat.Erro(p, "Esse cofre e VIP."); return; }
+            if (!P.TemVault(p, tam)) { Chat.Erro(p, "Voce nao tem esse cofre. Compre no NPC Vault da safe."); return; }
             P.Cofres.Abrir(p, tam);
             Chat.Ok(p, $"{tam.Nome} aberto ({tam.Largura}x{tam.Altura}).");
         }

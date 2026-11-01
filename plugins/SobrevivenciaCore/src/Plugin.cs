@@ -24,8 +24,10 @@ namespace SobrevivenciaCore
             Banco = new Banco(Directory);
             IniciarSistemas();
             LigarSafeZone();
+            MigrarLojas();
             CarregarStaff();
             LigarMenu();
+            LigarLojas();
             UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
@@ -42,6 +44,7 @@ namespace SobrevivenciaCore
         {
             CancelInvoke(nameof(ChecarZonas));
             DesligarMenu();
+            DesligarLojas();
             UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat -= AoMudarStat;
             DesligarSafeZone();
@@ -71,7 +74,8 @@ namespace SobrevivenciaCore
             => Configuration.Instance.ZonasSeguras.FirstOrDefault(z => DistanciaPlana(pos, z.X, z.Z) <= z.Raio);
 
         public Ponto AtmPerto(Vector3 pos)
-            => Configuration.Instance.Atms.FirstOrDefault(a => Vector3.Distance(pos, new Vector3(a.X, a.Y, a.Z)) <= a.Raio);
+            => (S.AtmSoNaSafe && ZonaSeguraEm(pos) == null) ? null
+             : Configuration.Instance.Atms.FirstOrDefault(a => Vector3.Distance(pos, new Vector3(a.X, a.Y, a.Z)) <= a.Raio);
 
         public Loja LojaPerto(Vector3 pos)
             => Configuration.Instance.Lojas
