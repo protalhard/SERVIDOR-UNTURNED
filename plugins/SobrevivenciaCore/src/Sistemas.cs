@@ -465,8 +465,8 @@ namespace SobrevivenciaCore
                 Itens = L(I(81, 2), I(337), I(362), I(288), I(14, 2)) },
             new Kit { Nome = "rush", Descricao = "Ace com 3 pentes e bandagens", Espera = 3600,
                 Itens = L(I(107), I(108, 3), I(95, 3)) },
-            new Kit { Nome = "base", Descricao = "Porta e paredes de metal, chapas, bau e bandeira", Espera = 7200,
-                Itens = L(I(378), I(370), I(371, 2), I(1092, 4), I(366), I(1158)) },
+            new Kit { Nome = "base", Descricao = "Porta e paredes de madeira, chapas, bau e bandeira", Espera = 14400,
+                Itens = L(I(281), I(32), I(33, 2), I(1059, 4), I(366), I(1158)) },
             new Kit { Nome = "airdrop", Descricao = "Binoculo, sinalizador, radio e MRE", Espera = 7200,
                 Itens = L(I(333), I(255, 2), I(1445), I(81)) },
 

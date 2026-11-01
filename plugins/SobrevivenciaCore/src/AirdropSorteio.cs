@@ -32,13 +32,14 @@ namespace SobrevivenciaCore
             var todos = new List<ItemAsset>();
             Assets.find(todos);
             var p = new Dictionary<string, List<ItemAsset>>();
-            foreach (var k in new[] { "comida", "bebida", "remedio", "arma", "acessorio", "granada", "mochila", "colete", "chapeu", "ferramenta", "construcao", "bau", "energia" })
+            foreach (var k in new[] { "comida", "bebida", "remedio", "arma", "acessorio", "granada", "mochila", "colete", "chapeu", "ferramenta", "construcao", "construcao_forte", "bau", "bau_forte", "energia" })
                 p[k] = new List<ItemAsset>();
             foreach (var a in todos)
             {
                 if (a == null || a.id == 0 || a.id >= 51000 || a.isPro || notas.Contains(a.id)) continue;
                 var nome = (a.itemName ?? "").Trim();
-                if (nome.Length < 2 || NomeProibido.IsMatch(nome)) continue;
+                if (nome.Length < 2 || NomeProibido.IsMatch(nome) || nome.IndexOf("unobtainable", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                var forte = EhForte(a) ? "_forte" : ""; // metal, tijolo, cofre: vai pra lista rara
                 switch (a)
                 {
                     case ItemGunAsset g when g.action != EAction.Rocket && g.action != EAction.Minigun: p["arma"].Add(a); break;
@@ -51,13 +52,13 @@ namespace SobrevivenciaCore
                     case ItemWaterAsset _: p["bebida"].Add(a); break;
                     case ItemFoodAsset _: p["comida"].Add(a); break;
                     case ItemFuelAsset _: case ItemRefillAsset _: case ItemToolAsset _: case ItemFisherAsset _: case ItemOpticAsset _: p["ferramenta"].Add(a); break;
-                    case ItemStorageAsset _: p["bau"].Add(a); break;
+                    case ItemStorageAsset _: p["bau" + forte].Add(a); break;
                     case ItemGeneratorAsset _: p["energia"].Add(a); break;
-                    case ItemStructureAsset _: p["construcao"].Add(a); break;
+                    case ItemStructureAsset _: p["construcao" + forte].Add(a); break;
                     case ItemBarricadeAsset b when b.build == EBuild.DOOR || b.build == EBuild.GATE || b.build == EBuild.HATCH
                         || b.build == EBuild.FORTIFICATION || b.build == EBuild.BARRICADE || b.build == EBuild.WIRE || b.build == EBuild.LADDER
                         || b.build == EBuild.CLAIM || b.build == EBuild.SPOT:
-                        p["construcao"].Add(a); break;
+                        p["construcao" + forte].Add(a); break;
                 }
             }
             return poolsDrop = p;
@@ -135,8 +136,9 @@ namespace SobrevivenciaCore
                     Por("ferramenta", 1, 1); Por("ferramenta", 1, 1); Por("remedio", 1, 2);
                     break;
                 case "base":
-                    for (int i = 0; i < 5; i++) Por("construcao", 2, 6);
-                    Por("bau", 1, 2);
+                    // o normal e madeira; metal, tijolo, porta reforcada e cofre caem pouco
+                    for (int i = 0; i < 5; i++) Por(sorte.NextDouble() < ChanceForteAirdrop ? "construcao_forte" : "construcao", 2, 6);
+                    Por(sorte.NextDouble() < ChanceForteAirdrop ? "bau_forte" : "bau", 1, 2);
                     if (sorte.Next(2) == 0) Por("energia", 1, 1);
                     break;
                 default: // completo
@@ -157,7 +159,7 @@ namespace SobrevivenciaCore
                 case "comida": return "sorteado: comida, bebida e remedio";
                 case "medico": return "sorteado: remedios e bebida";
                 case "equipamentos": return "sorteado: mochila, colete, capacete, ferramentas e remedio";
-                case "base": return "sorteado: pecas de construcao, bau e as vezes gerador";
+                case "base": return "sorteado: pecas de madeira, bau e as vezes gerador (metal e cofre sao raros)";
                 case "completo": return "sorteado: arma com carregadores, mochila ou colete, comida e remedio";
             }
             return ListaItens(kit?.Itens);

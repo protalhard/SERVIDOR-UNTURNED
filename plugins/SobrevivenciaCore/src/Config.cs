@@ -94,6 +94,7 @@ namespace SobrevivenciaCore
         public int VersaoLojas;
         public int VersaoCatalogo;
         public int VersaoEconomia;
+        public int VersaoKits;
 
         public void LoadDefaults()
         {
