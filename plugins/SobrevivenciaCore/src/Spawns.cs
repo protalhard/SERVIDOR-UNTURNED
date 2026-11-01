@@ -290,7 +290,13 @@ namespace SobrevivenciaCore
                 // igual ao /montar: a origem da barricada fica "offset" acima do chão (senão o NPC afunda)
                 var pos = hit.point + Vector3.up * ba.offset;
                 float rotX = EhNpc(ba.id) ? S.MontarRotacaoXNpc : S.MontarRotacaoX;
-                ok = BarricadeManager.dropNonPlantedBarricade(new Barricade(ba), pos, Quaternion.Euler(rotX, yaw, 0f), Id(p), EhNpc(ba.id) ? 0 : p.Player.quests.groupID.m_SteamID) != null;
+                var tr = BarricadeManager.dropNonPlantedBarricade(new Barricade(ba), pos, Quaternion.Euler(rotX, yaw, 0f), Id(p), EhNpc(ba.id) ? 0 : p.Player.quests.groupID.m_SteamID);
+                ok = tr != null;
+                // vira "peça montada": não some pelo tempo, ninguém quebra e bomba de gasolina fica sempre cheia
+                var dropPor = ok ? BarricadeManager.FindBarricadeByRootTransform(tr) : null;
+                if (dropPor != null)
+                    try { System.IO.File.AppendAllText(ArqMontagens, $"{DateTime.Now:yyyy-MM-dd HH:mm}\tpor\t{dropPor.instanceID}\t{pos.x:0.0} {pos.y:0.0} {pos.z:0.0}{Environment.NewLine}"); }
+                    catch { }
                 if (ok)
                 {
                     pecasMontadas = null;
