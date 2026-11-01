@@ -124,6 +124,8 @@ main.envolve { flex: 1; padding: 34px 0 70px; }
 .podio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 22px; }
 .podio .painel { text-align: left; }
 .podio .pos { font: 800 40px var(--mono); color: var(--c); opacity: .9; position: absolute; right: 18px; top: 10px; }
+.podio .nome-jog { padding-right: 64px; overflow-wrap: anywhere; }
+.podio .nome-jog .tag { display: block; margin-bottom: 2px; }
 .podio .p1 { border-color: rgba(255,176,32,.6); box-shadow: 0 0 40px -12px rgba(255,176,32,.6); }
 @media (max-width: 900px) { .podio { grid-template-columns: 1fr; } }
 .ferramentas { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
