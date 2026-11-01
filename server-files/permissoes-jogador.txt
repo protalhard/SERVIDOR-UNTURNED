@@ -38,3 +38,4 @@ montar
 desmontar
 raid
 atm
+garagem

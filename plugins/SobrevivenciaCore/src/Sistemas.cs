@@ -181,6 +181,7 @@ namespace SobrevivenciaCore
             "luz=7130", "fogueira=7130", "torre=6956", "barraca=0", "banco_praca=4893",
             "bandeira=51253", "bandeira_placa=4996",
             "hangar=51256", "heliponto=51255", "pista=51257",
+            "terminal=51258", "vaga=51259", "placa=51260",
         };
 
         /// <summary>Preenche o que estiver faltando (config antiga). Devolve true se mudou algo.</summary>
@@ -240,9 +241,18 @@ namespace SobrevivenciaCore
             if (VersaoPadroes < 8)
             {
                 if (MontarPecas != null)
-                    foreach (var x in new[] { "hangar=51256", "heliponto=51255", "pista=51257" })
+                    foreach (var x in new[] { "hangar=51256", "heliponto=51255", "pista=51257", "terminal=51258", "vaga=51259", "placa=51260" })
                         if (!MontarPecas.Exists(y => y.StartsWith(x.Split('=')[0] + "="))) MontarPecas.Add(x);
                 VersaoPadroes = 8;
+                mudou = true;
+            }
+            // v9: garagem (terminal, vaga, placa)
+            if (VersaoPadroes < 9)
+            {
+                if (MontarPecas != null)
+                    foreach (var x in new[] { "terminal=51258", "vaga=51259", "placa=51260" })
+                        if (!MontarPecas.Exists(y => y.StartsWith(x.Split('=')[0] + "="))) MontarPecas.Add(x);
+                VersaoPadroes = 9;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

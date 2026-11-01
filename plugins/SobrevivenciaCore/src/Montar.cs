@@ -191,10 +191,19 @@ namespace SobrevivenciaCore
                             if (loja != null && area == "safe") { loja.VX = v.x; loja.VY = v.y; loja.VZ = v.z; }
                             break;
                         }
+                        case "vaga":
+                        {
+                            var v = Mundo(pc.X, pc.Y); float r = Yaw(pc.X2, pc.Y2);
+                            Guardar(Colocar(IdPeca("vaga", area), v, r, dono));
+                            (cfg.Vagas = cfg.Vagas ?? new List<Vaga>()).Add(new Vaga { Tipo = "carro", X = v.x, Y = v.y, Z = v.z, R = r });
+                            break;
+                        }
                         case "heliponto":
                         {
                             var v = Mundo(pc.X, pc.Y);
                             Guardar(Colocar(IdPeca("heliponto", area), v, Yaw(0, 1), dono));
+                            // safe e negro: heli da garagem sai aqui (no caçador é só pouso)
+                            if (area != "cacador") (cfg.Vagas = cfg.Vagas ?? new List<Vaga>()).Add(new Vaga { Tipo = "heli", X = v.x, Y = v.y, Z = v.z, R = Yaw(0, 1) });
                             // no mercado negro o heli comprado nasce no heliponto
                             var loja = cfg.Lojas.FirstOrDefault(l => l.Id == "negro");
                             if (loja != null && area == "negro") { loja.VX = v.x; loja.VY = v.y; loja.VZ = v.z; }
@@ -205,6 +214,7 @@ namespace SobrevivenciaCore
                             var v = Mundo(pc.X, pc.Y);
                             var loja = cfg.Lojas.FirstOrDefault(l => l.Id == "negro");
                             if (loja != null && area == "negro") { loja.AX = v.x; loja.AY = v.y; loja.AZ = v.z; loja.AR = Yaw(pc.X2, pc.Y2); }
+                            (cfg.Vagas = cfg.Vagas ?? new List<Vaga>()).Add(new Vaga { Tipo = "aviao", X = v.x, Y = v.y, Z = v.z, R = Yaw(pc.X2, pc.Y2) });
                             break;
                         }
                         case "bandeira":

@@ -264,7 +264,7 @@ namespace SobrevivenciaCore
         {
             var id = Id(vitima);
             if (MenuAberto(vitima)) FecharMenu(vitima);
-            FecharLoja(vitima); FecharAtm(vitima);
+            FecharLoja(vitima); FecharAtm(vitima); FecharGaragem(vitima);
             combateAte.Remove(id);
             teleportes.Remove(id);
             if (Cofres.Aberto(id)) Cofres.Fechar(vitima, false);
@@ -427,6 +427,7 @@ namespace SobrevivenciaCore
             menus.Remove(id);
             lojasAbertas.Remove(id);
             atmsAbertos.Remove(id);
+            garagensAbertas.Remove(id);
             LimparAdmin(p);
             Cofres.Fechar(p, false);
             teleportes.Remove(id);

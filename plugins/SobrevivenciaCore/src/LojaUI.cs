@@ -36,7 +36,7 @@ namespace SobrevivenciaCore
         };
         static readonly string[] NegroArmas = { "Snipers", "Rifles fortes", "Metralhadoras", "Pistolas e escopetas", "Municao rara" };
 
-        public static bool EhNpc(ushort id) => (id >= 51240 && id <= 51252) || id == 51254;
+        public static bool EhNpc(ushort id) => (id >= 51240 && id <= 51252) || id == 51254 || id == TerminalId;
 
         class EstadoLoja
         {
@@ -189,6 +189,7 @@ namespace SobrevivenciaCore
                 var p = UnturnedPlayer.FromSteamPlayer(sp);
                 var pos = drop.model.position;
                 ushort id = drop.asset.id;
+                if (id == TerminalId) { AbrirGaragem(p, pos); return; }
                 if (id == NpcVault) { AbrirVaultNpc(p); return; }
                 if (id == NpcBanco && AbrirAtm(p, pos)) return;
                 if (id == NpcBanco)
@@ -424,6 +425,16 @@ namespace SobrevivenciaCore
                 if (asset.engine == EEngine.PLANE && (e.Loja.AX != 0 || e.Loja.AZ != 0))
                 { onde = new Vector3(e.Loja.AX, e.Loja.AY, e.Loja.AZ); giro = e.Loja.AR; }
                 if (!Dinheiro.Pagar(p, preco)) { AvisoLoja(p, "Dinheiro insuficiente.", false); return; }
+                if (GaragemAtiva)
+                {
+                    // vai pra garagem: o jogador tira no TERMINAL (vaga, heliponto ou pista)
+                    GuardarComprado(p, asset);
+                    var onde2 = TipoVeiculo(asset) == "heli" ? "no terminal do heliponto" : TipoVeiculo(asset) == "aviao" ? "no terminal da pista" : "no terminal do estacionamento";
+                    AvisoLoja(p, $"{asset.vehicleName} foi pra sua GARAGEM. Tire {onde2}.", true);
+                    Rocket.Core.Logging.Logger.Log($"[LOJA] {p.CharacterName} comprou veiculo {asset.vehicleName} por {preco} (garagem)");
+                    LT(p, "Loja_Dinheiro", C(Verde, "$ " + Dinheiro.NoBolso(p).ToString("N0")) + C(Cinza, " no bolso"));
+                    return;
+                }
                 VehicleManager.spawnLockedVehicleForPlayerV2(asset, onde + Vector3.up * 3f, Quaternion.Euler(0, giro, 0), p.Player);
                 Rocket.Core.Logging.Logger.Log($"[LOJA] {p.CharacterName} comprou veiculo {asset.vehicleName} por {preco}");
             }

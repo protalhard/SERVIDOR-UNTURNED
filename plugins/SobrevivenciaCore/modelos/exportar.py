@@ -85,7 +85,7 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd, nome="X"):
 
 MAPA = {"luz": "luz", "caixa": "caixa_grande", "torre": "torre", "fogueira": "fogueira", "barraca": "barraca",
         "varal": "mesa", "banco_praca": "banco_praca", "bandeira": "bandeira", "heliponto": "heliponto",
-        "veiculo": "veiculo", "mesa": "mesa"}
+        "veiculo": "veiculo", "mesa": "mesa", "vaga": "vaga", "terminal": "terminal", "placa": "placa"}
 
 with open(sys.argv[2] if len(sys.argv) > 2 else "montar_modelos.tsv", "w") as fo:
     fo.write("# gerado por exportar.py - " + __doc__.splitlines()[0] + "\n")

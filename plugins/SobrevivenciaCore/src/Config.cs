@@ -86,6 +86,8 @@ namespace SobrevivenciaCore
         public List<Ponto> ZonasSeguras;
         public List<Ponto> Atms;
         public List<Loja> Lojas;
+        // vagas da garagem (carro, heli, aviao), criadas pelo /montar
+        public List<Vaga> Vagas;
         public Sistemas Sistemas;
         // Versão das lojas padrão já aplicada (2 = lojas com NPC e itens do California 2)
         public int VersaoLojas;
