@@ -160,7 +160,7 @@ namespace SobrevivenciaCore
             "cerca@safe=7122", "cerca@negro=7121", "cerca@cacador=7120",
             "parede@safe=6204", "parede@negro=6196", "parede@cacador=6201",
             "balcao=6148", "balcao@cacador=4446",
-            "rack=4459", "prateleira=4968", "manequim=0", "mesa=4885", "mesa@cacador=4463",
+            "rack=4459", "prateleira=4968", "manequim=4575", "mesa=4885", "mesa@cacador=4463",
             "cofre=6957", "caixa=4449", "caixa_grande=6956", "barril=4587",
             "luz=7130", "fogueira=7130", "torre=6956", "barraca=0", "banco_praca=4893",
             "bandeira=51253", "bandeira_placa=4996",
@@ -210,6 +210,13 @@ namespace SobrevivenciaCore
             {
                 if (MontarCercaId == 7200) MontarCercaId = 7121;
                 VersaoPadroes = 6;
+                mudou = true;
+            }
+            // v7: manequim do California 2 (4575)
+            if (VersaoPadroes < 7)
+            {
+                if (MontarPecas != null) MontarPecas = MontarPecas.ConvertAll(x => x.Replace(" ", "") == "manequim=0" ? "manequim=4575" : x);
+                VersaoPadroes = 7;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

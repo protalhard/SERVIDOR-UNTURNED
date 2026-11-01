@@ -161,6 +161,8 @@ namespace SobrevivenciaCore
                             if (id == 0) break;
                             float comp = Mathf.Sqrt((pc.X2 - pc.X) * (pc.X2 - pc.X) + (pc.Y2 - pc.Y) * (pc.Y2 - pc.Y));
                             float esp = Mathf.Max(0.5f, pc.Tipo == "cerca" ? S.MontarEspacoCerca : S.MontarEspacoParede);
+                            // cerca: a largura da peça é ~2x o raio dela (7122/7121 = 3 m, 7120 = 1,6 m)
+                            if (pc.Tipo == "cerca" && Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset ca && ca.radius > 0.3f) esp = ca.radius * 2f;
                             int n = Mathf.Max(1, Mathf.RoundToInt(comp / esp));
                             // virada perpendicular à linha (a largura da peça fica ao longo da linha)
                             float yaw = Yaw(-(pc.Y2 - pc.Y), pc.X2 - pc.X) + S.MontarGiroParede;
