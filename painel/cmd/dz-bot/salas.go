@@ -33,7 +33,7 @@ func aoMudarVoz(s *discordgo.Session, v *discordgo.VoiceStateUpdate) {
 	}
 	if v.BeforeUpdate != nil && v.BeforeUpdate.ChannelID != "" && v.BeforeUpdate.ChannelID != v.ChannelID {
 		antes := v.BeforeUpdate.ChannelID
-		go func() { time.Sleep(3 * time.Second); apagarSeVazia(s, v.GuildID, antes) }()
+		go func() { time.Sleep(10 * time.Second); apagarSeVazia(s, v.GuildID, antes) }()
 	}
 }
 
