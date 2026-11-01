@@ -182,6 +182,8 @@ namespace SobrevivenciaCore
         public int FaccaoEsperaHoras = 24;
         public int FaccaoDiasProtecao = 15;
         public bool FaccaoBauSoNaSafe = true;
+        // baú virtual compartilhado no menu (desligado: só valem os baús de verdade da base)
+        public bool FaccaoBauVirtual = false;
         public List<NivelFaccao> FaccaoNiveis;
         public List<KitAirdrop> AirdropKits;
         public List<string> Anuncios;

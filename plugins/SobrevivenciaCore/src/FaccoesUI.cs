@@ -44,11 +44,12 @@ namespace SobrevivenciaCore
             var telas = f == null ? TelasSem : TelasCom;
             var st = e.Fac;
             if (!telas.Contains(st.Tela)) st.Tela = telas[0];
-            if (st.Tela == "Gerenciar" && !PodeGerenciar(f, Id(p))) st.Tela = "Minha";
+            bool lider = f?.Membro(Id(p))?.Cargo == 0;
+            if ((st.Tela == "Gerenciar" && !PodeGerenciar(f, Id(p))) || (st.Tela == "Permissoes" && !lider)) st.Tela = "Minha";
             T(p, "Fac_Titulo", f == null ? "FACCOES" : $"{f.TagCor} {Chat.Limpar(f.Nome).ToUpperInvariant()}");
             foreach (var t in TodasTelas)
             {
-                bool mostra = telas.Contains(t) && (t != "Gerenciar" || PodeGerenciar(f, Id(p)));
+                bool mostra = telas.Contains(t) && (t != "Gerenciar" || PodeGerenciar(f, Id(p))) && (t != "Permissoes" || lider);
                 V(p, "Fac_Tab_" + t, mostra);
                 V(p, "Fac_Tab_" + t + "_Sel", t == st.Tela);
                 V(p, "Fac_Pag_" + t, t == st.Tela);
@@ -154,6 +155,7 @@ namespace SobrevivenciaCore
                 : C(Verde, "ativa") + C(Cinza, $"  (Claim Flag, todos offline ha {S.RaidMinutosOffline}+ min)")));
             T(p, "Fac_Minha_Membros", string.Join("\n", f.Membros.OrderBy(m => m.Cargo).ThenBy(m => m.Nome).Select(m =>
                 (PlayerTool.getSteamPlayer(m.Id) != null ? C(Verde, "● ") : C(Cinza, "● ")) + Chat.Limpar(m.Nome) + "  " + C(Cinza, Chat.Limpar(f.NomeCargo(m.Cargo))))));
+            V(p, "Fac_Bau", S.FaccaoBauVirtual);
             T(p, "Fac_Bau_Texto", $"BAU DA FACCAO ({nivel.BauLargura}x{nivel.BauAltura})");
             bool lider = eu.Cargo == 0;
             V(p, "Fac_Sair", !lider);

@@ -641,7 +641,7 @@ namespace SobrevivenciaCore
             var lider = f?.Membro(Id(p));
             if (lider == null || lider.Cargo != 0) { msg = "So o lider pode dissolver a faccao."; return false; }
             if (BauFac.EmUso(f.Id)) { msg = "Alguem esta com o bau da faccao aberto. Espere fechar."; return false; }
-            if (BauFac.Contar(f.Id) > 0) { msg = "Esvazie o bau da faccao antes de dissolver (as coisas sao suas, e so pegar)."; return false; }
+            if (S.FaccaoBauVirtual && BauFac.Contar(f.Id) > 0) { msg = "Esvazie o bau da faccao antes de dissolver (as coisas sao suas, e so pegar)."; return false; }
             long cofre = f.Cofre;
             FecharFaccao(f, lider, "pelo lider");
             msg = "Faccao dissolvida. A base continua sua" + (cofre > 0 ? $" e os $ {cofre:N0} do cofre foram pro seu banco." : ".");
@@ -722,7 +722,7 @@ namespace SobrevivenciaCore
             f.Cofre -= prox.Preco; f.Nivel = prox.Nivel;
             Registrar(f, $"{Chat.Limpar(p.CharacterName)} subiu a faccao pro nivel {prox.Nivel} ($ {prox.Preco:N0})");
             SalvarFaccoes();
-            AvisarFaccao(f, Chat.Cor("#3DDC84", $"A faccao subiu pro nivel {prox.Nivel}! Agora sao {prox.Vagas} vagas e bau {prox.BauLargura}x{prox.BauAltura}."));
+            AvisarFaccao(f, Chat.Cor("#3DDC84", $"A faccao subiu pro nivel {prox.Nivel}! Agora sao {prox.Vagas} vagas" + (S.FaccaoBauVirtual ? $" e bau {prox.BauLargura}x{prox.BauAltura}." : ".")));
             msg = $"Nivel {prox.Nivel}!";
             return true;
         }
@@ -798,6 +798,7 @@ namespace SobrevivenciaCore
         {
             var f = FaccaoDe(p);
             if (f == null) { msg = "Voce nao esta em nenhuma faccao."; return false; }
+            if (!S.FaccaoBauVirtual) { msg = "Os baus da faccao sao os da sua base: o lider libera por cargo na aba Permissoes."; return false; }
             if (!TemPerm(f, Id(p), PermFac.Baus)) { msg = "Seu cargo nao abre o bau da faccao."; return false; }
             if (S.FaccaoBauSoNaSafe && ZonaSeguraEm(p.Position) == null) { msg = "O bau da faccao so abre dentro da safe zone."; return false; }
             if (EmCombate(p, out var resta)) { msg = $"Voce esta em combate. Espere {resta}s."; return false; }
