@@ -91,6 +91,7 @@ namespace SobrevivenciaCore
         public Sistemas Sistemas;
         // Versão das lojas padrão já aplicada (2 = lojas com NPC e itens do California 2)
         public int VersaoLojas;
+        public int VersaoCatalogo;
 
         public void LoadDefaults()
         {
@@ -99,7 +100,7 @@ namespace SobrevivenciaCore
             AvisarEntradaSafe = true;
             SaldoInicialBanco = 0;
             KitAoRenascer = true;
-            DinheiroKitInicial = 50;
+            DinheiroKitInicial = 0;
             KitInicial = new List<ItemKit>
             {
                 new ItemKit(13),      // Canned Beans
