@@ -264,6 +264,28 @@ namespace SobrevivenciaCore
             return "Nao achei peca ai.";
         }
 
+        /// <summary>/por registrar [raio]: marca como peça da safe tudo que o dono já colocou em volta (bomba enche, sem decay, sem dano).</summary>
+        public string RegistrarPecas(UnturnedPlayer p, float raio)
+        {
+            var c = p.Position; float r2 = raio * raio;
+            PecaMontada(null);
+            var novos = new List<uint>();
+            foreach (var reg in BarricadeManager.regions)
+                if (reg?.drops != null)
+                    foreach (var d in reg.drops)
+                    {
+                        var dd = d?.GetServersideData();
+                        if (d?.model == null || dd == null || pecasMontadas.Contains(dd.instanceID)) continue;
+                        float dx = d.model.position.x - c.x, dz = d.model.position.z - c.z;
+                        if (dx * dx + dz * dz < r2 && (dd.owner == Id(p) || EhDono(dd.owner))) novos.Add(dd.instanceID);
+                    }
+            if (novos.Count == 0) return "Nada novo pra registrar aqui (tudo ja esta registrado).";
+            try { System.IO.File.AppendAllText(ArqMontagens, $"{DateTime.Now:yyyy-MM-dd HH:mm}\tpor\t{string.Join(",", novos)}\t{c.x:0.0} {c.y:0.0} {c.z:0.0}{Environment.NewLine}"); }
+            catch (Exception e) { return "Erro ao salvar: " + e.Message; }
+            pecasMontadas = null;
+            return $"{novos.Count} pecas registradas como da safe (nao somem, nao quebram, bomba sempre cheia).";
+        }
+
         public string EntregarPendentes(UnturnedPlayer p)
         {
             if (!itensPendentes.TryGetValue(Id(p), out var lista) || lista.Count == 0) return "Nao tem mais pecas pra entregar.";
@@ -417,11 +439,13 @@ namespace SobrevivenciaCore
     {
         public override string Name => "por";
         public override string Help => "Coloca a peca que esta na sua mao onde voce olha, ate em lugar travado do mapa (dono).";
-        public override string Syntax => "[giro em graus] | tirar";
+        public override string Syntax => "[giro em graus] | tirar | registrar [raio]";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
             if (a.Length > 0 && a[0].Equals("tirar", StringComparison.OrdinalIgnoreCase)) { Chat.Info(p, P.TirarNaMira(p)); return; }
+            if (a.Length > 0 && a[0].Equals("registrar", StringComparison.OrdinalIgnoreCase))
+            { Chat.Info(p, P.RegistrarPecas(p, a.Length > 1 && float.TryParse(a[1], out var rr) ? Mathf.Clamp(rr, 5f, 250f) : 80f)); return; }
             float giro = a.Length > 0 && float.TryParse(a[0], out var g) ? g : 0f;
             Chat.Info(p, P.PorNaMira(p, giro));
         }
