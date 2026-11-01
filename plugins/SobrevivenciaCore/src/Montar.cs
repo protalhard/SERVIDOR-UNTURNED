@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using Rocket.Unturned.Player;
+using SDG.Framework.Landscapes;
 using SDG.Unturned;
 using UnityEngine;
 
@@ -98,7 +99,16 @@ namespace SobrevivenciaCore
             int mascara = RayMasks.GROUND | RayMasks.GROUND2 | RayMasks.ENVIRONMENT | RayMasks.LARGE | RayMasks.MEDIUM;
             var de = new Vector3(pos.x, pos.y + 25f, pos.z);
             if (Physics.Raycast(de, Vector3.down, out var hit, 60f, mascara)) return hit.point.y;
-            return LevelGround.getHeight(pos);
+            var t = Terreno(pos.x, pos.z);
+            return float.IsNaN(t) ? pos.y : t;
+        }
+
+        /// <summary>Altura do terreno (só o chão do mapa, sem casa/pedra). Raio de cima pra baixo nos colisores do terreno;
+        /// o LevelGround.getHeight volta 0 em parte do California 2. float.NaN = fora do mapa.</summary>
+        static float Terreno(float x, float z)
+        {
+            if (Physics.Raycast(new Vector3(x, 2000f, z), Vector3.down, out var hit, 4000f, RayMasks.GROUND | RayMasks.GROUND2)) return hit.point.y;
+            return Landscape.getWorldHeight(new Vector3(x, 0f, z), out var h) ? h : float.NaN;
         }
 
         /// <summary>Chão sob a peça: o ponto mais alto entre o centro e 4 pontos em volta (assim ela não afunda no lado mais alto).
@@ -225,7 +235,8 @@ namespace SobrevivenciaCore
                     float mn = float.MaxValue, mx = float.MinValue;
                     foreach (var q in grosso)
                     {
-                        float h = LevelGround.getHeight(new Vector3(cx + q.x, 0f, cz + q.y));
+                        float h = Terreno(cx + q.x, cz + q.y);
+                        if (float.IsNaN(h)) { mn = float.MinValue / 2; mx = float.MaxValue / 2; break; }
                         if (h < mn) mn = h; if (h > mx) mx = h;
                     }
                     candidatos.Add(new KeyValuePair<float, Vector2>(mx - mn, new Vector2(cx, cz)));
@@ -251,21 +262,23 @@ namespace SobrevivenciaCore
                 {
                     var dir = q.sqrMagnitude > 0 ? q.normalized * (r + 30f) : Vector2.zero;
                     var pt = new Vector3(cx + dir.x, 0f, cz + dir.y);
-                    pt.y = LevelGround.getHeight(pt) + 1f;
+                    pt.y = Terreno(pt.x, pt.z) + 1f;
                     if (LevelNodes.isPointInsideSafezone(pt, out _)) { safeMapa = true; break; }
                 }
                 if (safeMapa) continue;
                 float mn = float.MaxValue, mx = float.MinValue; int obst = 0; bool agua = false;
                 foreach (var q in fino)
                 {
-                    var v = new Vector3(cx + q.x, LevelGround.getHeight(new Vector3(cx + q.x, 0f, cz + q.y)), cz + q.y);
+                    var v = new Vector3(cx + q.x, Terreno(cx + q.x, cz + q.y), cz + q.y);
+                    if (float.IsNaN(v.y)) { agua = true; break; }
                     float h = Chao(new Vector3(v.x, v.y + 5f, v.z));
                     if (h > v.y + 1.5f) obst++;
                     if (SDG.Framework.Water.WaterUtility.isPointUnderwater(new Vector3(v.x, h + .3f, v.z))) agua = true;
                     if (h < mn) mn = h; if (h > mx) mx = h;
                 }
                 if (agua) continue;
-                var centro = new Vector3(cx, LevelGround.getHeight(new Vector3(cx, 0f, cz)), cz);
+                var centro = new Vector3(cx, Terreno(cx, cz), cz);
+                if (float.IsNaN(centro.y)) continue;
                 var regs = new List<RegionCoordinate>(); var arv = new List<Transform>();
                 Regions.getRegionsInRadius(centro, r, regs);
                 ResourceManager.getResourcesInRadius(centro, r * r, regs, arv);
@@ -312,7 +325,7 @@ namespace SobrevivenciaCore
             {
                 var v = Plano(x, y);
                 float h = Chao(v);
-                if (h > LevelGround.getHeight(v) + 1.5f) obstaculos++; // casa, pedra ou objeto grande no lugar
+                float th = Terreno(v.x, v.z); if (!float.IsNaN(th) && h > th + 1.5f) obstaculos++; // casa, pedra ou objeto grande no lugar
                 if (h < hMin) { hMin = h; pMin = new Vector2(x, y); }
                 if (h > hMax) { hMax = h; pMax = new Vector2(x, y); }
                 raioModelo = Mathf.Max(raioModelo, Mathf.Sqrt(x * x + y * y));
