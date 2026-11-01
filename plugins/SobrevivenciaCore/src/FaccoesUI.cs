@@ -150,9 +150,8 @@ namespace SobrevivenciaCore
             T(p, "Fac_Minha_Lider", Chat.Limpar(f.Lider?.Nome));
             T(p, "Fac_Minha_Cargo", "Seu cargo: " + C(Laranja, Chat.Limpar(f.NomeCargo(eu.Cargo))));
             T(p, "Fac_Minha_Online", C(Verde, "● ") + Online(f).Count() + " online");
-            T(p, "Fac_Minha_Protecao", S.FaccaoDiasProtecao > 0
-                ? $"Base com Claim Flag protegida com todos offline ha {S.RaidMinutosOffline} min. Se ninguem entrar por {S.FaccaoDiasProtecao} dias, a protecao acaba."
-                : "");
+            T(p, "Fac_Minha_Protecao", "Protecao da base: " + (FaccaoAbandonada(f.Id) ? C(Vermelho, $"perdida ({S.FaccaoDiasProtecao}+ dias sem ninguem)")
+                : C(Verde, "ativa") + C(Cinza, $"  (Claim Flag, todos offline ha {S.RaidMinutosOffline}+ min)")));
             T(p, "Fac_Minha_Membros", string.Join("\n", f.Membros.OrderBy(m => m.Cargo).ThenBy(m => m.Nome).Select(m =>
                 (PlayerTool.getSteamPlayer(m.Id) != null ? C(Verde, "● ") : C(Cinza, "● ")) + Chat.Limpar(m.Nome) + "  " + C(Cinza, Chat.Limpar(f.NomeCargo(m.Cargo))))));
             T(p, "Fac_Bau_Texto", $"BAU DA FACCAO ({nivel.BauLargura}x{nivel.BauAltura})");
@@ -188,7 +187,7 @@ namespace SobrevivenciaCore
                 V(p, n, true);
                 T(p, n + "_Nome", Chat.Limpar(ped.Nome));
                 T(p, n + "_Info", (fi != null ? $"{Chat.Tempo(fi.Segundos)} jogadas  •  {fi.Abates} abates  •  " : "") + Quando(ped.Quando)
-                    + (string.IsNullOrEmpty(ped.Msg) ? "" : "\n" + C(Cinza, "\"" + ped.Msg + "\"")));
+                    + (string.IsNullOrEmpty(ped.Msg) ? "" : C(Cinza, "  \"" + ped.Msg + "\"")));
             }
             V(p, "Fac_Ped_Vazio", !recruta || f.Pedidos.Count == 0);
             T(p, "Fac_Ped_Vazio", recruta ? "Nenhum pedido pra entrar." : "Seu cargo nao aceita pedidos.");
