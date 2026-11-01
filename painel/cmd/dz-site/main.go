@@ -28,9 +28,10 @@ import (
 var webFS embed.FS
 
 var (
-	fonte   dados.Fonte
-	segredo []byte
-	ip      string
+	chaveVinculo []byte
+	fonte        dados.Fonte
+	segredo      []byte
+	ip           string
 )
 
 func main() {
@@ -39,7 +40,9 @@ func main() {
 	arqSegredo := flag.String("segredo", "/home/unturned/dz-site/segredo", "arquivo com a chave dos cookies")
 	flag.StringVar(&ip, "ip", "54.94.93.87:27015", "IP:porta do servidor do jogo")
 	pastaIcones := flag.String("icones", pastaIconesPadrao(), "pasta com os PNGs dos itens (<id>.png)")
+	arqChave := flag.String("chave-vinculo", dados.ArqChavePadrao, "chave dividida com o bot pra vincular Discord e Steam")
 	flag.Parse()
+	chaveVinculo = dados.Chave(*arqChave)
 	fonte = dados.Fonte{Pasta: *pasta}
 	segredo = carregarSegredo(*arqSegredo)
 
@@ -70,6 +73,8 @@ func main() {
 	mux.HandleFunc("/entrar", entrar)
 	mux.HandleFunc("/entrar/retorno", retorno)
 	mux.HandleFunc("/sair", sair)
+	mux.HandleFunc("/vincular", vincular)
+	mux.HandleFunc("/vincular/retorno", vincularRetorno)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := strings.Trim(r.URL.Path, "/")
 		switch p {
@@ -201,24 +206,13 @@ func base(r *http.Request) string {
 	return esquema + "://" + r.Host
 }
 
-func entrar(w http.ResponseWriter, r *http.Request) {
-	b := base(r)
-	q := url.Values{
-		"openid.ns":         {"http://specs.openid.net/auth/2.0"},
-		"openid.mode":       {"checkid_setup"},
-		"openid.return_to":  {b + "/entrar/retorno"},
-		"openid.realm":      {b + "/"},
-		"openid.identity":   {"http://specs.openid.net/auth/2.0/identifier_select"},
-		"openid.claimed_id": {"http://specs.openid.net/auth/2.0/identifier_select"},
-	}
-	http.Redirect(w, r, steamOpenID+"?"+q.Encode(), http.StatusFound)
-}
+func entrar(w http.ResponseWriter, r *http.Request) { redirSteam(w, r, "/entrar/retorno") }
 
-func retorno(w http.ResponseWriter, r *http.Request) {
+// steamDoRetorno confere a resposta da Steam (OpenID) e devolve o SteamID64 ("" se inválida).
+func steamDoRetorno(r *http.Request, caminho string) string {
 	q := r.URL.Query()
-	if q.Get("openid.mode") != "id_res" || !strings.HasPrefix(q.Get("openid.return_to"), base(r)+"/entrar/retorno") {
-		http.Redirect(w, r, "/perfil?erro=1", http.StatusFound)
-		return
+	if q.Get("openid.mode") != "id_res" || !strings.HasPrefix(q.Get("openid.return_to"), base(r)+caminho) {
+		return ""
 	}
 	v := url.Values{}
 	for k, vs := range q {
@@ -230,31 +224,92 @@ func retorno(w http.ResponseWriter, r *http.Request) {
 	cli := &http.Client{Timeout: 10 * time.Second}
 	resp, err := cli.PostForm(steamOpenID, v)
 	if err != nil {
-		http.Redirect(w, r, "/perfil?erro=1", http.StatusFound)
-		return
+		return ""
 	}
 	defer resp.Body.Close()
 	corpo, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 	if !strings.Contains(string(corpo), "is_valid:true") {
-		http.Redirect(w, r, "/perfil?erro=1", http.StatusFound)
-		return
+		return ""
 	}
 	const prefixo = "https://steamcommunity.com/openid/id/"
 	claimed := q.Get("openid.claimed_id")
 	id := strings.TrimPrefix(claimed, prefixo)
 	if !strings.HasPrefix(claimed, prefixo) || len(id) != 17 {
-		http.Redirect(w, r, "/perfil?erro=1", http.StatusFound)
-		return
+		return ""
 	}
 	if _, err := strconv.ParseUint(id, 10, 64); err != nil {
-		http.Redirect(w, r, "/perfil?erro=1", http.StatusFound)
-		return
+		return ""
 	}
+	return id
+}
+
+func redirSteam(w http.ResponseWriter, r *http.Request, caminho string) {
+	b := base(r)
+	q := url.Values{
+		"openid.ns":         {"http://specs.openid.net/auth/2.0"},
+		"openid.mode":       {"checkid_setup"},
+		"openid.return_to":  {b + caminho},
+		"openid.realm":      {b + "/"},
+		"openid.identity":   {"http://specs.openid.net/auth/2.0/identifier_select"},
+		"openid.claimed_id": {"http://specs.openid.net/auth/2.0/identifier_select"},
+	}
+	http.Redirect(w, r, steamOpenID+"?"+q.Encode(), http.StatusFound)
+}
+
+func logar(w http.ResponseWriter, r *http.Request, id string) {
 	expira := time.Now().Add(30 * 24 * time.Hour).Unix()
 	valor := id + "." + strconv.FormatInt(expira, 10)
 	http.SetCookie(w, &http.Cookie{Name: "dz", Value: valor + "." + assinar(valor), Path: "/", HttpOnly: true,
 		SameSite: http.SameSiteLaxMode, Expires: time.Unix(expira, 0), Secure: r.TLS != nil})
+}
+
+func retorno(w http.ResponseWriter, r *http.Request) {
+	id := steamDoRetorno(r, "/entrar/retorno")
+	if id == "" {
+		http.Redirect(w, r, "/perfil?erro=1", http.StatusFound)
+		return
+	}
+	logar(w, r, id)
 	http.Redirect(w, r, "/perfil", http.StatusFound)
+}
+
+// /vincular?d=<discord>&e=<expira>&s=<assinatura>: link que o bot manda no #vincular.
+func vincular(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	d, e, s := q.Get("d"), q.Get("e"), q.Get("s")
+	if !dados.ConferirVinculo(chaveVinculo, d, e, s) {
+		http.Redirect(w, r, "/perfil?vinculo=expirado", http.StatusFound)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{Name: "dzv", Value: d + "." + e + "." + s, Path: "/vincular", HttpOnly: true,
+		SameSite: http.SameSiteLaxMode, MaxAge: 900, Secure: r.TLS != nil})
+	redirSteam(w, r, "/vincular/retorno")
+}
+
+func vincularRetorno(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("dzv")
+	if err != nil {
+		http.Redirect(w, r, "/perfil?vinculo=expirado", http.StatusFound)
+		return
+	}
+	p := strings.Split(c.Value, ".")
+	if len(p) != 3 || !dados.ConferirVinculo(chaveVinculo, p[0], p[1], p[2]) {
+		http.Redirect(w, r, "/perfil?vinculo=expirado", http.StatusFound)
+		return
+	}
+	id := steamDoRetorno(r, "/vincular/retorno")
+	if id == "" {
+		http.Redirect(w, r, "/perfil?erro=1", http.StatusFound)
+		return
+	}
+	if err := fonte.GravarVinculo(p[0], id); err != nil {
+		log.Println("vinculo:", err)
+		http.Redirect(w, r, "/perfil?vinculo=erro", http.StatusFound)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{Name: "dzv", Value: "", Path: "/vincular", MaxAge: -1})
+	logar(w, r, id)
+	http.Redirect(w, r, "/perfil?vinculo=ok", http.StatusFound)
 }
 
 func sair(w http.ResponseWriter, r *http.Request) {

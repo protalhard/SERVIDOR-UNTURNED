@@ -361,3 +361,34 @@ td.ord { color: var(--c); font-weight: 800; }
 .heroi-video { position: absolute; inset: 0; z-index: -2; overflow: hidden; opacity: 0; transition: opacity 1.6s ease; pointer-events: none; background: #000; }
 .heroi-video.tocando { opacity: 1; }
 .heroi-video iframe { position: absolute; top: 50%; left: 50%; width: max(100vw, 177.78vh); height: max(56.25vw, 100vh); transform: translate(-50%, -50%) scale(1.18); border: 0; }
+
+/* Loja VIP */
+.vip-abas { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin: 0 auto 22px; padding: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(10,10,14,.6); max-width: 760px; }
+.vip-abas button { background: none; border: 0; color: var(--texto, #c9cdd3); font: 700 12px var(--mono); letter-spacing: .12em; text-transform: uppercase; padding: 9px 14px; cursor: pointer; }
+.vip-abas button.ativo { background: var(--c1, #ff5a00); color: #111; }
+.vip-card { display: flex; flex-direction: column; border-top: 3px solid var(--vc); }
+.vip-card h3, .vip-supremo h3 { font: 800 24px var(--sans); text-transform: uppercase; margin-top: 6px; }
+.vip-foto { position: relative; height: 150px; background-size: cover; background-position: center; border-radius: 6px; overflow: hidden; display: grid; place-items: center; }
+.vip-foto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.65)); }
+.vip-foto.grande { height: 190px; min-width: 240px; }
+.vip-emblema { position: relative; z-index: 1; font: 900 22px var(--sans); letter-spacing: .06em; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.8); border: 2px solid var(--vc, #ff5a00); padding: 6px 12px; background: rgba(0,0,0,.35); }
+.vip-selo { display: inline-block; margin-top: 10px; font: 700 11px var(--mono); letter-spacing: .1em; color: var(--vc, var(--c2)); }
+.vip-preco { font: 900 30px var(--sans); color: var(--vc, var(--c2)); margin: 10px 0 4px; }
+.vip-preco.grande { font-size: 40px; color: #ff5a00; }
+.vip-preco small { font: 600 12px var(--mono); color: var(--fraco, #8a8f98); white-space: nowrap; }
+.vip-lista { list-style: none; padding: 0; margin: 8px 0 14px; flex: 1; }
+.vip-lista li { padding: 4px 0 4px 20px; position: relative; font-size: 14px; }
+.vip-lista li::before { content: "✓"; position: absolute; left: 0; color: var(--vc, var(--c2)); }
+.vip-lista.duas { columns: 2; }
+.vip-detalhes { border: 1px solid rgba(255,90,0,.4); margin-bottom: 10px; }
+.vip-detalhes summary { cursor: pointer; text-align: center; padding: 9px; font: 800 13px var(--mono); letter-spacing: .1em; color: var(--c1, #ff5a00); }
+.vip-kit { padding: 10px 12px; border-top: 1px solid rgba(255,255,255,.06); }
+.vip-kit-topo { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.vip-itens { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.vip-item { position: relative; width: 44px; height: 44px; background: rgba(255,255,255,.05); border-radius: 4px; display: grid; place-items: center; }
+.vip-item img { max-width: 40px; max-height: 40px; }
+.vip-item small { position: absolute; right: 2px; bottom: 0; font: 700 10px var(--mono); }
+.vip-comprar { width: 100%; opacity: .55; cursor: not-allowed; }
+.vip-supremo { display: grid; grid-template-columns: 240px 1fr 220px; gap: 22px; align-items: center; margin-bottom: 16px; border: 1px solid rgba(255,90,0,.6); }
+.vip-dir { text-align: right; }
+@media (max-width: 860px) { .vip-supremo { grid-template-columns: 1fr; } .vip-dir { text-align: left; } .vip-lista.duas { columns: 1; } }

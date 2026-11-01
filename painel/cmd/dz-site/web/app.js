@@ -179,16 +179,73 @@
     },
 
     async loja () {
-      const vips = [
-        ['Vault VIP', 'Cofre 7x7 em vez de 5x5.', ['Mais espaço pra guardar', 'Tag no chat'], 'neblina'],
-        ['Vault Grande', 'Cofre 11x9.', ['Espaço de base no bolso', 'Tag no chat'], 'bunker'],
-        ['Vault Ultra', 'Cofre 15x13.', ['O maior cofre do servidor', 'Tag no chat'], 'torre-noite'],
-        ['Kits VIP', 'Kits extras com espera menor.', ['Kits exclusivos', 'Cargo VIP no Discord'], 'ponte-por-do-sol'],
+      const d = await api('/api/kits').catch(() => ({ kits: [] }));
+      const kits = d.kits || [];
+      const real = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+      const conteudo = nomes => nomes.map(n => kits.find(k => k.nome === n)).filter(Boolean).map(k => `
+        <div class="vip-kit"><div class="vip-kit-topo"><b>${esc(k.titulo || k.nome)}</b><span class="mono fraco">/kit ${esc(k.nome)} · ${espera(k.espera)}</span></div>
+          <p class="fraco">${esc(k.descricao)}</p>
+          <div class="vip-itens">${(k.itens || []).map(i => `<span class="vip-item" title="ID ${i.id}"><img src="/icones/${i.id}.png" alt="" loading="lazy">${i.quantidade > 1 ? `<small>x${i.quantidade}</small>` : ''}</span>`).join('')}</div></div>`).join('');
+      // pacotes VIP do DAY Z BRASIL (nomes, kits e preços nossos)
+      const P = [
+        { id: 'iniciante', aba: 'kits', nome: 'Kit Iniciante', selo: 'ENTRADA', cor: '#c9cdd3', foto: 'vila', preco: 6.40, dias: 30,
+          desc: 'Escolha 1 dos 3 kits de iniciante.', itens: ['Escolha 1: Andarilho, Batedor ou Saqueador', 'Espera de 30 min', 'Tag do kit no chat', 'Cargo VIP no Discord'],
+          kits: ['andarilho', 'batedor', 'saqueador'] },
+        { id: 'bandido', aba: 'kits', nome: 'Bandido', selo: 'NÍVEL 1', cor: '#ffb020', foto: 'mercado', preco: 19.40, dias: 30,
+          desc: 'Libera +5 kits.', itens: ['Kits Bandido 1 e 2 (30 min)', 'Inclui os 3 kits de iniciante', 'Tag [BANDIDO] no chat', 'Cargo VIP no Discord'],
+          kits: ['bandido1', 'bandido2'] },
+        { id: 'mercenario', aba: 'kits', nome: 'Mercenário', selo: 'NÍVEL 2', cor: '#ff5a00', foto: 'bunker', preco: 30.90, dias: 30,
+          desc: 'Libera +8 kits.', itens: ['Kits Mercenário 1 e 2 (30 min)', 'Kit Base (12 h)', 'Inclui todos os kits do Bandido', 'Tag [MERCENÁRIO] no chat', 'Cargo VIP no Discord'],
+          kits: ['mercenario1', 'mercenario2', 'base'] },
+        { id: 'comandante', aba: 'kits', nome: 'Comandante', selo: 'NÍVEL 3', cor: '#ff3d00', foto: 'torre-noite', preco: 45.30, dias: 30,
+          desc: 'Libera +11 kits.', itens: ['Kits Comandante 1 e 2 (30 min)', 'Kit Zona Quente (1 h)', 'Inclui todos os kits do Mercenário', 'Tag [COMANDANTE] no chat', 'Cargo VIP no Discord'],
+          kits: ['comandante1', 'comandante2', 'zonaquente'] },
+        { id: 'especial', aba: 'especiais', nome: 'Kit Especial', selo: 'ESPECIAL', cor: '#ffb020', foto: 'deserto', preco: 21.60, dias: 30,
+          desc: 'Escolha 1 dos 3 kits especiais.', itens: ['Escolha 1: Zona Quente, Base ou Raid', 'Esperas diferentes (1 h, 12 h, 24 h)', 'Tag do kit no chat', 'Cargo VIP no Discord'],
+          kits: ['zonaquente', 'base', 'raid'] },
+        { id: 'cofre-mochila', aba: 'cofres', nome: 'Cofre Mochila', selo: '8×7', cor: '#ffd08a', foto: 'neblina', preco: 13.60, dias: 30,
+          desc: 'Seu /vault vira 8×7.', itens: ['Cofre 8×7 (56 espaços)', 'Tag [COFRE] no chat', 'Cargo VIP no Discord'] },
+        { id: 'cofre-bunker', aba: 'cofres', nome: 'Cofre Bunker', selo: '12×9', cor: '#ff8a3d', foto: 'colinas', preco: 22.90, dias: 30,
+          desc: 'Libera o Cofre Mochila e o Bunker.', itens: ['Cofre 8×7 e 12×9 (108 espaços)', 'Tag [BUNKER] no chat', 'Cargo VIP no Discord'] },
+        { id: 'cofre-fortaleza', aba: 'cofres', nome: 'Cofre Fortaleza', selo: '15×14', cor: '#ffb020', foto: 'farol', preco: 42.90, dias: 30,
+          desc: 'Os 3 cofres, o maior do servidor.', itens: ['Cofres 8×7, 12×9 e 15×14 (210 espaços)', 'Tag [FORTALEZA] no chat', 'Cargo VIP no Discord'] },
       ];
-      return cabeca('Loja VIP', 'Apoie o <em>servidor</em>', 'Os pacotes VIP vão abrir em breve, com pagamento por PIX. Todo apoio mantém o servidor online e sem lag.') +
-        `<div class="grade g4">${vips.map(([t, d, l, f]) => `<div class="painel vip"><div class="kit-foto" style="background-image:url(/img/mapa/${f}.webp)"></div><span class="em-breve">EM BREVE</span><h3 style="margin-top:8px">${t}</h3>
-          <p class="fraco">${d}</p><ul>${l.map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>
-         <p class="fraco" style="text-align:center;margin-top:24px">Quer ser avisado quando abrir? Entre no nosso Discord.</p>`;
+      const separado = P.reduce((t, p) => t + p.preco, 0);
+      const S = [
+        { id: 'supremo', nome: 'DZ Supremo', selo: 'TUDO INCLUSO', preco: 77.70, per: '35 dias', foto: 'ponte-por-do-sol',
+          desc: 'Tudo que o servidor tem, por 30 dias + 5 de bônus.', itens: ['Libera +12 kits', 'Libera os 3 cofres', '30 dias + 5 dias de bônus', `Economize ${Math.round(100 - 100 * 77.70 / separado)}% comprando tudo junto`] },
+        { id: 'supremo-vitalicio', nome: 'DZ Supremo Vitalício', selo: 'PRA SEMPRE', preco: 255.90, per: 'vitalício', foto: 'palmeiras',
+          desc: 'Paga uma vez, é seu pra sempre.', itens: ['Libera +12 kits', 'Libera os 3 cofres', 'Vitalício', 'Tag [SUPREMO] dourada no chat'] },
+      ];
+      const botao = `<button class="botao vip-comprar" disabled title="O pagamento abre em breve">🔒 EM BREVE</button>`;
+      const cartao = p => `<div class="painel vip-card" data-aba="${p.aba}" style="--vc:${p.cor}">
+          <div class="vip-foto" style="background-image:url(/img/mapa/${p.foto}.webp)"><span class="vip-emblema">${esc(p.nome.toUpperCase())}</span></div>
+          <span class="vip-selo">[${esc(p.selo)}]</span>
+          <h3>${esc(p.nome)}</h3><p class="fraco">${esc(p.desc)}</p>
+          <div class="vip-preco">${real(p.preco)}<small> / ${p.dias} dias</small></div>
+          <ul class="vip-lista">${p.itens.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+          ${p.kits ? `<details class="vip-detalhes"><summary>DETALHES</summary>${conteudo(p.kits)}</details>` : ''}
+          ${botao}
+        </div>`;
+      const supremo = p => `<div class="painel vip-supremo" data-aba="supremo">
+          <div class="vip-foto grande" style="background-image:url(/img/mapa/${p.foto}.webp)"><span class="vip-emblema">DZ</span></div>
+          <div class="vip-meio"><span class="vip-selo">[${esc(p.selo)}]</span><h3>${esc(p.nome)}</h3><p class="fraco">${esc(p.desc)}</p>
+            <ul class="vip-lista duas">${p.itens.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+          <div class="vip-dir">${p.id === 'supremo' ? `<div class="fraco mono" style="font-size:11px">COMPRANDO TUDO SEPARADO</div><s class="fraco">${real(separado)}</s>` : ''}
+            <div class="vip-preco grande">${real(p.preco)}<small> / ${p.per}</small></div>${botao}</div>
+        </div>`;
+      setTimeout(() => {
+        document.querySelectorAll('.vip-abas button').forEach(b => b.onclick = () => {
+          document.querySelectorAll('.vip-abas button').forEach(x => x.classList.toggle('ativo', x === b));
+          document.querySelectorAll('[data-aba]').forEach(c => { c.style.display = b.dataset.f === 'todos' || c.dataset.aba === b.dataset.f ? '' : 'none'; });
+        });
+      });
+      return cabeca('Loja VIP', 'Apoie & <em>sobreviva</em>', 'Kits VIP, kits especiais, cofres maiores e o DZ Supremo. O pagamento (PIX / Mercado Pago) abre em breve, com ativação automática no jogo.') +
+        `<div class="vip-abas">${[['todos', 'Todos'], ['kits', 'Kits VIP'], ['especiais', 'Kits especiais'], ['cofres', 'Cofres'], ['supremo', 'Supremo']]
+          .map(([f, t], i) => `<button data-f="${f}"${i ? '' : ' class="ativo"'}>${t}</button>`).join('')}</div>
+         ${S.map(supremo).join('')}
+         <div class="grade g4" style="margin-top:20px">${P.map(cartao).join('')}</div>
+         <p class="fraco" style="text-align:center;margin-top:24px">As fotos dos itens aparecem conforme forem adicionadas. Dúvidas? Abra um ticket no nosso Discord.</p>`;
     },
 
     async sobre () {
@@ -207,7 +264,9 @@
             <p style="margin-top:10px" class="fraco">A cada 30 minutos os itens do chão são limpos, com aviso antes. O que está em caixas não some.</p></div>
           <div class="painel"><h3 style="margin-bottom:8px">Comandos</h3>${cmds.map(([c, d]) =>
             `<div class="regra"><span class="t mono" style="color:var(--c2)">${c}</span><span class="fraco" style="text-align:right">${d}</span></div>`).join('')}</div>
-        </div>`;
+        </div>
+        <div class="painel destaque creditos" style="margin-top:20px"><h3 style="margin-bottom:8px">🙏 Créditos e agradecimento</h3>
+          <p>O DAY Z BRASIL se inspirou no servidor <b>Zumbas Brasil</b>. Reconhecemos o ótimo trabalho que eles fazem pela comunidade brasileira de Unturned e agradecemos pela inspiração na construção do nosso servidor. Valeu, Zumbas!</p></div>`;
     },
 
     async regras () {
@@ -224,6 +283,14 @@
     },
 
     async perfil () {
+      const v = new URLSearchParams(location.search).get('vinculo');
+      const aviso = v === 'ok' ? `<div class="painel destaque" style="text-align:center;margin-bottom:18px;border-color:#5be37d"><b style="color:#5be37d">✅ Steam vinculada ao Discord!</b><br><span class="fraco">No jogo, pegue seu kit com <b class="mono">/kit discord</b>. Os alertas de raid chegam na sua DM.</span></div>`
+        : v ? `<div class="painel" style="text-align:center;margin-bottom:18px"><b style="color:#ff4d4d">O link de vínculo expirou ou deu erro.</b><br><span class="fraco">Volte no canal #vincular do Discord e clique de novo.</span></div>` : '';
+      return aviso + await paginaPerfil();
+    },
+  };
+  async function paginaPerfil () {
+    {
       if (!eu || !eu.logado) {
         return cabeca('Seu perfil', 'Seu <em>perfil</em>', 'Entre com a sua conta Steam pra ver suas estatísticas, patente e o progresso dos Rank Kits.') +
           `<div style="text-align:center"><a class="botao" href="/entrar">Entrar com Steam</a>
@@ -232,14 +299,16 @@
       if (!eu.ficha) return cabeca('Seu perfil', 'Seu <em>perfil</em>', 'Você ainda não jogou no servidor. Entre uma vez e suas estatísticas aparecem aqui.') +
         `<div style="text-align:center"><a class="botao" href="/servidores" data-link>Ir pro servidor</a> <a class="botao fantasma" href="/sair">Sair</a></div>`;
       return desenharPerfil(eu.ficha, eu.kits, true);
-    },
+    }
+  }
+  Object.assign(paginas, {
 
     async jogador (id) {
       const [f, k] = await Promise.all([api('/api/jogador/' + encodeURIComponent(id)).catch(() => null), api('/api/kits')]);
       if (!f) return cabeca('Jogador', 'Não encontrado', 'Esse jogador ainda não tem estatísticas.');
       return desenharPerfil(f, k.kits, false);
     },
-  };
+  });
 
   function desenharPerfil(f, kits, meu) {
     const prox = (kits || []).filter(k => k.abates > f.abates).sort((a, b) => a.abates - b.abates)[0];

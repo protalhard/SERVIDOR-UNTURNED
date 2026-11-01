@@ -255,6 +255,20 @@ namespace SobrevivenciaCore
                 VersaoPadroes = 9;
                 mudou = true;
             }
+            // v10: kits VIP do DZ (bandido, mercenario, comandante, especiais), kit do Discord e cofres com nome nosso
+            if (VersaoPadroes < 10)
+            {
+                foreach (var k in KitsVipPadrao())
+                    if (!Kits.Exists(x => x.Nome.Equals(k.Nome, StringComparison.OrdinalIgnoreCase))) Kits.Add(k);
+                foreach (var v in Vaults)
+                {
+                    if (v.Nome == "Vault VIP") { v.Nome = "Cofre Mochila"; if (v.Largura == 7 && v.Altura == 7) v.Largura = 8; }
+                    else if (v.Nome == "Vault Grande") { v.Nome = "Cofre Bunker"; if (v.Largura == 11 && v.Altura == 9) v.Largura = 12; }
+                    else if (v.Nome == "Vault Ultra") { v.Nome = "Cofre Fortaleza"; if (v.Largura == 15 && v.Altura == 13) v.Altura = 14; }
+                }
+                VersaoPadroes = 10;
+                mudou = true;
+            }
             // config antiga sem bônus/título nos kits de rank: copia do padrão
             var padrao = KitsPadrao();
             foreach (var k in Kits)
@@ -278,6 +292,61 @@ namespace SobrevivenciaCore
             new Patente("Veterano", 6000, "#FFB020"),
             new Patente("Elite", 15000, "#FF7A2E"),
             new Patente("Lenda", 40000, "#FF5A00"),
+        };
+
+        // Permissões VIP (o site vende; o admin dá com /p ou pelo grupo do Rocket). Cada nível inclui os de baixo.
+        const string PIniciante = "vip.iniciante,vip.bandido,vip.mercenario,vip.comandante,vip.supremo";
+        const string PBandido = "vip.bandido,vip.mercenario,vip.comandante,vip.supremo";
+        const string PMercenario = "vip.mercenario,vip.comandante,vip.supremo";
+        const string PComandante = "vip.comandante,vip.supremo";
+
+        /// <summary>Kits VIP do DAY Z BRASIL (nomes e conteúdo nossos; o admin pode mudar no .xml).</summary>
+        public static List<Kit> KitsVipPadrao() => new List<Kit>
+        {
+            new Kit { Nome = "discord", Titulo = "Discord", Permissao = "discord", Espera = 14400,
+                Descricao = "Quem vinculou a Steam no Discord: mochila, comida, agua, curativos e uma Viper",
+                Itens = L(I(4600), I(4523), I(4525, 2), I(4301, 2), I(4400, 2), I(4406, 4)) },
+            // iniciantes (o pacote de entrada libera 1 dos 3; os níveis VIP liberam os 3)
+            new Kit { Nome = "andarilho", Titulo = "Andarilho", Permissao = "vip.andarilho," + PBandido, Espera = 1800,
+                Descricao = "Viper, mochila media, comida, agua e curativos",
+                Itens = L(I(4523), I(4525, 3), I(4137), I(4301, 2), I(4400, 2), I(4407, 3)) },
+            new Kit { Nome = "batedor", Titulo = "Batedor", Permissao = "vip.batedor," + PBandido, Espera = 1800,
+                Descricao = "Quicksilver, colete leve, binoculo e curativos",
+                Itens = L(I(4724), I(4726, 3), I(4104), I(4407, 3), I(4400)) },
+            new Kit { Nome = "saqueador", Titulo = "Saqueador", Permissao = "vip.saqueador," + PBandido, Espera = 1800,
+                Descricao = "Shorty com cartuchos, mochila e ferramentas",
+                Itens = L(I(4098), I(4198, 4), I(4600), I(4700), I(4407, 2)) },
+            // BANDIDO
+            new Kit { Nome = "bandido1", Titulo = "Bandido", Permissao = PBandido, Espera = 1800,
+                Descricao = "Maplestrike com 3 pentes militares, colete e medkit",
+                Itens = L(I(4518), I(4820, 3), I(4052), I(4414), I(4407, 3)) },
+            new Kit { Nome = "bandido2", Titulo = "Bandido", Permissao = PBandido, Espera = 1800,
+                Descricao = "Arachnid com 3 pentes, mochila militar e mira holografica",
+                Itens = L(I(6256), I(6224, 3), I(4064), I(4206), I(4407, 3)) },
+            // MERCENARIO
+            new Kit { Nome = "mercenario1", Titulo = "Mercenario", Permissao = PMercenario, Espera = 1800,
+                Descricao = "Roupa de mercenario, Maplestrike com Ares 4x e 4 pentes",
+                Itens = L(I(4080), I(4082), I(4084), I(4086), I(4518), I(4820, 4), I(6409), I(4414)) },
+            new Kit { Nome = "mercenario2", Titulo = "Mercenario", Permissao = PMercenario, Espera = 1800,
+                Descricao = "Doorkicker com 6 cartuchos, colete pesado e estimulante",
+                Itens = L(I(4526), I(4198, 6), I(4077), I(6269), I(4414)) },
+            new Kit { Nome = "base", Titulo = "Base", Permissao = "vip.base," + PMercenario, Espera = 43200,
+                Descricao = "Pra levantar a base: portoes, cercas, bau grande e cofre",
+                Itens = L(I(7200, 2), I(4449, 2), I(6184), I(6957), I(4995)) },
+            // COMANDANTE
+            new Kit { Nome = "comandante1", Titulo = "Comandante", Permissao = PComandante, Espera = 1800,
+                Descricao = "Sniper do mercado negro com luneta 8x e municao",
+                Itens = L(I(4009), I(4010, 3), I(6395), I(4077), I(4414, 2)) },
+            new Kit { Nome = "comandante2", Titulo = "Comandante", Permissao = PComandante, Espera = 1800,
+                Descricao = "Umbra com supressor, mochila grande e estimulantes",
+                Itens = L(I(4207), I(4820, 4), I(4532), I(6055), I(6269, 2), I(4414)) },
+            new Kit { Nome = "zonaquente", Titulo = "Zona Quente", Permissao = "vip.zonaquente," + PComandante, Espera = 3600,
+                Descricao = "Pra entrar na radiacao: anti-radiacao, estimulantes e medkits",
+                Itens = L(I(4812, 2), I(4021), I(6268), I(4414, 3)) },
+            // especial
+            new Kit { Nome = "raid", Titulo = "Raid", Permissao = "vip.raid,vip.supremo", Espera = 86400,
+                Descricao = "Explosivos pra raid (so funciona no horario de raid)",
+                Itens = L(I(4091, 3), I(6064, 2)) },
         };
 
         static List<Kit> KitsPadrao() => new List<Kit>
@@ -408,9 +477,9 @@ namespace SobrevivenciaCore
         static List<TamanhoVault> VaultsPadrao() => new List<TamanhoVault>
         {
             new TamanhoVault { Nome = "Vault", Largura = 5, Altura = 5 },
-            new TamanhoVault { Nome = "Vault VIP", Permissao = "vault.vip", Largura = 7, Altura = 7 },
-            new TamanhoVault { Nome = "Vault Grande", Permissao = "vault.grande", Largura = 11, Altura = 9 },
-            new TamanhoVault { Nome = "Vault Ultra", Permissao = "vault.ultra", Largura = 15, Altura = 13 },
+            new TamanhoVault { Nome = "Cofre Mochila", Permissao = "vault.vip,vip.supremo", Largura = 8, Altura = 7 },
+            new TamanhoVault { Nome = "Cofre Bunker", Permissao = "vault.grande,vip.supremo", Largura = 12, Altura = 9 },
+            new TamanhoVault { Nome = "Cofre Fortaleza", Permissao = "vault.ultra,vip.supremo", Largura = 15, Altura = 14 },
         };
 
         static List<KitAirdrop> AirdropPadrao() => new List<KitAirdrop>

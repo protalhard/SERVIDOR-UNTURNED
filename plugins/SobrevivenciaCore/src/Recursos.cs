@@ -102,8 +102,19 @@ namespace SobrevivenciaCore
         public void IniciarIntervalo(UnturnedPlayer p, string tipo, int segundos)
             => intervalos[Id(p) + "|" + tipo] = Time.realtimeSinceStartup + segundos;
 
+        /// <summary>Permissão vazia = todos. Várias separadas por vírgula = qualquer uma serve.
+        /// "discord" = quem vinculou a Steam no Discord.</summary>
         public bool TemPermissao(UnturnedPlayer p, string perm)
-            => string.IsNullOrEmpty(perm) || p.IsAdmin || p.HasPermission(perm);
+        {
+            if (string.IsNullOrEmpty(perm) || p.IsAdmin) return true;
+            foreach (var x in perm.Split(','))
+            {
+                var t = x.Trim();
+                if (t == "") continue;
+                if (t == "discord" ? VinculadoDiscord(Id(p)) : p.HasPermission(t)) return true;
+            }
+            return false;
+        }
 
         // ---------- XP ----------
 

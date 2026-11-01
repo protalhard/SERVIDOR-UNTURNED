@@ -4,7 +4,7 @@ Icon: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/brandi
 Thumbnail: https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon.png
 Desc_Server_List: <color=#ff5a00>SAFE ZONE | ATM | BLACK MARKET | CAÇA</color>
 Desc_Hint: <color=#f5f6f7>Sobrevivência</color> <color=#ff5a00>PvP</color> <color=#ffb020>estilo DayZ</color>
-Desc_Full: <color=#ff5a00><b>DAY Z BRASIL OFICIAL</b></color>\n<color=#f5f6f7>Sobrevivência PvP estilo DayZ no mapa California 2.</color>\n\n<color=#ffb020>Safe zone com lojas e ATM</color>\n<color=#ffb020>Dinheiro físico: guarde no banco ou perde ao morrer</color>\n<color=#ffb020>Mercado negro, caça e airdrops</color>\n<color=#ffb020>Kits por abates, XP, ranking e /vault</color>\n\n<color=#c9cdd3>Digite /menu no chat para ver tudo.</color>\n<color=#5be37d>Discord: discord.gg/J9mvXR5brd</color>
+Desc_Full: <color=#ff5a00><b>DAY Z BRASIL OFICIAL</b></color>\n<color=#f5f6f7>Sobrevivência PvP estilo DayZ no mapa California 2.</color>\n\n<color=#ffb020>Safe zone com lojas e ATM</color>\n<color=#ffb020>Dinheiro físico: guarde no banco ou perde ao morrer</color>\n<color=#ffb020>Mercado negro, caça e airdrops</color>\n<color=#ffb020>Kits por abates, XP, ranking e /vault</color>\n\n<color=#c9cdd3>Digite /menu no chat para ver tudo.</color>\n\n<color=#ff5a00><b>Créditos:</b></color> <color=#c9cdd3>nos inspiramos no servidor Zumbas Brasil. Obrigado pelo ótimo trabalho que vocês fazem pela comunidade do Unturned!</color>\n<color=#5be37d>Discord: discord.gg/J9mvXR5brd</color>
 Link: Discord oficial | https://discord.gg/J9mvXR5brd
 Link: Site e ranking | http://54.94.93.87
 Link: SnapLag - Redutor de ping | https://snaplag.com.br/

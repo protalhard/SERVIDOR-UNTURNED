@@ -500,9 +500,12 @@ namespace SobrevivenciaCore
                 var c = l.Split('\t');
                 if (c.Length < 2 || !ulong.TryParse(c[0], out var id)) continue;
                 if (!vaultsComprados.TryGetValue(id, out var s)) vaultsComprados[id] = s = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                s.Add(c[1]);
+                s.Add(NomesAntigosVault.TryGetValue(c[1], out var novo) ? novo : c[1]);
             }
         }
+
+        static readonly Dictionary<string, string> NomesAntigosVault = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        { { "Vault VIP", "Cofre Mochila" }, { "Vault Grande", "Cofre Bunker" }, { "Vault Ultra", "Cofre Fortaleza" } };
 
         public bool TemVault(UnturnedPlayer p, TamanhoVault v)
             => TemPermissao(p, v.Permissao) || (vaultsComprados.TryGetValue(Id(p), out var s) && s.Contains(v.Nome));
