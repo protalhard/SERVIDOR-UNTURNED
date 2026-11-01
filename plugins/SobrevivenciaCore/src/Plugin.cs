@@ -93,6 +93,7 @@ namespace SobrevivenciaCore
             try { TickRaid(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickGaragem(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickBombas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickLimiteVeiculos(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickMenus(); }
             catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             if (!Configuration.Instance.AvisarEntradaSafe) return;

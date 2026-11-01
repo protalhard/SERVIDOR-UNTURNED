@@ -174,6 +174,8 @@ namespace SobrevivenciaCore
         // DZ GUARD (anti-cheat do servidor)
         /// <summary>Reinício automático todo dia (horário de Brasília, HH:mm; vazio = desligado). Avisa 15 min antes.</summary>
         public string ReinicioDiario = "07:00";
+        /// <summary>Máximo de helis/aviões soltos (sem dono) no mapa ao mesmo tempo. 0 = sem limite.</summary>
+        public int LimiteAeronavesSoltas = 3;
         public bool GuardLigado = true;
         public bool GuardBanAutomatico = true;   // caso claro (speed/voo absurdo) bane sozinho
         public double GuardBanHoras = 0;          // 0 = permanente
