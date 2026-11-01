@@ -98,30 +98,12 @@ namespace SobrevivenciaCore
             return LevelGround.getHeight(pos);
         }
 
-        float? rotXDetectada;
-
-        /// <summary>Olha as barricadas que os jogadores já colocaram no mapa e vê como o jogo deixa elas (X = -90 ou 0).</summary>
-        float RotacaoX()
-        {
-            if (rotXDetectada.HasValue) return rotXDetectada.Value;
-            var conta = new Dictionary<int, int>();
-            foreach (var reg in BarricadeManager.regions)
-                foreach (var d in reg.drops)
-                {
-                    if (d.asset == null || EhNpc(d.asset.id) || d.model == null) continue;
-                    int x = Mathf.RoundToInt(Mathf.DeltaAngle(0, d.model.rotation.eulerAngles.x));
-                    conta.TryGetValue(x, out var n); conta[x] = n + 1;
-                }
-            if (conta.Values.Sum() < 5) return S.MontarRotacaoX;
-            rotXDetectada = conta.OrderByDescending(k => k.Value).First().Key;
-            Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: /montar usa rotacao X {rotXDetectada} (visto em {conta.Values.Sum()} barricadas)");
-            return rotXDetectada.Value;
-        }
-
         BarricadeDrop Colocar(ushort id, Vector3 pos, float yaw, ulong dono, bool npc = false)
         {
             if (id == 0 || !(Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset asset)) return null;
-            var rot = Quaternion.Euler(npc ? S.MontarRotacaoXNpc : RotacaoX(), yaw, 0f);
+            // padrão do Unturned: Euler(-90, yaw, 0) fica em pé virado pro yaw; a origem fica "offset" acima do chão
+            var rot = Quaternion.Euler(npc ? S.MontarRotacaoXNpc : S.MontarRotacaoX, yaw, 0f);
+            pos.y += asset.offset;
             var t = BarricadeManager.dropNonPlantedBarricade(new Barricade(asset), pos, rot, dono, 0);
             return t != null ? BarricadeManager.FindBarricadeByRootTransform(t) : null;
         }
