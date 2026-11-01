@@ -133,6 +133,15 @@ ufw --force enable >/dev/null
 verde "Ligando o servidor"
 systemctl restart unturned
 
+# Use_FakeIP: jogadores entram pela rede da Steam (relay). Sem isso, quem tem
+# internet com CGNAT (comum no Brasil) cai com "Lost connection" ao entrar.
+# O Config.txt só existe depois do primeiro start, então espera ele aparecer.
+for _ in $(seq 1 60); do [ -f "$INST_DIR/Config.txt" ] && break; sleep 5; done
+if [ -f "$INST_DIR/Config.txt" ] && ! grep -qE '^\s*Use_FakeIP\s+True' "$INST_DIR/Config.txt"; then
+  sed -i -E 's/^(\s*)Use_FakeIP\b.*/\1Use_FakeIP True/' "$INST_DIR/Config.txt"
+  systemctl restart unturned
+fi
+
 echo
 verde "PRONTO! Servidor instalado."
 echo "  IP pra conectar: $(curl -fsS -4 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}'):27015"

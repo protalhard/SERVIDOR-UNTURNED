@@ -39,6 +39,8 @@ O que o instalador faz: instala dependências, cria swap de 4 GB, cria o usuári
 
 Arquivos do servidor: `/home/unturned/server/Servers/dayz/`
 
+**FakeIP ligado (`Use_FakeIP True` no `Config.txt`):** os jogadores entram pela rede da Steam. Sem isso, quem tem internet com CGNAT cai com "Lost connection to host or Steam network" logo depois de carregar o mapa. O `install.sh` já liga sozinho.
+
 ## Primeira configuração dentro do jogo (admin)
 
 Você é o dono (`Owner`) e está no grupo `admin` do Rocket. Vá até o lugar e digite:
