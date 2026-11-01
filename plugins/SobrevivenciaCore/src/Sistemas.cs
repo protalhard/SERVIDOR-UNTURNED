@@ -146,14 +146,14 @@ namespace SobrevivenciaCore
             if (Anuncios == null) { Anuncios = AnunciosPadrao(); mudou = true; }
             if (AirdropKits == null || AirdropKits.Count == 0) { AirdropKits = AirdropPadrao(); mudou = true; }
             if (Tutorial == null) { Tutorial = TutorialPadrao(); mudou = true; }
-            // padrões novos (v2): adiciona kits e pacotes que ainda não existem, sem mexer nos que o admin editou
-            if (VersaoPadroes < 2)
+            // padrões novos (v2, v3 = kits do California 2): adiciona kits e pacotes que ainda não existem, sem mexer nos que o admin editou
+            if (VersaoPadroes < 3)
             {
                 foreach (var k in KitsPadrao())
                     if (!Kits.Exists(x => x.Nome.Equals(k.Nome, StringComparison.OrdinalIgnoreCase))) Kits.Add(k);
                 foreach (var pc in LojaXpPadrao())
                     if (!LojaXp.Exists(x => x.Nome.Equals(pc.Nome, StringComparison.OrdinalIgnoreCase))) LojaXp.Add(pc);
-                VersaoPadroes = 2;
+                VersaoPadroes = 3;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão
@@ -231,6 +231,57 @@ namespace SobrevivenciaCore
                 Itens = L(I(378, 2), I(371, 4), I(1091, 4), I(328), I(458), I(1158)) },
             new Kit { Nome = "vipelite", Descricao = "Grizzly, 3 pentes, farda do deserto e 2 medkits", Espera = 14400, Permissao = "kit.vipelite",
                 Itens = L(I(297), I(298, 3), I(1011), I(1012), I(1013), I(1010), I(15, 2)) },
+
+            // ===== Kits com itens do California 2 (IDs 4000+), no estilo dos kits do Zumbas =====
+            // Basicos do C2: 4407 bandagem, 4408 curativo, 4419 morfina, 4422 adrenalina, 6268 stim, 4400 agua, 4305 MRE
+
+            // por abates (mesmos degraus do Zumbas: 25/50/100/150/200/250)
+            new Kit { Nome = "capanga", Titulo = "Capanga", Descricao = "Greyhound, cartuchos e mochila de couro", Espera = 600, Abates = 25, BonusXp = 5000,
+                Itens = L(I(6218), I(4198, 3), I(4137), I(4407, 3), I(4400), I(4301)) },
+            new Kit { Nome = "policia", Titulo = "Policial", Descricao = "Doorkicker e farda policial com colete SWAT", Espera = 900, Abates = 50, BonusXp = 10000,
+                Itens = L(I(4526), I(4198, 3), I(4025), I(4023), I(4022), I(4036), I(4407, 3)) },
+            new Kit { Nome = "cabo", Titulo = "Cabo", Descricao = "Banshee, pistola Talon e mochila de mercenario", Espera = 900, Abates = 100, BonusXp = 15000,
+                Itens = L(I(7157), I(7158, 3), I(4119), I(4118, 2), I(4066), I(4407, 4), I(4408, 2)) },
+            new Kit { Nome = "merc", Titulo = "Mercenario", Descricao = "Palmov e roupa completa de mercenario", Espera = 1800, Abates = 150, BonusXp = 20000,
+                Itens = L(I(4826), I(4734, 3), I(4080), I(4082), I(4084), I(4088), I(4066), I(4407, 4)) },
+            new Kit { Nome = "soldado", Titulo = "Soldado", Descricao = "Metralhadora Sumendi e farda militar", Espera = 1800, Abates = 200, BonusXp = 25000,
+                Itens = L(I(6354), I(6108, 2), I(4060), I(4043), I(4039), I(4054), I(6055), I(4408, 3)) },
+            new Kit { Nome = "sniper", Titulo = "Sniper", Descricao = "Black Arrow, Romeo e roupa ghillie", Espera = 1800, Abates = 250, BonusXp = 30000,
+                Itens = L(I(6393), I(6394, 3), I(4520), I(4118, 2), I(4002), I(4004), I(6055), I(4419, 2)) },
+
+            // VIP de entrada (o jogador escolhe 1: kit.vipbronze, kit.vipprata ou kit.vipouro)
+            new Kit { Nome = "vipbronze", Descricao = "Quicksilver, machete e armadura de sucata", Espera = 1800, Permissao = "kit.vipbronze",
+                Itens = L(I(4724), I(4726, 3), I(4694), I(4137), I(6054), I(6053), I(4407, 3), I(4400), I(4305)) },
+            new Kit { Nome = "vipprata", Descricao = "Tempest, faca militar e colete de carga", Espera = 1800, Permissao = "kit.vipprata",
+                Itens = L(I(6046), I(4732, 3), I(4813), I(4066), I(4054), I(4407, 3), I(4400), I(4305)) },
+            new Kit { Nome = "vipouro", Descricao = "Whopper, machete e colete de mercenario", Espera = 1800, Permissao = "kit.vipouro",
+                Itens = L(I(6043), I(4726, 3), I(4694), I(4066), I(4088), I(4407, 3), I(4400), I(4305)) },
+
+            // VIP diamante (kit.vipdiamante)
+            new Kit { Nome = "vipdiamante1", Descricao = "Esfalka, Talon e roupa de mercenario com Alicepack", Espera = 1800, Permissao = "kit.vipdiamante",
+                Itens = L(I(4097), I(4096, 3), I(4119), I(4118, 2), I(6057), I(4088), I(4082), I(4084), I(4407, 5), I(4419)) },
+            new Kit { Nome = "vipdiamante2", Descricao = "Vihor, Talon e roupa de mercenario com Alicepack", Espera = 1800, Permissao = "kit.vipdiamante",
+                Itens = L(I(4819), I(4805, 3), I(4119), I(4118, 2), I(6057), I(4088), I(4086), I(4084), I(4407, 5), I(4419)) },
+
+            // VIP elite (kit.vipelite, a mesma do vipelite)
+            new Kit { Nome = "vipelite1", Descricao = "Sabotage, Romeo, colete blindado e 2 stims", Espera = 1800, Permissao = "kit.vipelite",
+                Itens = L(I(4536), I(4010, 3), I(4520), I(4118, 2), I(6055), I(7085), I(4060), I(4043), I(4039), I(6268, 2), I(4407, 5)) },
+            new Kit { Nome = "vipelite2", Descricao = "Maplestrike, Romeo, colete blindado e 2 stims", Espera = 1800, Permissao = "kit.vipelite",
+                Itens = L(I(4518), I(4031, 4), I(4520), I(4118, 2), I(6055), I(7085), I(4060), I(4043), I(4039), I(6268, 2), I(4407, 5)) },
+
+            // VIP mestre (kit.vipmestre)
+            new Kit { Nome = "vipmestre1", Descricao = "Monarch anti-material, Talon e farda militar avancada", Espera = 1800, Permissao = "kit.vipmestre",
+                Itens = L(I(4738), I(4740, 3), I(4119), I(4118, 3), I(7166), I(4077), I(6225), I(6226), I(4060), I(6268, 2), I(4422, 2), I(4407, 6)) },
+            new Kit { Nome = "vipmestre2", Descricao = "Sabertooth, Talon e farda militar avancada", Espera = 1800, Permissao = "kit.vipmestre",
+                Itens = L(I(4735), I(4737, 4), I(4119), I(4118, 3), I(7166), I(4077), I(6225), I(6226), I(4060), I(6268, 2), I(4422, 2), I(4407, 6)) },
+
+            // VIP especiais (kit.vipespecial)
+            new Kit { Nome = "vipdeadzone", Descricao = "Ratel, Magnus e roupa anti-radiacao completa", Espera = 3600, Permissao = "kit.vipespecial",
+                Itens = L(I(4727), I(4822, 3), I(4818), I(4522, 3), I(4185), I(4186), I(4202), I(6057), I(7018, 2), I(6268, 2), I(4407, 6)) },
+            new Kit { Nome = "vipairdrop", Descricao = "Metralhadora Eotens, Magnus e 3 sinalizadores", Espera = 3600, Permissao = "kit.vipespecial",
+                Itens = L(I(6096), I(6108, 2), I(4818), I(4522, 3), I(4750, 3), I(6057), I(4077), I(4407, 4)) },
+            new Kit { Nome = "vipconstrutor", Descricao = "Britadeira, motosserra, caixas de metal e itens de base", Espera = 7200, Permissao = "kit.vipespecial",
+                Itens = L(I(6035), I(6034), I(6957, 2), I(4995), I(378, 2), I(371, 4), I(1091, 4), I(328), I(458)) },
         };
 
         static List<PacoteXp> LojaXpPadrao() => new List<PacoteXp>
