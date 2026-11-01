@@ -89,6 +89,14 @@ type Config struct {
 	Kits     []Kit      `xml:"Sistemas>Kits>Kit"`
 	LojaXp   []PacoteXp `xml:"Sistemas>LojaXp>PacoteXp"`
 	Discord  string     `xml:"Sistemas>LinkDiscord"`
+	// raid (Raid.cs)
+	RaidHorarioLigado   string `xml:"Sistemas>RaidHorarioLigado"`
+	RaidInicioHora      int    `xml:"Sistemas>RaidInicioHora"`
+	RaidFimHora         int    `xml:"Sistemas>RaidFimHora"`
+	RaidDias            string `xml:"Sistemas>RaidDias"`
+	RaidProtecaoOffline string `xml:"Sistemas>RaidProtecaoOffline"`
+	RaidMinutosOffline  int    `xml:"Sistemas>RaidMinutosOffline"`
+	RaidDiasRenovar     int    `xml:"Sistemas>RaidDiasRenovarClaim"`
 }
 
 type Fonte struct{ Pasta string }

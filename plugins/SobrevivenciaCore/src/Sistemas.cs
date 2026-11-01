@@ -182,6 +182,8 @@ namespace SobrevivenciaCore
             "bandeira=51253", "bandeira_placa=4996",
             "hangar=51256", "heliponto=51255", "pista=51257",
             "terminal=51258", "vaga=51259", "placa=51260",
+            // v11: enfeites da oficina, estacionamento e heliponto (pack DZ)
+            "elevador=51261", "macaco=51262", "bancada=51263", "pneus=51264", "galao=51265", "bomba=51266", "cone=51267", "biruta=51268", "luz_pouso=51269", "caixa_ferramentas=51270",
         };
 
         /// <summary>Preenche o que estiver faltando (config antiga). Devolve true se mudou algo.</summary>
@@ -267,6 +269,15 @@ namespace SobrevivenciaCore
                     else if (v.Nome == "Vault Ultra") { v.Nome = "Cofre Fortaleza"; if (v.Largura == 15 && v.Altura == 13) v.Altura = 14; }
                 }
                 VersaoPadroes = 10;
+                mudou = true;
+            }
+            // v11: enfeites da oficina, estacionamento e heliponto
+            if (VersaoPadroes < 11)
+            {
+                if (MontarPecas != null)
+                    foreach (var x in new[] { "elevador=51261", "macaco=51262", "bancada=51263", "pneus=51264", "galao=51265", "bomba=51266", "cone=51267", "biruta=51268", "luz_pouso=51269", "caixa_ferramentas=51270" })
+                        if (!MontarPecas.Exists(y => y.StartsWith(x.Split('=')[0] + "="))) MontarPecas.Add(x);
+                VersaoPadroes = 11;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

@@ -28,6 +28,8 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd, nome="X"):
         p("hangar", L(0, dd / 2), fx, fy)
         if nome: p("npc", L(-w / 2 - 1.5, 0.5), fx, fy, NPC[tema])
         p("luz", L(-w / 2 - .8, -.5), fx, fy); p("luz", L(w / 2 + .8, -.5), fx, fy)
+        p("caixa_ferramentas", L(w / 2 + 1.5, 2), -sx, -sy); p("galao", L(w / 2 + 1.5, 4), -sx, -sy)
+        p("macaco", L(w / 2 + 1.5, 6), -sx, -sy); p("pneus", L(-w / 2 - 1.5, 3), sx, sy)
         return out
     for a, b in [((-w / 2, 0), (-w / 2, dd)), ((-w / 2, dd), (w / 2, dd)), ((w / 2, dd), (w / 2, 0))]:
         out.append(("parede",) + L(*a) + L(*b))
@@ -68,8 +70,14 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd, nome="X"):
         for q in fundo(5): p("barril", q, fx, fy)
         for q, d in lados(2): p("caixa", q, *d)
     elif tema == "oficina":
-        for q in fundo(4): p("caixa", q, fx, fy)
-        for q, d in lados(2): p("mesa", q, *d)
+        # oficina de verdade: 2 elevadores, bancadas com ferramentas no fundo, pneus, macacos e caixas de ferramentas
+        for u in (-w / 4, w / 4):
+            p("elevador", L(u, dd / 2 + .5), fx, fy)
+            p("macaco", L(u + 2.2, dd / 2 + 1.5), fx, fy)
+        for q in fundo(3): p("bancada", q, fx, fy)
+        for q, d in lados(2, .7): p("pneus", q, *d) if d == (sx, sy) else p("caixa_ferramentas", q, *d)
+        p("galao", L(w / 2 - .8, dd - 1.6), fx, fy)
+        p("bomba", L(-w / 2 - 1.5, .5), fx, fy)
     elif tema == "hangar":
         for q, d in lados(2): p("barril", q, *d)
     elif tema == "cacador":
@@ -85,7 +93,8 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd, nome="X"):
 
 MAPA = {"luz": "luz", "caixa": "caixa_grande", "torre": "torre", "fogueira": "fogueira", "barraca": "barraca",
         "varal": "mesa", "banco_praca": "banco_praca", "bandeira": "bandeira", "heliponto": "heliponto",
-        "veiculo": "veiculo", "mesa": "mesa", "vaga": "vaga", "terminal": "terminal", "placa": "placa"}
+        "veiculo": "veiculo", "mesa": "mesa", "vaga": "vaga", "terminal": "terminal", "placa": "placa",
+        "luz_pouso": "luz_pouso", "biruta": "biruta", "galao": "galao", "cone": "cone", "bomba": "bomba", "pneus": "pneus"}
 
 with open(sys.argv[2] if len(sys.argv) > 2 else "montar_modelos.tsv", "w") as fo:
     fo.write("# gerado por exportar.py - " + __doc__.splitlines()[0] + "\n")

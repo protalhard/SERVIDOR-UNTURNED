@@ -33,7 +33,19 @@ class M:
         x1, x2, y1, y2 = -w / 2, w / 2, y0, y0 + h
         s.seg((x1, y1), (x1, y2)); s.seg((x1, y2), (x2, y2)); s.seg((x2, y2), (x2, y1))
         s.seg((x2, y1), (x1, y1), (ex, y1, larg)); s.entrada = (ex, y1)
-    def add(s, t, x, y, nome=""): s.itens.append((t, x, y, nome))
+    def add(s, t, x, y, nome=""):
+        s.itens.append((t, x, y, nome))
+        if t == "heliponto":
+            for dx, dy in ((-7.5, 0), (7.5, 0), (0, 7.5), (0, -7.5)): s.itens.append(("luz_pouso", x + dx, y + dy, ""))
+            s.itens.append(("biruta", x + 8, y + 8, ""))
+            s.itens.append(("galao", x - 8.5, y + 7, ""))
+    def estacionamento(s, vagas, lado_x, y_terminal):
+        """enfeite do estacionamento: cones nas pontas, bomba, pneus, macaco e caixa de ferramentas"""
+        xs = [v[0] for v in vagas]; y = vagas[0][1]
+        for x in (min(xs) - 3, max(xs) + 3): s.itens.append(("cone", x, y, ""))
+        s.itens.append(("bomba", lado_x, y_terminal + 4, ""))
+        s.itens.append(("pneus", lado_x + (3 if lado_x > 0 else -3), y_terminal + 2, ""))
+        s.itens.append(("galao", lado_x + (5 if lado_x > 0 else -5), y_terminal, ""))
     def banca(s, tema, nome, x, y, fx, fy, w=12, d=9):
         """cantinho: centro x,y, frente aberta virada pra (fx,fy)"""
         fx, fy = norm(fx, fy); s.bancas.append((tema, nome, x, y, fx, fy, w, d))
@@ -111,6 +123,8 @@ for k in range(5):
     m.add("vaga", -12 - 4.5 * (k + 1), -44); m.add("vaga", 12 + 4.5 * (k + 1), -44)
 m.add("terminal", -10, -38, "CARROS"); m.add("terminal", 10, -38, "CARROS")
 m.add("placa", -10, -33); m.add("placa", 10, -33)
+m.estacionamento([(-12 - 4.5 * (k + 1), -44) for k in range(5)], -14, -38)
+m.estacionamento([(12 + 4.5 * (k + 1), -44) for k in range(5)], 14, -38)
 pista_direita(m, 72)
 m.add("terminal", 59, -50, "AVIAO")
 m.caminhos += [[(0, -58), (0, 30)], [(-36, 0), (36, 0)], [(-36, -38), (36, -38)], [(5, -55), (59, -55)]]
@@ -156,6 +170,7 @@ m.banca("hangar", "HANGAR", 26, 20, 0, -1, 20, 18)
 m.add("heliponto", 26, 0); m.add("terminal", 15, 2, "HELI")
 for k in range(4): m.add("vaga", -12 - 4.5 * (k + 1), -26)
 m.add("terminal", -9, -21, "CARROS"); m.add("placa", -9, -16)
+m.estacionamento([(-12 - 4.5 * (k + 1), -26) for k in range(4)], -13, -21)
 for x in (-36, -30):
     for y in (-12, -5, 2): m.add("caixa", x, y)
 for p in [(-14, -6), (-16, 8)]: m.add("caixa", *p)
@@ -316,6 +331,8 @@ def desenhar(m, tipo, num, PX=1000):
             c2 = L(w / 4, dd / 2 + .5); px, py = P(*c2); d.rounded_rectangle([px - 1.0 * esc, py - 2 * esc, px + 1.0 * esc, py + 2 * esc], 8, fill=(170, 40, 40, 255))
             for p in ao_longo(dd - .5, 6): circ(*p, .4, fill=(25, 25, 25, 255), outline=(80, 80, 80, 255))
             lateral(-w / 2 + .6, 3, lambda p: rq(*p, .4, .6, fill=(200, 40, 40, 255)))
+            lateral(w / 2 - .6, 3, lambda p: rq(*p, .5, .35, fill=(150, 110, 60, 255), outline=(230, 200, 60, 255), width=2))
+            for u in (-w / 4 + 1.6, w / 4 + 1.6): rq(*L(u, dd / 2 + 1.5), .35, .2, fill=(240, 200, 40, 255))
         elif tema == "hangar":
             px, py = P(*L(0, dd / 2 + .5))
             d.ellipse([px - 1.1 * esc, py - 3 * esc, px + 1.1 * esc, py + 3 * esc], fill=(50, 70, 50, 255))
@@ -395,6 +412,20 @@ def desenhar(m, tipo, num, PX=1000):
             fn = f(13); tw = d.textlength("TERMINAL", font=fn)
             d.rounded_rectangle([px - tw / 2 - 5, py + 12, px + tw / 2 + 5, py + 30], 4, fill=(0, 0, 0, 200))
             d.text((px, py + 21), "TERMINAL", font=fn, fill=(60, 220, 230), anchor="mm")
+        elif t == "luz_pouso":
+            circ(x, y, .7, fill=(60, 230, 90, 255), outline=(255, 255, 255, 255), width=2)
+        elif t == "biruta":
+            d.line([px, py, px, py - 28], fill=(200, 200, 200, 255), width=3)
+            d.polygon([(px, py - 28), (px + 20, py - 24), (px, py - 20)], fill=(255, 120, 20, 255), outline=(255, 255, 255, 255))
+        elif t == "galao":
+            for k in (-.5, .5): rq(x + k, y, .4, .5, fill=(200, 30, 30, 255), outline=(60, 10, 10, 255), width=1)
+        elif t == "cone":
+            r = .7 * esc; d.polygon([(px, py - r * 1.4), (px - r, py + r), (px + r, py + r)], fill=(255, 110, 0, 255), outline=(255, 255, 255, 255))
+        elif t == "bomba":
+            rq(x, y, .7, .5, fill=(200, 30, 30, 255), outline=(255, 255, 255, 255), width=2)
+            d.text((px, py), "⛽" if False else "G", font=f(12), fill=BRANCO, anchor="mm")
+        elif t == "pneus":
+            for k in (-.6, .6): circ(x + k, y, .55, fill=(20, 20, 20, 255), outline=(90, 90, 90, 255), width=2)
         elif t == "veiculo":
             box = [px - 4.5 * esc, py - 3.5 * esc, px + 4.5 * esc, py + 3.5 * esc]
             d.rectangle(box, outline=LAR + (255,), width=3, fill=(30, 30, 30, 120))
