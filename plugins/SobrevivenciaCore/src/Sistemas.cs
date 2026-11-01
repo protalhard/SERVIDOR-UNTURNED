@@ -183,7 +183,7 @@ namespace SobrevivenciaCore
             "hangar=51256", "heliponto=51255", "pista=51257",
             "terminal=51258", "vaga=51259", "placa=51260",
             // v11: enfeites da oficina, estacionamento e heliponto (pack DZ)
-            "elevador=51261", "macaco=51262", "bancada=51263", "pneus=51264", "galao=51265", "bomba=51266", "cone=51267", "biruta=51268", "luz_pouso=51269", "caixa_ferramentas=51270",
+            "elevador=51261", "macaco=51262", "bancada=51263", "pneus=51264", "galao=51265", "bomba=51266|6173", "cone=51267", "biruta=51268", "luz_pouso=51269", "caixa_ferramentas=51270",
                     // v12: enfeites de cada cantinho (pack DZ)
             "rack_armas=51271", "prateleira_comida=51272", "manequim_dz=51273", "arara_roupas=51274", "armario_remedios=51275", "maca=51276", "prateleira_equip=51277", "cofre_dz=51278", "caixas_militares=51279", "varal_caca=51280", "caixa_tnt=51281", "mesa_dinheiro=51282", "materiais=51283", "pecas_aviao=51284", "balcao_dz=51285", "alvo=51286", "sacos_areia=51287", "barril_toxico=51288", "espelho=51289", "soro=51290", "trofeu=51291", "geladeira=51292", "fogao=51293", "caixa_frutas=51294",
         };
@@ -289,6 +289,17 @@ namespace SobrevivenciaCore
                     foreach (var x in new[] { "rack_armas=51271", "prateleira_comida=51272", "manequim_dz=51273", "arara_roupas=51274", "armario_remedios=51275", "maca=51276", "prateleira_equip=51277", "cofre_dz=51278", "caixas_militares=51279", "varal_caca=51280", "caixa_tnt=51281", "mesa_dinheiro=51282", "materiais=51283", "pecas_aviao=51284", "balcao_dz=51285", "alvo=51286", "sacos_areia=51287", "barril_toxico=51288", "espelho=51289", "soro=51290", "trofeu=51291", "geladeira=51292", "fogao=51293", "caixa_frutas=51294" })
                         if (!MontarPecas.Exists(y => y.StartsWith(x.Split('=')[0] + "="))) MontarPecas.Add(x);
                 VersaoPadroes = 12;
+                mudou = true;
+            }
+            // v13: bomba de gasolina vira tanque (galão enche à vontade); sem o pack, usa o Fuel Drum do California 2
+            if (VersaoPadroes < 13)
+            {
+                if (MontarPecas != null)
+                {
+                    int i = MontarPecas.FindIndex(y => y.StartsWith("bomba="));
+                    if (i >= 0 && MontarPecas[i] == "bomba=51266") MontarPecas[i] = "bomba=51266|6173";
+                }
+                VersaoPadroes = 13;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

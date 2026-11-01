@@ -69,7 +69,7 @@ namespace SobrevivenciaCore
                 }
                 catch { }
             }
-            if (pecasMontadas.Count == 0) return false;
+            if (pecasMontadas.Count == 0 || t == null) return false;
             var d = BarricadeManager.FindBarricadeByRootTransform(t);
             return d != null && pecasMontadas.Contains(d.instanceID);
         }
@@ -86,7 +86,10 @@ namespace SobrevivenciaCore
                 return null;
             }
             var v = Achar(peca + "@" + area) ?? Achar(peca);
-            return ushort.TryParse(v, out var id) ? id : (ushort)0;
+            // "51266|6173": usa a primeira que existe no servidor (peça do pack DZ ou uma do jogo no lugar)
+            foreach (var x in (v ?? "").Split('|'))
+                if (ushort.TryParse(x.Trim(), out var id) && Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset) return id;
+            return 0;
         }
 
         static float Chao(Vector3 pos)
