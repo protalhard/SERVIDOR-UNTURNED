@@ -130,6 +130,19 @@ namespace SobrevivenciaCore
         public bool LojaXpSoNaSafe = true;
         // ATM só funciona dentro da safe zone (no mercado negro e no caçador não tem)
         public bool AtmSoNaSafe = true;
+        // segundos que o aviso grande de entrada na safe fica na tela
+        public float SafeAvisoSegundos = 8f;
+        // Raid de base: só no horário (Brasília). Dias: "todos" ou "sex,sab,dom"...
+        public bool RaidHorarioLigado = true;
+        public int RaidInicioHora = 18;
+        public int RaidFimHora = 23;
+        public string RaidDias = "todos";
+        // proteção offline (igual Zumbas): base com Claim Flag protegida com o grupo offline há X min
+        public bool RaidProtecaoOffline = true;
+        public int RaidMinutosOffline = 10;
+        public int RaidDiasRenovarClaim = 3;
+        public float RaidRaioClaim = 32f;
+        public bool RaidAdminIgnora = true;
         // /montar (antigo, sem uso desde os modelos)
         public ushort MontarCercaId = 7121;
         public float MontarCercaEspaco = 3.5f;

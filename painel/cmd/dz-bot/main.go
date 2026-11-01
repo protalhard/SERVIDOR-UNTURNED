@@ -35,6 +35,7 @@ type Estado struct {
 	AvatarFeito bool              `json:"avatarFeito"`
 	Convite     string            `json:"convite"`
 	LogAdminPos *int64            `json:"logAdminPos,omitempty"`
+	LogRaidPos  *int64            `json:"logRaidPos,omitempty"`
 }
 
 var (
@@ -77,6 +78,7 @@ func main() {
 	go laco(dg, 10*time.Minute, atualizarTop)
 	go laco(dg, 10*time.Minute, atualizarContador)
 	go laco(dg, 20*time.Second, enviarLogsAdmin)
+	go laco(dg, 15*time.Second, enviarLogsRaid)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
@@ -173,6 +175,7 @@ var estrutura = []categoriaDef{
 		{"top", "🏆│top-jogadores", "Ranking atualizado a cada 10 minutos.", discordgo.ChannelTypeGuildText, true, false},
 		{"raid", "🚨│raid-alert", "Alertas de raid (em breve).", discordgo.ChannelTypeGuildText, true, false},
 		{"banimentos", "🔨│banimentos", "Jogadores banidos.", discordgo.ChannelTypeGuildText, true, false},
+		{"raid", "💥│alerta-raid", "Bases sendo atacadas, em tempo real.", discordgo.ChannelTypeGuildText, true, false},
 	}},
 	{"cat_comunidade", "💬 COMUNIDADE", []canalDef{
 		{"geral", "💬│chat-geral", "Papo livre. Respeito sempre.", discordgo.ChannelTypeGuildText, false, false},

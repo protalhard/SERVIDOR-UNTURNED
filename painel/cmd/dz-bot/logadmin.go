@@ -12,23 +12,32 @@ import (
 // enviarLogsAdmin manda pro canal #logs as linhas novas do admin_log.txt que o plugin grava
 // (kick, ban, itens, teleporte, reinício...). Na primeira vez começa do fim do arquivo.
 func enviarLogsAdmin(s *discordgo.Session) {
-	arq := filepath.Join(fonte.Pasta, "admin_log.txt")
+	enviarLog(s, "admin_log.txt", "logs", "🛡️ **Admin**", &estado.LogAdminPos)
+}
+
+// enviarLogsRaid manda pro canal #alerta-raid as bases atacadas (raid_log.txt do plugin).
+func enviarLogsRaid(s *discordgo.Session) {
+	enviarLog(s, "raid_log.txt", "raid", "💥 **Raid em andamento**", &estado.LogRaidPos)
+}
+
+func enviarLog(s *discordgo.Session, nome, canal, titulo string, posp **int64) {
+	arq := filepath.Join(fonte.Pasta, nome)
 	info, err := os.Stat(arq)
 	if err != nil {
 		return
 	}
 	mu.Lock()
 	defer mu.Unlock()
-	if estado.Canais["logs"] == "" {
+	if estado.Canais[canal] == "" {
 		return
 	}
-	if estado.LogAdminPos == nil || *estado.LogAdminPos > info.Size() {
+	if *posp == nil || **posp > info.Size() {
 		p := info.Size()
-		estado.LogAdminPos = &p
+		*posp = &p
 		salvarEstado()
 		return
 	}
-	pos := *estado.LogAdminPos
+	pos := **posp
 	if pos == info.Size() {
 		return
 	}
@@ -49,7 +58,7 @@ func enviarLogsAdmin(s *discordgo.Session) {
 	}
 	texto := strings.TrimSpace(string(b[:fim]))
 	novo := pos + int64(fim) + 1
-	estado.LogAdminPos = &novo
+	*posp = &novo
 	salvarEstado()
 	for len(texto) > 0 {
 		parte := texto
@@ -61,8 +70,8 @@ func enviarLogsAdmin(s *discordgo.Session) {
 			parte = parte[:corte]
 		}
 		texto = strings.TrimSpace(texto[len(parte):])
-		postar(s, "logs", &discordgo.MessageSend{
-			Content: "🛡️ **Admin**\n```\n" + strings.ReplaceAll(parte, "```", "'''") + "\n```",
+		postar(s, canal, &discordgo.MessageSend{
+			Content: titulo + "\n```\n" + strings.ReplaceAll(parte, "```", "'''") + "\n```",
 		})
 	}
 }

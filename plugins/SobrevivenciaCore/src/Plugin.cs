@@ -26,6 +26,7 @@ namespace SobrevivenciaCore
             LigarSafeZone();
             MigrarLojas();
             CarregarStaff();
+            CarregarClaims();
             LigarMenu();
             LigarLojas();
             UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
@@ -87,6 +88,7 @@ namespace SobrevivenciaCore
         {
             try { TickSistemas(); }
             catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickRaid(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickMenus(); }
             catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             if (!Configuration.Instance.AvisarEntradaSafe) return;
@@ -100,9 +102,17 @@ namespace SobrevivenciaCore
                 zonaAtual[id] = zona;
                 var p = UnturnedPlayer.FromSteamPlayer(sp);
                 if (zona != null)
+                {
                     Chat.Ok(p, $"Voce entrou na SAFE ZONE ({Chat.Limpar(zona)}). PvP desligado aqui.");
+                    Chat.Erro(p, "Regra da safe: proibido mexer nos carros e itens de outro jogador. Quem fizer leva ban.");
+                    // aviso grande na tela, some sozinho
+                    sp.player.ServerShowHint("<color=#55E07A><b>VOCE ENTROU NA SAFE ZONE</b></color>\nPvP desligado aqui.\n\n<color=#FF6A00><b>REGRA:</b></color> proibido mexer nos carros\ne itens de outro jogador.", S.SafeAvisoSegundos);
+                }
                 else
+                {
                     Chat.Erro(p, "Voce saiu da safe zone. PvP LIBERADO! Cuidado.");
+                    sp.player.ServerShowHint("<color=#FF4040><b>VOCE SAIU DA SAFE ZONE</b></color>\nPvP liberado. Cuidado!", 4f);
+                }
             }
         }
 
@@ -136,6 +146,7 @@ namespace SobrevivenciaCore
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
             BoasVindas(p);
+            StartCoroutine(Depois(8f, p, () => AvisarRaidAoEntrar(p)));
             BuscarAvatar(id);
             StartCoroutine(Depois(3f, p, () => MostrarHud(p)));
             if (Banco.PrimeiroKit(id))

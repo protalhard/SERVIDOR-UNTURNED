@@ -23,6 +23,10 @@ namespace SobrevivenciaCore
             StructureManager.onDamageStructureRequested += AoDanoEstrutura;
             VehicleManager.onDamageVehicleRequested += AoDanoVeiculo;
             VehicleManager.onDamageTireRequested += AoDanoPneu;
+            VehicleManager.onVehicleLockpicked += AoArrombarVeiculo;
+            VehicleManager.onVehicleCarjacked += AoRoubarVeiculo;
+            VehicleManager.onSiphonVehicleRequested += AoSifonar;
+            VehicleManager.onEnterVehicleRequested += AoEntrarVeiculo;
         }
 
         void DesligarSafeZone()
@@ -33,9 +37,34 @@ namespace SobrevivenciaCore
             StructureManager.onDamageStructureRequested -= AoDanoEstrutura;
             VehicleManager.onDamageVehicleRequested -= AoDanoVeiculo;
             VehicleManager.onDamageTireRequested -= AoDanoPneu;
+            VehicleManager.onVehicleLockpicked -= AoArrombarVeiculo;
+            VehicleManager.onVehicleCarjacked -= AoRoubarVeiculo;
+            VehicleManager.onSiphonVehicleRequested -= AoSifonar;
+            VehicleManager.onEnterVehicleRequested -= AoEntrarVeiculo;
         }
 
         bool NaSafe(Vector3 pos) => ZonaSeguraEm(pos) != null;
+
+        // ---- regra da safe: ninguém mexe no carro dos outros ----
+        static bool DonoDoVeiculo(InteractableVehicle v, Player p)
+        {
+            if (v.lockedOwner == CSteamID.Nil || v.lockedOwner == p.channel.owner.playerID.steamID) return true;
+            var g = p.quests.groupID;
+            return g != CSteamID.Nil && v.lockedGroup == g;
+        }
+
+        bool BloquearNaSafe(InteractableVehicle v, Player p)
+        {
+            if (!S.SafeProtegeVeiculos || v == null || p == null || !NaSafe(v.transform.position) || DonoDoVeiculo(v, p)) return false;
+            if (p.channel.owner.isAdmin) return false;
+            p.ServerShowHint("<color=#FF4040><b>PROIBIDO NA SAFE</b></color>\nNao mexa no carro de outro jogador.", 4f);
+            return true;
+        }
+
+        void AoArrombarVeiculo(InteractableVehicle v, Player p, ref bool permitir) { if (permitir && BloquearNaSafe(v, p)) permitir = false; }
+        void AoRoubarVeiculo(InteractableVehicle v, Player p, ref bool permitir, ref Vector3 forca, ref Vector3 torque) { if (permitir && BloquearNaSafe(v, p)) permitir = false; }
+        void AoSifonar(InteractableVehicle v, Player p, ref bool permitir, ref ushort quanto) { if (permitir && BloquearNaSafe(v, p)) permitir = false; }
+        void AoEntrarVeiculo(Player p, InteractableVehicle v, ref bool permitir) { if (permitir && BloquearNaSafe(v, p)) permitir = false; }
 
         bool PodeConstruirNaSafe(ulong dono)
         {
@@ -67,11 +96,13 @@ namespace SobrevivenciaCore
         {
             if (permitir && t != null && (BarricadaEhNpc(t) || PecaMontada(t))) { permitir = false; return; }
             if (permitir && S.SafeProtegeBases && t != null && NaSafe(t.position)) permitir = false;
+            DanoBarricadaRaid(quem, t, ref permitir);
         }
 
         void AoDanoEstrutura(CSteamID quem, Transform t, ref ushort dano, ref bool permitir, EDamageOrigin origem)
         {
             if (permitir && S.SafeProtegeBases && t != null && NaSafe(t.position)) permitir = false;
+            DanoEstruturaRaid(quem, t, ref permitir);
         }
 
         void AoDanoVeiculo(CSteamID quem, InteractableVehicle v, ref ushort dano, ref bool reparar, ref bool permitir, EDamageOrigin origem)
