@@ -127,6 +127,7 @@ namespace SobrevivenciaCore
         {
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);
+            bool novo = !Stats.Existe(id);
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
             BoasVindas(p);
@@ -135,6 +136,7 @@ namespace SobrevivenciaCore
             StartCoroutine(Depois(3f, p, () => MostrarHud(p)));
             StartCoroutine(Depois(6f, p, () => MarcarSafeNoMapa(p)));
             StartCoroutine(Depois(12f, p, () => VotacaoAoEntrar(p)));
+            SpawnAoConectar(p, novo);
             if (Banco.PrimeiroKit(id))
                 StartCoroutine(DarKitDepois(p, "Bem-vindo! Voce recebeu o kit inicial."));
         }
@@ -146,6 +148,7 @@ namespace SobrevivenciaCore
             guard.Remove(p.CSteamID.m_SteamID);
             espioes.Remove(p.CSteamID.m_SteamID);
             AoSair(p);
+            escolherSafeAte.Remove(p.CSteamID.m_SteamID); spawnAberto.Remove(p.CSteamID.m_SteamID); itensPendentes.Remove(p.CSteamID.m_SteamID);
         }
 
         readonly Dictionary<ulong, float> renasceuEm = new Dictionary<ulong, float>();
@@ -160,6 +163,7 @@ namespace SobrevivenciaCore
             GuardLiberar(p.CSteamID.m_SteamID, 8f);
             StartCoroutine(Depois(1f, p, () => MostrarHud(p)));
             StartCoroutine(Depois(2f, p, () => MarcarSafeNoMapa(p)));
+            SpawnAoRenascer(p, pos);
             if (Configuration.Instance.KitAoRenascer)
                 StartCoroutine(DarKitDepois(p, "Voce renasceu com o kit inicial."));
         }

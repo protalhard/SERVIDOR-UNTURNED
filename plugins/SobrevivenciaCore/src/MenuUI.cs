@@ -331,6 +331,7 @@ namespace SobrevivenciaCore
                 var p = UnturnedPlayer.FromPlayer(pl);
                 if (p == null) return;
                 if (CliqueGaragem(p, botao) || CliqueAtm(p, botao) || CliqueMarcar(p, botao)) return;
+                if (CliqueSpawn(p, botao)) return;
                 if (CliqueLoja(p, botao)) return;
                 if (!menus.TryGetValue(Id(p), out var e)) return;
                 if (botao.StartsWith("Adm_") || botao.StartsWith("Preco_")) { CliqueAdmin(p, e, botao); return; }

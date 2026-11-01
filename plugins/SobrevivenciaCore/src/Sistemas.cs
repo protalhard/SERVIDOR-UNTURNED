@@ -94,6 +94,10 @@ namespace SobrevivenciaCore
         public int WarpIntervalo = 30;
         /// <summary>Warp pra safe só vale até X segundos depois de renascer (morreu). 0 = livre sempre.</summary>
         public int WarpSafeAposMorrer = 60;
+        // segundos pra escolher a safe depois de entrar ou renascer
+        public int EscolherSafeSegundos = 120;
+        // mochila que o /itens dá pro dono (Mercenary Alicepack)
+        public ushort MochilaItens = 6057;
         public int HomeEspera = 10;
         public int HomeIntervalo = 120;
         public int TpaEspera = 10;

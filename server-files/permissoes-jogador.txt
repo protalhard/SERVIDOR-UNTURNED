@@ -50,3 +50,4 @@ staff
 bomba
 skills
 votar
+irsafe

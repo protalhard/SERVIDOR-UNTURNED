@@ -84,6 +84,7 @@ namespace SobrevivenciaCore
         public int DinheiroKitInicial;
         public List<Nota> Notas;
         public List<Ponto> ZonasSeguras;
+        public List<SpawnSafe> SpawnsSafe = new List<SpawnSafe>();
         public List<Ponto> Atms;
         public List<Loja> Lojas;
         // vagas da garagem (carro, heli, aviao), criadas pelo /montar
