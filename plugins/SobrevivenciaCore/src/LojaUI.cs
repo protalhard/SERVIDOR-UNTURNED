@@ -327,6 +327,8 @@ namespace SobrevivenciaCore
         void Recarregar(UnturnedPlayer p, EstadoLoja e)
         {
             var validos = e.Loja.Itens.Where(i => ValeNoModo(e, i) && (e.SoCats == null || Array.IndexOf(e.SoCats, i.Categoria ?? "") >= 0) && (i.Veiculo ? Assets.find(EAssetType.VEHICLE, i.Id) != null : Itens.Existe(i.Id))).ToList();
+            // vender: só o que o jogador tem no inventário
+            if (e.Vender) validos = validos.Where(i => !i.Veiculo && Itens.Contar(p, i.Id) > 0).ToList();
             e.Cats = validos.Select(i => string.IsNullOrEmpty(i.Categoria) ? "Geral" : i.Categoria).Distinct().ToList();
             if (e.Cats.Count > 8) e.Cats = e.Cats.Take(7).Concat(new[] { "Outros" }).ToList();
             e.Cat = Mathf.Clamp(e.Cat, 0, Math.Max(0, e.Cats.Count - 1));
@@ -364,7 +366,7 @@ namespace SobrevivenciaCore
                 if (idx >= e.Lista.Count) { LV(p, n, false); continue; }
                 var it = e.Lista[idx];
                 LV(p, n, true);
-                LT(p, n + "_Nome", Chat.Limpar(NomeDe(it)).ToUpperInvariant());
+                LT(p, n + "_Nome", Chat.Limpar(NomeDe(it)).ToUpperInvariant() + (e.Vender ? $" x{Itens.Contar(p, it.Id)}" : ""));
                 LI(p, n + "_Icone", it);
                 LT(p, n + "_Preco", "$ " + (e.Vender ? it.Venda : it.Compra).ToString("N0"));
                 LV(p, n + "_Sel", idx == e.Sel);
@@ -377,7 +379,7 @@ namespace SobrevivenciaCore
             if (e.Sel < 0 || e.Sel >= e.Lista.Count)
             {
                 LT(p, "Det_Nome", C(Cinza, "Escolha um item"));
-                LT(p, "Det_Desc", e.Vender ? "Clique no item que quer vender." : "Clique no item que quer comprar.");
+                LT(p, "Det_Desc", e.Vender ? (e.Lista.Count == 0 ? "Voce nao tem nada que esta loja compra." : "Clique no item que quer vender.") : "Clique no item que quer comprar.");
                 LT(p, "Det_Preco", ""); LT(p, "Det_Total", "");
                 return;
             }
@@ -499,9 +501,13 @@ namespace SobrevivenciaCore
             int r = Itens.Remover(p, it.Id, Math.Min(tem, e.Qtd));
             long ganho = (long)it.Venda * r;
             Dinheiro.Dar(p, ganho);
-            AvisoLoja(p, $"Vendeu {r}x {Chat.Limpar(NomeDe(it))} por $ {ganho:N0}.", true);
             LT(p, "Loja_Dinheiro", C(Verde, "$ " + Dinheiro.NoBolso(p).ToString("N0")) + C(Cinza, " no bolso"));
+            // a lista de venda só mostra o que ele tem: atualiza (some se vendeu tudo)
+            Recarregar(p, e);
+            e.Sel = e.Lista.IndexOf(it);
+            PreencherItensLoja(p, e);
             PreencherDetalhe(p, e);
+            AvisoLoja(p, $"Vendeu {r}x {Chat.Limpar(NomeDe(it))} por $ {ganho:N0}.", true);
         }
 
         void VenderTudoLoja(UnturnedPlayer p, EstadoLoja e)
