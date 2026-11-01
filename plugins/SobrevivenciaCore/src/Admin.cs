@@ -137,6 +137,8 @@ namespace SobrevivenciaCore
             if (e.StaffAberto && EhDono(p)) PreencherStaff(p, e);
             V(p, "Adm_Precos_Area", e.PrecosAberto && Pode(p, "Precos"));
             if (e.PrecosAberto && Pode(p, "Precos")) PreencherPrecos(p, e);
+            PreencherEspiao(p);
+            PreencherLista(p);
         }
 
         KitAirdrop KitDropAtual(EstadoAdmin e)
@@ -244,6 +246,7 @@ namespace SobrevivenciaCore
                 case "Adm_ItemId": e.ItemId = texto; break;
                 case "Adm_ItemQtd": e.ItemQtd = texto; break;
                 case "Adm_Anuncio": e.Anuncio = texto; break;
+                case "Adm_Lista_Busca": { var l = ListaDe(p); l.Busca = texto; l.Pagina = 0; PreencherLista(p); } break;
                 case "Preco_Busca": e.PrecoBusca = texto; e.PrecoPagina = 0; PreencherPrecos(p, e); break;
                 case "Preco_Compra": e.PrecoCompra = texto; break;
                 case "Preco_Venda": e.PrecoVenda = texto; break;
@@ -270,6 +273,7 @@ namespace SobrevivenciaCore
                 return;
             }
             if (botao.StartsWith("Adm_P_")) { AlternarPermissao(p, e, botao.Substring(6)); return; }
+            if (botao.StartsWith("Adm_Lista_") || botao == "Adm_Banidos" || botao == "Adm_Espiao" || botao == "Adm_Invisivel") { CliqueGuardAdmin(p, e, botao); return; }
             if (botao == "Preco_Fechar") { e.PrecosAberto = false; V(p, "Adm_Precos_Area", false); return; }
             if (botao.StartsWith("Preco_")) { if (Pode(p, "Precos")) CliquePreco(p, e, botao); return; }
             if (BotaoPermissao.TryGetValue(botao, out var perm) && !Pode(p, perm)) { AvisoAdm(p, "Voce nao tem permissao pra isso.", false); return; }
@@ -296,6 +300,8 @@ namespace SobrevivenciaCore
                     if (double.TryParse(e.BanHoras.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var h) && h > 0)
                         dur = (uint)Math.Min(uint.MaxValue - 1, h * 3600);
                     LogAdmin(p, $"BAN {a.CharacterName} ({Id(a)}) {(dur == SteamBlacklist.PERMANENT ? "permanente" : e.BanHoras + "h")}: {mb}");
+                    RegistrarBan(Id(a), a.CharacterName, Id(p), p.CharacterName, mb, dur,
+                        (Suspeitos.TryGetValue(Id(a), out var sus) ? string.Join(" | ", sus.Motivos) + " || " : "") + ResumoHistorico(Id(a)), TirarFoto(a.Player.channel.owner, "ban"));
                     Provider.requestBanPlayer(p.CSteamID, a.CSteamID, a.Player.channel.owner.getIPv4AddressOrZero(), a.Player.channel.owner.playerID.GetHwids(), mb, dur);
                     AvisoAdm(p, Chat.Limpar(a.CharacterName) + " foi banido.", true);
                     e.Alvo = 0; PreencherListaAdmin(p, e); PreencherAlvo(p, e);
@@ -312,6 +318,7 @@ namespace SobrevivenciaCore
                     if (!AlvoValido(p, a, false)) return;
                     if (a.Player.movement.getVehicle() != null) a.Player.movement.forceRemoveFromVehicle();
                     LogAdmin(p, $"TROUXE {a.CharacterName} ({Id(a)})");
+                    GuardLiberar(Id(a), 5f);
                     a.Teleport(p.Position + p.Player.transform.forward * 1.5f + Vector3.up * 0.5f, a.Rotation);
                     Chat.Aviso(a, "Um admin te puxou ate ele.");
                     AvisoAdm(p, Chat.Limpar(a.CharacterName) + " foi trazido.", true);
@@ -445,7 +452,7 @@ namespace SobrevivenciaCore
 
                 case "Adm_Precos":
                     e.PrecosAberto = !e.PrecosAberto;
-                    if (e.PrecosAberto) { e.StaffAberto = false; V(p, "Adm_Staff_Area", false); }
+                    if (e.PrecosAberto) { e.StaffAberto = false; V(p, "Adm_Staff_Area", false); ListaDe(p).Aberta = false; V(p, "Adm_Lista_Area", false); }
                     V(p, "Adm_Precos_Area", e.PrecosAberto);
                     if (e.PrecosAberto) PreencherPrecos(p, e);
                     break;
@@ -453,6 +460,7 @@ namespace SobrevivenciaCore
                 case "Adm_Staff":
                     if (!EhDono(p)) return;
                     e.PrecosAberto = false; V(p, "Adm_Precos_Area", false);
+                    ListaDe(p).Aberta = false; V(p, "Adm_Lista_Area", false);
                     e.StaffAberto = !e.StaffAberto;
                     V(p, "Adm_Staff_Area", e.StaffAberto);
                     if (e.StaffAberto) PreencherStaff(p, e);
@@ -585,7 +593,7 @@ namespace SobrevivenciaCore
             if (!menus.TryGetValue(Id(a), out var m)) return;
             V(a, "Aba_Admin", EhStaff(a));
             if (m.Aba == "Admin") MostrarAba(a, m, EhStaff(a) ? "Admin" : "Inicio");
-            if (!EhStaff(a)) { Visao(a, false); imortais.Remove(Id(a)); }
+            if (!EhStaff(a)) { Visao(a, false); imortais.Remove(Id(a)); if (espioes.Remove(Id(a)) || a.VanishMode) Invisivel(a, false); }
         }
 
         // ---------- Ações ----------
@@ -746,6 +754,7 @@ namespace SobrevivenciaCore
             imortais.Remove(id);
             congelados.Remove(id);
             admins.Remove(id);
+            listas.Remove(id);
         }
 
         /// <summary>Imortal: bloqueia todo dano no admin.</summary>

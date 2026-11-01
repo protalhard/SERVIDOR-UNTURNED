@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel Admin · DAY Z BRASIL</title>
+<link rel="icon" href="/img/icon64.png" type="image/png">
+<link rel="stylesheet" href="/site.css?v=9">
+<link rel="stylesheet" href="/admin.css?v=1">
+</head>
+<body class="adm">
+<header class="adm-topo">
+  <a class="marca" href="/"><img src="/img/icon64.png" alt=""><span>DAY Z <b>BRASIL</b></span></a>
+  <span class="adm-titulo">PAINEL ADMIN · <b>DZ GUARD</b></span>
+  <span id="quem" class="adm-quem"></span>
+</header>
+<main class="adm-main">
+  <section id="fora" class="adm-caixa" hidden>
+    <h2>Área da staff</h2>
+    <p>Entre com a Steam. Só dono e staff do servidor conseguem ver.</p>
+    <a class="adm-btn" href="/admin/entrar">Entrar com a Steam</a>
+    <p id="naostaff" class="adm-erro" hidden>Sua conta Steam não está na staff.</p>
+  </section>
+  <section id="dentro" hidden>
+    <nav class="adm-abas" id="abas">
+      <button data-aba="banidos" class="ativa">Banidos <span id="n-banidos"></span></button>
+      <button data-aba="suspeitos">Suspeitos <span id="n-suspeitos"></span></button>
+      <button data-aba="reports">Reports <span id="n-reports"></span></button>
+      <button data-aba="banir">Banir por Steam ID</button>
+      <button data-aba="logs">Logs</button>
+    </nav>
+    <div class="adm-barra">
+      <input id="busca" placeholder="Buscar nome ou Steam ID" autocomplete="off">
+      <span id="aviso" class="adm-aviso"></span>
+    </div>
+    <div id="lista" class="adm-lista"></div>
+    <form id="form-banir" class="adm-caixa" hidden>
+      <h2>Banir jogador (online ou offline)</h2>
+      <label>Steam ID <input name="steam" placeholder="7656119..." required pattern="7656[0-9]{13}"></label>
+      <label>Horas (0 ou vazio = permanente) <input name="horas" type="number" min="0" step="0.5"></label>
+      <label>Motivo <input name="motivo" maxlength="200" required></label>
+      <button class="adm-btn perigo" type="submit">BANIR</button>
+    </form>
+    <div id="logs" hidden>
+      <div class="adm-sub"><button data-log="admin" class="ativa">Ações da staff</button><button data-log="guard">DZ GUARD</button></div>
+      <pre id="log-texto" class="adm-log"></pre>
+    </div>
+  </section>
+</main>
+<div id="zoom" class="adm-zoom" hidden><img alt=""></div>
+<script src="/admin.js?v=1"></script>
+</body>
+</html>

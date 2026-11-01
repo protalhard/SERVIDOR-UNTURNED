@@ -188,6 +188,7 @@ namespace SobrevivenciaCore
                 teleportes.Remove(id);
                 var destino = t.Destino();
                 if (destino == null) { Chat.Erro(p, "O destino nao existe mais."); continue; }
+                GuardLiberar(id, 5f);
                 p.Teleport(destino.Value + Vector3.up * 0.5f, p.Rotation);
                 Chat.Ok(p, $"Voce chegou em {t.Nome}.");
                 t.AoChegar?.Invoke();

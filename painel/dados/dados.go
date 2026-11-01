@@ -89,6 +89,7 @@ type Config struct {
 	Kits     []Kit      `xml:"Sistemas>Kits>Kit"`
 	LojaXp   []PacoteXp `xml:"Sistemas>LojaXp>PacoteXp"`
 	Discord  string     `xml:"Sistemas>LinkDiscord"`
+	Donos    string     `xml:"Sistemas>Donos"`
 	// raid (Raid.cs)
 	RaidHorarioLigado   string `xml:"Sistemas>RaidHorarioLigado"`
 	RaidInicioHora      int    `xml:"Sistemas>RaidInicioHora"`

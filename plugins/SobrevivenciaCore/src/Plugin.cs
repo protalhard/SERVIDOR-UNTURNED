@@ -37,6 +37,7 @@ namespace SobrevivenciaCore
             UnturnedPlayerEvents.OnPlayerRevive += AoRenascer;
             ChatManager.onChatted += AoFalar;
             InvokeRepeating(nameof(ChecarZonas), 1f, 1f);
+            LigarGuard();
             Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore carregado: {Configuration.Instance.Lojas.Count} lojas, " +
                 $"{Configuration.Instance.Atms.Count} ATMs, {Configuration.Instance.ZonasSeguras.Count} safe zones.");
         }
@@ -44,6 +45,7 @@ namespace SobrevivenciaCore
         protected override void Unload()
         {
             CancelInvoke(nameof(ChecarZonas));
+            DesligarGuard();
             DesligarMenu();
             DesligarLojas();
             UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;
@@ -145,6 +147,7 @@ namespace SobrevivenciaCore
         void AoConectar(UnturnedPlayer p)
         {
             var id = p.CSteamID.m_SteamID;
+            GuardLiberar(id, 15f);
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
             BoasVindas(p);
@@ -158,11 +161,14 @@ namespace SobrevivenciaCore
         void AoDesconectar(UnturnedPlayer p)
         {
             zonaAtual.Remove(p.CSteamID.m_SteamID);
+            guard.Remove(p.CSteamID.m_SteamID);
+            espioes.Remove(p.CSteamID.m_SteamID);
             AoSair(p);
         }
 
         void AoRenascer(UnturnedPlayer p, Vector3 pos, byte angulo)
         {
+            GuardLiberar(p.CSteamID.m_SteamID, 8f);
             StartCoroutine(Depois(1f, p, () => MostrarHud(p)));
             if (Configuration.Instance.KitAoRenascer)
                 StartCoroutine(DarKitDepois(p, "Voce renasceu com o kit inicial."));

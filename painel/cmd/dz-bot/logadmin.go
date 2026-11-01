@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -16,7 +19,56 @@ func enviarLogsAdmin(s *discordgo.Session) {
 	postarLinhas(s, "logs", "🛡️ **Admin**", linhas)
 	for _, l := range linhas {
 		postarBan(s, l)
+		postarDesban(s, l)
 	}
+}
+
+var (
+	reFotoGuard = regexp.MustCompile(`foto=(spy/[0-9]+_[0-9]{8}_[0-9]{6}_[a-z]+\.jpg)`)
+	reDesban    = regexp.MustCompile(`^.*\(\d+\): DESBAN (.*) \((\d+)\)$`)
+)
+
+// enviarLogsGuard: alertas do DZ GUARD (anti-cheat) e reports vão pro #logs (staff).
+// As fotos da tela (report, ban automático) vão anexadas.
+func enviarLogsGuard(s *discordgo.Session) {
+	linhas := novasLinhas("guard_log.txt", "logs", &estado.LogGuardPos)
+	var texto []string
+	for _, l := range linhas {
+		m := reFotoGuard.FindStringSubmatch(l)
+		if m == nil {
+			texto = append(texto, l)
+			continue
+		}
+		f, err := os.Open(filepath.Join(fonte.Pasta, m[1]))
+		if err != nil {
+			texto = append(texto, l)
+			continue
+		}
+		mu.Lock()
+		postar(s, "logs", &discordgo.MessageSend{
+			Content: "📸 **DZ GUARD** " + strings.TrimSpace(strings.Replace(l, m[0], "", 1)),
+			Files:   []*discordgo.File{{Name: filepath.Base(m[1]), ContentType: "image/jpeg", Reader: f}},
+		})
+		mu.Unlock()
+		f.Close()
+	}
+	if len(texto) > 0 {
+		postarLinhas(s, "logs", "🛡️ **DZ GUARD**", texto)
+	}
+}
+
+func postarDesban(s *discordgo.Session, l string) {
+	m := reDesban.FindStringSubmatch(l)
+	if m == nil {
+		return
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	postar(s, "banimentos", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{{
+		Title: "✅ Jogador desbanido", Color: 0x3DDC84,
+		Description: fmt.Sprintf("**%s** foi desbanido pela staff.\n\n[Perfil Steam](https://steamcommunity.com/profiles/%s)", m[1], m[2]),
+		Timestamp:   time.Now().Format(time.RFC3339), Footer: &discordgo.MessageEmbedFooter{Text: rodape},
+	}}})
 }
 
 // enviarLogsRaid: as tentativas de raid vão pro #logs (staff) e pra DM do dono da base.

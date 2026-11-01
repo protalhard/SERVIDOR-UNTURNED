@@ -171,6 +171,15 @@ namespace SobrevivenciaCore
         // Versão dos padrões já aplicada (pra adicionar kits/pacotes novos em config antiga)
         public int VersaoPadroes = 0;
 
+        // DZ GUARD (anti-cheat do servidor)
+        public bool GuardLigado = true;
+        public bool GuardBanAutomatico = true;   // caso claro (speed/voo absurdo) bane sozinho
+        public double GuardBanHoras = 0;          // 0 = permanente
+        public float GuardVelocidadeMax = 11f;    // m/s a pé (correndo normal fica perto de 7)
+        public float GuardTeleporteMetros = 60f;  // pulo de posição em 0,5 s
+        public int GuardPontosAlerta = 60;        // avisa a staff a partir disso
+        public int ReportIntervaloSegundos = 180;
+
         public static List<string> MontarPecasPadrao() => new List<string>
         {
             "cerca@safe=7122", "cerca@negro=7121", "cerca@cacador=7120",

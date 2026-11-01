@@ -40,3 +40,7 @@ raid
 atm
 garagem
 marcar
+report
+banidos
+desbanir
+espiao

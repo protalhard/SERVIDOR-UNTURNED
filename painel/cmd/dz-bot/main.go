@@ -36,6 +36,7 @@ type Estado struct {
 	Convite     string            `json:"convite"`
 	LogAdminPos *int64            `json:"logAdminPos,omitempty"`
 	LogRaidPos  *int64            `json:"logRaidPos,omitempty"`
+	LogGuardPos *int64            `json:"logGuardPos,omitempty"`
 	// discord -> steam já avisado do vínculo; alertas de raid desligados
 	Vinculados      map[string]string `json:"vinculados,omitempty"`
 	AlertaDesligado map[string]bool   `json:"alertaDesligado,omitempty"`
@@ -84,6 +85,7 @@ func main() {
 	go laco(dg, 10*time.Minute, atualizarContador)
 	go laco(dg, 20*time.Second, enviarLogsAdmin)
 	go laco(dg, 15*time.Second, enviarLogsRaid)
+	go laco(dg, 10*time.Second, enviarLogsGuard)
 	go laco(dg, 20*time.Second, conferirVinculos)
 
 	sc := make(chan os.Signal, 1)
