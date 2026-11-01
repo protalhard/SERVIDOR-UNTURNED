@@ -99,14 +99,19 @@ namespace SobrevivenciaCore
 
         /// <summary>Dentro da safe ou ainda na contagem de saída.</summary>
         /// <summary>Marca a safe mais perto no mapa (tecla M) do jogador. Só se ele não tiver um marcador dele.</summary>
+        /// <summary>Ao entrar: as safes o mapa do jogo já mostra, então marca o mercado negro mais perto (ou o caçador)
+        /// e avisa no chat como marcar os dois. O mapa do California 2 não aceita ícone fixo do servidor.</summary>
         public void MarcarSafeNoMapa(UnturnedPlayer p)
         {
-            if (p?.Player?.quests == null || p.Dead || p.Player.quests.isMarkerPlaced) return;
-            var zonas = Configuration.Instance.ZonasSeguras?.Where(z => z.Definido).ToList();
-            if (zonas == null || zonas.Count == 0) return;
-            var pos = p.Position;
-            var z = zonas.OrderBy(q => (q.X - pos.x) * (q.X - pos.x) + (q.Z - pos.z) * (q.Z - pos.z)).First();
-            p.Player.quests.replicateSetMarker(true, new Vector3(z.X, z.Y, z.Z), "SAFE ZONE");
+            if (p?.Player?.quests == null || p.Dead) return;
+            var areas = AreasDoMapa();
+            bool temNegro = areas.Any(a => a.Tipo == "negro"), temCacador = areas.Any(a => a.Tipo == "cacador");
+            if (!temNegro && !temCacador) return;
+            if (!p.Player.quests.isMarkerPlaced) MarcarArea(p, temNegro ? "negro" : "cacador");
+            var partes = new List<string>();
+            if (temNegro) partes.Add(Chat.Cor("#FF5A00", "/marcar negro") + " (mercado negro)");
+            if (temCacador) partes.Add(Chat.Cor("#3DDC84", "/marcar cacador") + " (cacador)");
+            Chat.Info(p, "Aperte M pra ver no mapa. Pra marcar: " + string.Join(" e ", partes) + ".");
         }
 
         public bool ProtegidoSafe(Player pl)

@@ -231,6 +231,7 @@ namespace SobrevivenciaCore
             if (LojaXp == null) { LojaXp = LojaXpPadrao(); mudou = true; }
             if (Vaults == null || Vaults.Count == 0) { Vaults = VaultsPadrao(); mudou = true; }
             if (Anuncios == null) { Anuncios = AnunciosPadrao(); mudou = true; }
+            if (!Anuncios.Exists(a => a.Contains("/marcar"))) { Anuncios.Add("Onde fica o mercado negro e o cacador? Digite /marcar negro ou /marcar cacador e aperte M."); mudou = true; }
             if (AirdropKits == null || AirdropKits.Count == 0) { AirdropKits = AirdropPadrao(); mudou = true; }
             if (MontarPecas == null || MontarPecas.Count == 0) { MontarPecas = MontarPecasPadrao(); mudou = true; }
             if (Tutorial == null) { Tutorial = TutorialPadrao(); mudou = true; }
@@ -598,6 +599,7 @@ namespace SobrevivenciaCore
             "Perdido? /safe te leva pra safe zone (fique parado).",
             "Troque seu XP por equipamento na /lojaxp.",
             "Ranking dos melhores: /top",
+            "Onde fica o mercado negro e o cacador? Digite /marcar negro ou /marcar cacador e aperte M.",
         };
 
         static List<string> TutorialPadrao() => new List<string>
