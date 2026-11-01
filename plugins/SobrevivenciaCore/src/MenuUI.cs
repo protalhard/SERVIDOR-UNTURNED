@@ -187,6 +187,8 @@ namespace SobrevivenciaCore
                 V(p, n, true);
                 T(p, n + "_Nome", Chat.Limpar(k.Nome).ToUpperInvariant());
                 T(p, n + "_Status", StatusKit(p, f, k));
+                var ic = IconeKit(k.Itens);
+                if (ic != null) Img(p, n + "_Icone", ic);
             }
             T(p, "Kits_Pagina", $"{e.PaginaKit + 1}/{PaginasKit}");
             V(p, "Kits_Anterior", PaginasKit > 1);
@@ -225,6 +227,8 @@ namespace SobrevivenciaCore
                 T(p, n + "_Desc", Chat.Limpar(pac.Descricao));
                 T(p, n + "_Preco", C(f.XpSaldo >= pac.Preco ? Verde : Vermelho, pac.Preco.ToString("N0") + " XP"));
                 T(p, n + "_Comprar_Texto", "COMPRAR");
+                var icv = IconeKit(pac.Itens);
+                if (icv != null) Img(p, n + "_IconeImg", icv);
             }
         }
 

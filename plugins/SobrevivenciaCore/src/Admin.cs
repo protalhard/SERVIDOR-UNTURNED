@@ -426,7 +426,7 @@ namespace SobrevivenciaCore
                     if (!Pode(p, "Airdrop")) return;
                     e.KitDrop++;
                     T(p, "Adm_Drop_Kit_Texto", KitDropAtual(e)?.Nome?.ToUpperInvariant() ?? "-");
-                    AvisoAdm(p, "Conteudo: " + ListaItens(KitDropAtual(e)?.Itens), true);
+                    AvisoAdm(p, "Conteudo: " + DescreverDrop(KitDropAtual(e)), true);
                     break;
 
                 case "Adm_Drop_Aqui":
@@ -698,7 +698,7 @@ namespace SobrevivenciaCore
                 airdrops.RemoveAt(i);
                 var st = (InteractableStorage)caixa.interactable;
                 st.items.clear();
-                foreach (var it in ad.Kit.Itens ?? new List<ItemKit>())
+                foreach (var it in ConteudoAirdrop(ad.Kit))
                 {
                     if (!Itens.Existe(it.Id)) continue;
                     for (int q = 0; q < it.Quantidade; q++)
