@@ -138,7 +138,7 @@ namespace SobrevivenciaCore
             try { AjustarEconomia(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
 
-        public const int VersaoEconomia = 1;
+        public const int VersaoEconomia = 2;
 
         static int Subir(int atual, int minimo) => Math.Max(atual, minimo);
 
@@ -156,10 +156,13 @@ namespace SobrevivenciaCore
             foreach (var k in S.Kits ?? new List<Kit>())
                 if ((k.Permissao ?? "").IndexOf("vip", StringComparison.OrdinalIgnoreCase) >= 0 || k.Abates >= 50)
                     foreach (var i in k.Itens ?? new List<ItemKit>()) top.Add(i.Id);
+            var baixo = new HashSet<ushort>();
             foreach (var pc in S.LojaXp ?? new List<PacoteXp>())
-                foreach (var i in pc.Itens ?? new List<ItemKit>()) top.Add(i.Id);
+                foreach (var i in pc.Itens ?? new List<ItemKit>()) (pc.Preco >= 4000 ? top : baixo).Add(i.Id);
+            baixo.ExceptWith(top);
+            bool v1 = cfg.VersaoEconomia < 1;
 
-            int armas = 0, kits = 0, helis = 0;
+            int armas = 0, kits = 0, helis = 0, baratos = 0;
             foreach (var l in cfg.Lojas)
             {
                 bool negro = l.Tipo == "negro";
@@ -168,7 +171,9 @@ namespace SobrevivenciaCore
                     if (i.Compra <= 0) continue;
                     if (i.Veiculo)
                     {
-                        if (Assets.find(EAssetType.VEHICLE, i.Id) is VehicleAsset v && v.engine == EEngine.HELICOPTER)
+                        var va = Assets.find(EAssetType.VEHICLE, i.Id);
+                        var v = va as VehicleAsset ?? (va as VehicleRedirectorAsset)?.TargetVehicle.Find() as VehicleAsset;
+                        if ((v != null && v.engine == EEngine.HELICOPTER) || (i.Categoria ?? "").StartsWith("Helic", StringComparison.OrdinalIgnoreCase))
                         {
                             int antes = i.Compra;
                             i.Compra = Subir(i.Compra * 5 / 2, 150000);
@@ -182,6 +187,17 @@ namespace SobrevivenciaCore
                     bool arma = a is ItemGunAsset || a.type == EItemType.GUN;
                     bool explosivo = a is ItemChargeAsset || a is ItemSentryAsset || (a is ItemThrowableAsset t && t.isExplosive);
                     int antesC = i.Compra;
+                    // v2: item que só está no pacote barato da loja de XP (Cobra) volta pro preço normal
+                    if (!v1 && baixo.Contains(i.Id) && !negro)
+                    {
+                        var cl = Classificar(a);
+                        int normal = arma ? Preco(r, 600, 1500, 3000, 6000) : cl?.preco ?? i.Compra;
+                        if (i.Compra > normal) { i.Compra = normal; i.Venda = Math.Max(1, normal * 20 / 100); baratos++; }
+                        continue;
+                    }
+                    // v2: tudo do mercado negro também dá pra vender (10%)
+                    if (negro && i.Venda <= 0) i.Venda = Math.Max(1, i.Compra * 10 / 100);
+                    if (!v1) continue;
                     // armas por raridade (a loja normal só tem até rara)
                     if (arma) i.Compra = Subir(i.Compra, negro ? Preco(r, 8000, 10000, 12000, 15000, 30000, 50000) : Preco(r, 600, 1500, 3000, 6000));
                     // itens dos kits top: bem mais caros pra comprar com dinheiro
@@ -199,7 +215,7 @@ namespace SobrevivenciaCore
             // a revenda do caçador (o que o jogador caça) fica como está: é a renda de quem joga limpo
             cfg.VersaoEconomia = VersaoEconomia;
             Configuration.Save();
-            Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: economia v{VersaoEconomia}: {armas} armas mais caras, {kits} itens de kit top mais caros, {helis} helicopteros mais caros, revenda 20%/10%.");
+            Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: economia v{VersaoEconomia}: {armas} armas mais caras, {kits} itens de kit top mais caros, {helis} helicopteros mais caros, {baratos} itens do pacote barato de XP no preco normal, revenda 20%/10%.");
         }
 
         /// <summary>Põe nas lojas todo item do servidor que ainda não está em nenhuma. Devolve quantos entraram.</summary>
