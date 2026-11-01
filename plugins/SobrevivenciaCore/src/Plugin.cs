@@ -27,6 +27,7 @@ namespace SobrevivenciaCore
             MigrarLojas();
             CarregarStaff();
             CarregarClaims();
+            LigarFaccoes();
             LigarMenu();
             LigarLojas();
             UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
@@ -48,6 +49,7 @@ namespace SobrevivenciaCore
             DesligarGuard();
             DesligarMenu();
             DesligarLojas();
+            DesligarFaccoes();
             UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat -= AoMudarStat;
             DesligarSafeZone();
@@ -90,6 +92,7 @@ namespace SobrevivenciaCore
         {
             try { TickSistemas(); }
             catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickFaccoes(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickRaid(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickGaragem(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickBombas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
@@ -131,6 +134,7 @@ namespace SobrevivenciaCore
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
             BoasVindas(p);
+            StartCoroutine(Depois(4f, p, () => AoEntrarFaccao(p)));
             StartCoroutine(Depois(8f, p, () => AvisarRaidAoEntrar(p)));
             BuscarAvatar(id);
             StartCoroutine(Depois(3f, p, () => MostrarHud(p)));

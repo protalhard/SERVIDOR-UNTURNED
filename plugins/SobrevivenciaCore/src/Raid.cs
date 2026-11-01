@@ -140,7 +140,7 @@ namespace SobrevivenciaCore
 
             string motivo = null;
             if (!RaidAberto(out var quando)) motivo = quando;
-            else if (S.RaidProtecaoOffline && MinutosOffline(dono, grupo) >= S.RaidMinutosOffline && TemClaimValida(pos, dono, grupo))
+            else if (S.RaidProtecaoOffline && MinutosOffline(dono, grupo) >= S.RaidMinutosOffline && !FaccaoAbandonada(grupo) && TemClaimValida(pos, dono, grupo))
                 motivo = "Essa base esta protegida: o dono esta offline (protecao offline com Claim Flag).";
 
             if (motivo != null)
@@ -163,7 +163,7 @@ namespace SobrevivenciaCore
                         c.player.ServerShowHint($"<color=#FF4040><b>SUA BASE ESTA SENDO ATACADA!</b></color>\nPerto de {pos.x:0} {pos.z:0}", 8f);
                 try
                 {
-                    File.AppendAllText(ArqRaidLog, $"{AgoraBrasil:dd/MM HH:mm} RAID: {sp.playerID.characterName} ({quem.m_SteamID}) atacando base de {NomeJogador(dono)} ({dono}) em {pos.x:0} {pos.z:0}{Environment.NewLine}");
+                    File.AppendAllText(ArqRaidLog, $"{AgoraBrasil:dd/MM HH:mm} RAID: {sp.playerID.characterName} ({quem.m_SteamID}) atacando base de {NomeJogador(dono)} ({dono}) em {pos.x:0} {pos.z:0}{(FaccaoPorGrupo(grupo) != null ? $" faccao {grupo}" : "")}{Environment.NewLine}");
                 }
                 catch { }
             }

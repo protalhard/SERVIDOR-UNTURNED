@@ -106,6 +106,8 @@ namespace SobrevivenciaCore
             HudT(p, env, "Hud_Kd", f.Kd.ToString("0.00"));
             HudT(p, env, "Hud_Posicao", posicoes.TryGetValue(Id(p), out var pos) ? "#" + pos : "-");
             HudT(p, env, "Hud_Dica", "/hud para esconder");
+            var fc = FaccaoDe(p);
+            HudT(p, env, "Hud_Faccao", fc == null ? "" : fc.TagCor + " " + Chat.Cor("#9C9CA6", Chat.Limpar(fc.NomeCargo(fc.Membro(Id(p))?.Cargo ?? 5))));
             bool combate = EmCombate(p, out var resta);
             HudV(p, env, "Hud_Combate", combate);
             if (combate) HudT(p, env, "Hud_Combate_Texto", $"EM COMBATE {resta / 60}:{resta % 60:00}");

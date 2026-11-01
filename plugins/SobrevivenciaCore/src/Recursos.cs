@@ -53,6 +53,7 @@ namespace SobrevivenciaCore
         void PararSistemas()
         {
             Cofres?.SalvarTodos();
+            BauFac?.SalvarTodos();
             Stats?.Salvar(true);
         }
 
@@ -151,6 +152,7 @@ namespace SobrevivenciaCore
                 Chat.Cor(S.CorApagada, " (" + Chat.Tempo(S.CombateSegundos) + " sem /safe, /home, /tpa e /vault)") +
                 (S.PunirDeslogarEmCombate ? Chat.Cor(S.CorPerigo, " Se sair do jogo agora, voce morre e deixa suas coisas.") : ""));
             if (Cofres.Aberto(id)) Cofres.Fechar(p);
+            if (BauFac != null && BauFac.Aberto(id)) BauFac.Fechar(p);
         }
 
         // ---------- Teleportes ----------
@@ -216,6 +218,7 @@ namespace SobrevivenciaCore
 
             TickTeleportes();
             Cofres.Tick();
+            BauFac?.Tick();
 
             // tempo jogado e XP por minuto
             foreach (var sp in Provider.clients)
@@ -280,6 +283,7 @@ namespace SobrevivenciaCore
             combateAte.Remove(id);
             teleportes.Remove(id);
             if (Cofres.Aberto(id)) Cofres.Fechar(vitima, false);
+            if (BauFac != null && BauFac.Aberto(id)) BauFac.Fechar(vitima, false);
 
             var fv = FichaDe(vitima);
             fv.Mortes++;
@@ -328,7 +332,8 @@ namespace SobrevivenciaCore
                 var f = FichaDe(p);
                 var pat = PatenteDe(f.Xp);
                 string nome = Chat.Limpar(sp.playerID.characterName);
-                string tag = Chat.Cor(pat.Cor, "[" + pat.Nome + "]") + " " +
+                var fc = FaccaoDe(Id(p));
+                string tag = (fc != null ? fc.TagCor + " " : "") + Chat.Cor(pat.Cor, "[" + pat.Nome + "]") + " " +
                              Chat.Cor(sp.isAdmin ? S.CorPrincipal : S.CorTexto, nome) + " " + Chat.Cor(S.CorApagada, "Lv." + f.Nivel);
                 visivel = false;
                 ChatManager.serverSendMessage(tag + Chat.Cor(S.CorApagada, ": ") + Chat.Cor("#FFFFFF", Chat.Limpar(texto)),
@@ -442,6 +447,8 @@ namespace SobrevivenciaCore
             garagensAbertas.Remove(id);
             LimparAdmin(p);
             Cofres.Fechar(p, false);
+            BauFac?.Fechar(p, false);
+            AoSairFaccao(p);
             teleportes.Remove(id);
             pedidosTpa.Remove(id);
             Stats.Salvar();
