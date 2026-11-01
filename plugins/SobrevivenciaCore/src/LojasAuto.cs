@@ -11,7 +11,7 @@ namespace SobrevivenciaCore
     /// Itens que já estão em alguma loja ficam como estão (preço editado não muda). Roda uma vez por versão do catálogo.</summary>
     public partial class Plugin
     {
-        public const int VersaoCatalogo = 2;
+        public const int VersaoCatalogo = 3;
 
         // raridade a partir da qual a arma vai pro mercado negro
         const EItemRarity RaridadeNegro = EItemRarity.EPIC;
@@ -176,11 +176,15 @@ namespace SobrevivenciaCore
                 foreach (var i in armas.Itens.ToList())
                 {
                     if (i.Veiculo) continue;
-                    var g = todos.FirstOrDefault(x => x != null && x.id == i.Id) as ItemGunAsset ?? Assets.find(EAssetType.ITEM, i.Id) as ItemGunAsset;
-                    if (g == null) continue;
-                    var c = Classificar(g);
-                    Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: arma {i.Id} {g.itemName} {g.rarity} {g.action} -> {(c == null ? "fora" : c.Value.loja)}");
-                    if (c == null || c.Value.loja != "negro") continue;
+                    var a = Assets.find(EAssetType.ITEM, i.Id) as ItemAsset ?? todos.FirstOrDefault(x => x != null && x.id == i.Id);
+                    if (a == null) { Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: arma {i.Id} sem asset"); continue; }
+                    bool arma = a is ItemGunAsset || a.type == EItemType.GUN;
+                    var c = a is ItemGunAsset g ? Classificar(g) : null;
+                    bool apelao = arma && (a.rarity >= RaridadeNegro || (c != null && c.Value.loja == "negro"));
+                    Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: arma {i.Id} {a.itemName} {a.GetType().Name} {a.type} {a.rarity} -> {(apelao ? "negro" : "armas")}");
+                    if (!apelao) continue;
+                    if (negro.Itens.Any(x => !x.Veiculo && x.Id == i.Id)) { armas.Itens.Remove(i); continue; }
+                    if (c == null) c = ("negro", i.Categoria == "Pistolas" ? "Pistolas" : "Rifles fortes", Preco(a.rarity, 3000, 5000, 8000, 12000, 20000, 30000));
                     armas.Itens.Remove(i);
                     negro.Itens.Add(new ItemLoja(i.Id, Math.Max(i.Compra, c.Value.preco), 0) { Categoria = c.Value.cat });
                     n0++;
