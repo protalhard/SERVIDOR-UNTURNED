@@ -31,7 +31,7 @@ namespace SobrevivenciaCore
         class Guardado { public ulong Dono; public ushort Id; public ushort Combustivel, Vida, Bateria; public bool Novo; }
 
         List<Guardado> garagem;
-        class EstadoGaragem { public Vector3 Terminal; public int Pagina; public List<string> Tipos; }
+        class EstadoGaragem { public Vector3 Terminal; public int Pagina; public List<string> Tipos; public bool AbaVagas; public List<InteractableVehicle> Vagas = new List<InteractableVehicle>(); }
         readonly Dictionary<ulong, EstadoGaragem> garagensAbertas = new Dictionary<ulong, EstadoGaragem>();
         string ArqGaragem => Path.Combine(Directory, "garagem.tsv");
 
@@ -122,25 +122,99 @@ namespace SobrevivenciaCore
             return $"{asset.vehicleName} esta na vaga, trancado pra voce.";
         }
 
-        string Guardar(UnturnedPlayer p, Vector3 terminal)
+        // ---------- quem pode guardar ----------
+        // Último motorista de cada veículo (instanceID -> steam). Se o carro está destrancado, quem trouxe é o "dono" pra guardar:
+        // roubou lá fora e trouxe pra safe, pode guardar. Trancado, vale o dono da tranca (ou o grupo dele).
+        readonly Dictionary<uint, ulong> ultimoMotorista = new Dictionary<uint, ulong>();
+
+        void TickGaragem()
+        {
+            foreach (var sp in Provider.clients)
+            {
+                var v = sp?.player?.movement?.getVehicle();
+                if (v == null || v.passengers == null || v.passengers.Length == 0) continue;
+                if (v.passengers[0].player == sp) ultimoMotorista[v.instanceID] = sp.playerID.steamID.m_SteamID;
+            }
+        }
+
+        bool PodeGuardar(InteractableVehicle v, UnturnedPlayer p)
+        {
+            var id = Id(p);
+            if (v.isLocked)
+            {
+                if (v.lockedOwner.m_SteamID == id) return true;
+                var g = p.Player.quests.groupID;
+                return g != CSteamID.Nil && v.lockedGroup == g;
+            }
+            if (ultimoMotorista.TryGetValue(v.instanceID, out var m)) return m == id;
+            return v.lockedOwner.m_SteamID == id;
+        }
+
+        string DonoNome(InteractableVehicle v)
+        {
+            ulong d = v.isLocked ? v.lockedOwner.m_SteamID : ultimoMotorista.TryGetValue(v.instanceID, out var m) ? m : v.lockedOwner.m_SteamID;
+            if (d == 0) return "sem dono";
+            var sp = PlayerTool.getSteamPlayer(d);
+            return sp != null ? Chat.Limpar(sp.playerID.characterName) : "outro jogador";
+        }
+
+        static float ToleranciaVaga(string tipo) => tipo == "aviao" ? 15f : tipo == "heli" ? 6f : 2.8f;
+
+        /// <summary>Número da vaga (1..) onde o veículo está parado, ou 0 se não está dentro de nenhuma vaga do tipo dele.</summary>
+        int VagaDoVeiculo(InteractableVehicle v, Vector3 terminal)
+        {
+            var tipo = TipoVeiculo(v.asset);
+            var vagas = VagasPerto(terminal).Where(x => x.Tipo == tipo).ToList();
+            float tol = ToleranciaVaga(tipo);
+            var pos = v.transform.position;
+            for (int i = 0; i < vagas.Count; i++)
+            {
+                float dx = pos.x - vagas[i].X, dz = pos.z - vagas[i].Z;
+                if (dx * dx + dz * dz <= tol * tol && Mathf.Abs(pos.y - vagas[i].Y) < 6f) return i + 1;
+            }
+            return 0;
+        }
+
+        /// <summary>Veículos parados dentro das vagas deste terminal.</summary>
+        List<InteractableVehicle> Estacionados(Vector3 terminal)
         {
             var perto = new List<InteractableVehicle>();
-            VehicleManager.getVehiclesInRadius(terminal, 60f, perto);
+            VehicleManager.getVehiclesInRadius(terminal, 90f, perto);
+            return perto.Where(v => v != null && !v.isDead && !v.isExploded && v.asset != null && VagaDoVeiculo(v, terminal) > 0)
+                        .OrderBy(v => VagaDoVeiculo(v, terminal)).ToList();
+        }
+
+        string Guardar(UnturnedPlayer p, Vector3 terminal, InteractableVehicle v)
+        {
+            if (v == null || v.isDead || v.isExploded) return "Esse veiculo nao esta mais ai.";
+            var tipo = TipoVeiculo(v.asset);
+            if (VagaDoVeiculo(v, terminal) == 0)
+                return tipo == "heli" ? "Pouse o helicoptero DENTRO do heliponto pra guardar."
+                     : tipo == "aviao" ? "Pare o aviao no comeco da pista pra guardar."
+                     : "Estacione o carro DENTRO de uma vaga (P) pra guardar.";
+            if (!PodeGuardar(v, p)) return "Esse veiculo nao e seu.";
             var meu = p.Player.movement.getVehicle();
-            var v = meu != null && meu.lockedOwner == p.CSteamID ? meu
-                : perto.Where(x => x.lockedOwner == p.CSteamID && !x.isDead && !x.isExploded)
-                       .OrderBy(x => (x.transform.position - p.Position).sqrMagnitude).FirstOrDefault();
-            if (v == null) return "Traga o seu veiculo (trancado no seu nome) pra perto do terminal.";
-            if ((v.transform.position - terminal).sqrMagnitude > 60f * 60f) return "Seu veiculo esta longe demais do terminal.";
             if (v.passengers.Any(s => s.player != null && s.player.playerID.steamID != p.CSteamID)) return "Tem gente dentro do veiculo.";
             if (v.trunkItems != null && v.trunkItems.getItemCount() > 0) return "Esvazie o porta-malas antes de guardar.";
             if (meu == v) VehicleManager.forceRemovePlayer(v, p.CSteamID);
             Garagem.Add(new Guardado { Dono = Id(p), Id = v.asset.id, Combustivel = v.fuel, Vida = v.health, Bateria = v.batteryCharge });
             SalvarGaragem();
             var nome = v.asset.vehicleName;
+            ultimoMotorista.Remove(v.instanceID);
             VehicleManager.askVehicleDestroy(v);
             LogAdmin(p, $"GARAGEM guardou {nome}");
             return $"{nome} guardado na garagem.";
+        }
+
+        /// <summary>Botão grande "GUARDAR": guarda o primeiro veículo do jogador que está numa vaga deste terminal.</summary>
+        string GuardarMeu(UnturnedPlayer p, Vector3 terminal)
+        {
+            var est = Estacionados(terminal);
+            var v = est.FirstOrDefault(x => PodeGuardar(x, p));
+            if (v != null) return Guardar(p, terminal, v);
+            var meu = p.Player.movement.getVehicle();
+            if (meu != null && PodeGuardar(meu, p)) return Guardar(p, terminal, meu);
+            return est.Count > 0 ? "Nenhum veiculo seu esta nas vagas. Estacione DENTRO da vaga (P)." : "Estacione o seu veiculo DENTRO de uma vaga (P) e volte aqui.";
         }
 
         // ---------- janela ----------
@@ -176,25 +250,54 @@ namespace SobrevivenciaCore
         void PreencherGaragem(UnturnedPlayer p)
         {
             if (!garagensAbertas.TryGetValue(Id(p), out var e)) return;
-            var lista = DoJogador(Id(p), e.Tipos);
-            int paginas = Math.Max(1, (lista.Count + GaragemPorPagina - 1) / GaragemPorPagina);
+            GV(p, "Garagem_Aba_Garagem_Ativa", !e.AbaVagas);
+            GV(p, "Garagem_Aba_Vagas_Ativa", e.AbaVagas);
+            int total;
+            if (e.AbaVagas)
+            {
+                e.Vagas = Estacionados(e.Terminal);
+                total = e.Vagas.Count;
+            }
+            else total = DoJogador(Id(p), e.Tipos).Count;
+            var lista = e.AbaVagas ? null : DoJogador(Id(p), e.Tipos);
+            int paginas = Math.Max(1, (total + GaragemPorPagina - 1) / GaragemPorPagina);
             e.Pagina = Mathf.Clamp(e.Pagina, 0, paginas - 1);
             for (int i = 0; i < GaragemPorPagina; i++)
             {
                 int idx = e.Pagina * GaragemPorPagina + i;
                 string n = "Garagem_Item_" + (i + 1);
-                if (idx >= lista.Count) { GV(p, n, false); continue; }
-                var g = lista[idx];
-                var a = Assets.find(EAssetType.VEHICLE, g.Id) as VehicleAsset;
+                if (idx >= total) { GV(p, n, false); continue; }
                 GV(p, n, true);
-                GT(p, n + "_Nome", (a?.vehicleName ?? ("Veiculo " + g.Id)).ToUpperInvariant());
-                GT(p, n + "_Tipo", NomeTipo(TipoVeiculo(a)));
-                GT(p, n + "_Estado", g.Novo ? "Novo" : $"Vida {(a != null && a.health > 0 ? 100 * g.Vida / a.health : 100)}%  |  Gasolina {(a != null && a.fuel > 0 ? 100 * g.Combustivel / a.fuel : 0)}%");
+                ushort vid;
+                if (e.AbaVagas)
+                {
+                    var v = e.Vagas[idx];
+                    vid = v.asset.id;
+                    bool meu = PodeGuardar(v, p);
+                    GT(p, n + "_Nome", v.asset.vehicleName.ToUpperInvariant());
+                    GT(p, n + "_Tipo", $"{NomeTipo(TipoVeiculo(v.asset))}  -  vaga {VagaDoVeiculo(v, e.Terminal)}");
+                    GT(p, n + "_Estado", meu ? Chat.Cor(S.CorOk, "SEU") : "De " + DonoNome(v));
+                    GV(p, n + "_Tirar", false);
+                    GV(p, n + "_Guardar", meu);
+                }
+                else
+                {
+                    var g = lista[idx];
+                    vid = g.Id;
+                    var a = Assets.find(EAssetType.VEHICLE, g.Id) as VehicleAsset;
+                    GT(p, n + "_Nome", (a?.vehicleName ?? ("Veiculo " + g.Id)).ToUpperInvariant());
+                    GT(p, n + "_Tipo", NomeTipo(TipoVeiculo(a)));
+                    GT(p, n + "_Estado", g.Novo ? "Novo" : $"Vida {(a != null && a.health > 0 ? 100 * g.Vida / a.health : 100)}%  |  Gasolina {(a != null && a.fuel > 0 ? 100 * g.Combustivel / a.fuel : 0)}%");
+                    GV(p, n + "_Tirar", true);
+                    GV(p, n + "_Guardar", false);
+                }
                 if (!string.IsNullOrEmpty(S.IconeVeiculoUrl))
-                    EffectManager.sendUIEffectImageURL(GaragemKey, Con(p), true, n + "_Icone", S.IconeVeiculoUrl.Replace("{id}", g.Id.ToString()), true, false);
+                    EffectManager.sendUIEffectImageURL(GaragemKey, Con(p), true, n + "_Icone", S.IconeVeiculoUrl.Replace("{id}", vid.ToString()), true, false);
             }
             GT(p, "Garagem_Pagina", $"{e.Pagina + 1}/{paginas}");
-            if (lista.Count == 0) GT(p, "Garagem_Aviso", "Sua garagem esta vazia aqui. Compre veiculos na garagem (safe) ou no hangar (mercado negro).");
+            if (total == 0)
+                GT(p, "Garagem_Aviso", e.AbaVagas ? "Nenhum veiculo estacionado nas vagas agora."
+                    : "Sua garagem esta vazia aqui. Compre veiculos na garagem (safe) ou no hangar (mercado negro).");
         }
 
         bool CliqueGaragem(UnturnedPlayer p, string botao)
@@ -205,24 +308,28 @@ namespace SobrevivenciaCore
                 case "Garagem_Fechar": FecharGaragem(p); return true;
                 case "Garagem_Anterior": e.Pagina--; PreencherGaragem(p); return true;
                 case "Garagem_Proximo": e.Pagina++; PreencherGaragem(p); return true;
+                case "Garagem_Aba_Garagem": e.AbaVagas = false; e.Pagina = 0; GT(p, "Garagem_Aviso", ""); PreencherGaragem(p); return true;
+                case "Garagem_Aba_Vagas": e.AbaVagas = true; e.Pagina = 0; GT(p, "Garagem_Aviso", ""); PreencherGaragem(p); return true;
                 case "Garagem_Guardar":
                 {
-                    var msg = Guardar(p, e.Terminal);
-                    GT(p, "Garagem_Aviso", msg);
+                    if ((p.Position - e.Terminal).sqrMagnitude > 10f * 10f) { GT(p, "Garagem_Aviso", "Chegue mais perto do terminal."); return true; }
+                    GT(p, "Garagem_Aviso", GuardarMeu(p, e.Terminal));
                     PreencherGaragem(p);
                     return true;
                 }
             }
-            if (botao.StartsWith("Garagem_Item_") && botao.EndsWith("_Tirar") && int.TryParse(botao.Substring(13, botao.Length - 19), out var n))
+            if (botao.StartsWith("Garagem_Item_") && int.TryParse(new string(botao.Substring(13).TakeWhile(char.IsDigit).ToArray()), out var n))
             {
-                var lista = DoJogador(Id(p), e.Tipos);
                 int idx = e.Pagina * GaragemPorPagina + n - 1;
-                if (idx >= 0 && idx < lista.Count)
+                if ((p.Position - e.Terminal).sqrMagnitude > 10f * 10f) { GT(p, "Garagem_Aviso", "Chegue mais perto do terminal."); return true; }
+                if (botao.EndsWith("_Tirar") && !e.AbaVagas)
                 {
-                    var msg = Tirar(p, e.Terminal, lista[idx]);
-                    GT(p, "Garagem_Aviso", msg);
-                    PreencherGaragem(p);
+                    var lista = DoJogador(Id(p), e.Tipos);
+                    if (idx >= 0 && idx < lista.Count) GT(p, "Garagem_Aviso", Tirar(p, e.Terminal, lista[idx]));
                 }
+                else if (botao.EndsWith("_Guardar") && e.AbaVagas && idx >= 0 && idx < e.Vagas.Count)
+                    GT(p, "Garagem_Aviso", Guardar(p, e.Terminal, e.Vagas[idx]));
+                PreencherGaragem(p);
             }
             return true;
         }
@@ -231,7 +338,7 @@ namespace SobrevivenciaCore
         void ListarGaragemChat(UnturnedPlayer p, List<string> tipos)
         {
             var lista = DoJogador(Id(p), tipos);
-            if (lista.Count == 0) { Chat.Info(p, "Sua garagem esta vazia aqui. /garagem guardar guarda o veiculo que esta com voce."); return; }
+            if (lista.Count == 0) { Chat.Info(p, "Sua garagem esta vazia aqui. Estacione DENTRO da vaga e use /garagem guardar."); return; }
             Chat.Info(p, "Sua garagem (use /garagem tirar numero):");
             for (int i = 0; i < lista.Count && i < 10; i++)
                 Chat.Para(p, Chat.Cor(S.CorPrincipal, $"{i + 1}. ") + Chat.Cor(S.CorTexto, (Assets.find(EAssetType.VEHICLE, lista[i].Id) as VehicleAsset)?.vehicleName ?? ("Veiculo " + lista[i].Id)));
@@ -250,7 +357,26 @@ namespace SobrevivenciaCore
             var t = TerminalPerto(p.Position);
             if (t == null) { Chat.Erro(p, "Va ate um TERMINAL da garagem (estacionamento, heliponto ou pista)."); return; }
             var tipos = VagasPerto(t.Value).Select(v => v.Tipo).Distinct().ToList();
-            if (a.Length >= 1 && a[0] == "guardar") { Chat.Info(p, Guardar(p, t.Value)); return; }
+            if (a.Length >= 1 && a[0] == "vagas")
+            {
+                var est = Estacionados(t.Value);
+                if (est.Count == 0) { Chat.Info(p, "Nenhum veiculo nas vagas agora."); return; }
+                Chat.Info(p, "Estacionados (use /garagem guardar numero):");
+                for (int i = 0; i < est.Count && i < 10; i++)
+                    Chat.Para(p, Chat.Cor(S.CorPrincipal, $"{i + 1}. ") + Chat.Cor(S.CorTexto, $"{est[i].asset.vehicleName} - " + (PodeGuardar(est[i], p) ? "SEU" : "de " + DonoNome(est[i]))));
+                return;
+            }
+            if (a.Length >= 1 && a[0] == "guardar")
+            {
+                if (a.Length >= 2 && int.TryParse(a[1], out var g))
+                {
+                    var est = Estacionados(t.Value);
+                    if (g < 1 || g > est.Count) { Chat.Erro(p, "Numero invalido. Veja /garagem vagas."); return; }
+                    Chat.Info(p, Guardar(p, t.Value, est[g - 1]));
+                }
+                else Chat.Info(p, GuardarMeu(p, t.Value));
+                return;
+            }
             if (a.Length >= 2 && a[0] == "tirar" && int.TryParse(a[1], out var n))
             {
                 var lista = DoJogador(Id(p), tipos);
@@ -266,7 +392,7 @@ namespace SobrevivenciaCore
     {
         public override string Name => "garagem";
         public override string Help => "Garagem dos seus veiculos (perto de um terminal).";
-        public override string Syntax => "[tirar numero | guardar]";
+        public override string Syntax => "[tirar numero | vagas | guardar [numero]]";
         protected override void Rodar(UnturnedPlayer p, string[] a) => P.ComandoGaragem(p, a);
     }
 }
