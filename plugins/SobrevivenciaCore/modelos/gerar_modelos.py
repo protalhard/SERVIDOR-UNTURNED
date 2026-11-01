@@ -13,9 +13,9 @@ def norm(x, y):
     l = math.hypot(x, y) or 1; return x / l, y / l
 
 class M:
-    def __init__(s, cod, titulo, desc, alcance, centro_y=0):
-        s.cod, s.titulo, s.desc, s.alcance, s.cy = cod, titulo, desc, alcance, centro_y
-        s.cercas, s.itens, s.caminhos, s.areas, s.bancas = [], [], [], [], []
+    def __init__(s, cod, titulo, desc, alcance, centro_y=0, cx=0):
+        s.cod, s.titulo, s.desc, s.alcance, s.cy, s.cx = cod, titulo, desc, alcance, centro_y, cx
+        s.cercas, s.itens, s.caminhos, s.areas, s.bancas, s.pistas = [], [], [], [], [], []
         s.zona = 0; s.entrada = (0, 0); s.mostrar_entrada = True
     def seg(s, a, b, ent=None):
         if ent: s.cercas += corta(a, b, *ent)
@@ -53,131 +53,149 @@ def arco(m, temas, r, a0, a1, w=12, d=9):
         m.banca(tema, nome, x, y, -x, -y, w, d)
 
 modelos = []
+SAFE8 = [("armas", "ARMAS"), ("roupas", "ROUPAS"), ("equip", "EQUIPAMENTOS"), ("construtor", "CONSTRUTOR"),
+         ("comida", "COMIDA"), ("remedios", "REMEDIOS"), ("vault", "VAULT"), ("banco", "BANCO / ATM")]
+
+def pista_direita(m, x, y0=-60, comp=120, nome="PISTA DE AVIAO"):
+    m.pistas.append((x, y0 + comp / 2, 0, 1, comp, 20, nome))
+
 # ======================= SAFE =======================
-m = M("safe1", "Praca redonda", ["Cerca redonda de 90 m, 1 entrada", "6 cantinhos tematicos em volta da praca",
-      "Oficina do lado da entrada (carro ja sai)", "Bandeira DZ no centro e no portao"], 52)
-m.circulo(45, 8); m.zona = 50
-arco(m, [("armas", "ARMAS"), ("equip", "EQUIPAMENTOS"), ("roupas", "ROUPAS"), ("mercado", "MERCADO"),
-         ("vault", "VAULT"), ("banco", "BANCO / ATM")], 31, -108, 108)
-m.banca("oficina", "OFICINA", -21, -30, 1, 0, 16, 12)
-m.add("bandeira", 0, 0); m.add("bandeira", -5.5, -46.5); m.add("bandeira", 5.5, -46.5)
-for i in range(12):
-    a = 2 * math.pi * (i + .5) / 12
+m = M("safe1", "Praca redonda", ["Cerca redonda de 110 m, 1 entrada", "8 cantinhos + oficina em volta da praca",
+      "Hangar com heliponto dentro da safe", "Pista de aviao do lado de fora"], 86, 2, 18)
+m.circulo(55, 8); m.zona = 60
+arco(m, SAFE8, 40, -100, 100)
+m.banca("oficina", "OFICINA", -27, -26, 1, 0, 16, 12)
+m.banca("hangar", "", 28, -24, -1, 0, 20, 18)
+m.add("heliponto", 9, -24)
+m.add("bandeira", 0, 10); m.add("bandeira", -5.5, -56.5); m.add("bandeira", 5.5, -56.5)
+for i in range(14):
+    a = 2 * math.pi * (i + .5) / 14
     if math.cos(a) < -.9: continue
-    m.add("luz", 41 * math.sin(a), 41 * math.cos(a))
-for p in [(-7, 7), (7, 7), (-7, -7), (7, -7)]: m.add("luz", *p)
-m.add("veiculo", 0, -58, "CARROS")
-m.caminhos += [[(0, -54), (0, 0)], [(0, -33), (-13, -33)]]
-m.areas.append(("praca", 0, 0, 15))
-for p in [(-10, -16), (10, -16)]: m.add("banco_praca", *p)
+    m.add("luz", 51 * math.sin(a), 51 * math.cos(a))
+for p in [(-8, 18), (8, 18), (-8, 2), (8, 2)]: m.add("luz", *p)
+m.add("veiculo", -10, -66, "CARROS")
+pista_direita(m, 74)
+m.caminhos += [[(0, -64), (0, 10)], [(0, -26), (-18, -26)], [(55, -45), (64, -45)]]
+m.areas.append(("praca", 0, 10, 14))
 modelos.append(m)
 
-m = M("safe2", "Rua do comercio", ["Area de 48 x 92 m, 1 entrada", "Rua reta com 3 cantinhos de cada lado",
-      "Oficina grande no fim da rua", "Postes de luz dos 2 lados da rua"], 54, 0)
-m.ret(48, 92, 8); m.zona = 52
-for i, (t, n) in enumerate([("armas", "ARMAS"), ("equip", "EQUIPAMENTOS"), ("roupas", "ROUPAS")]):
-    m.banca(t, n, -17, -30 + 20 * i, 1, 0)
-for i, (t, n) in enumerate([("mercado", "MERCADO"), ("vault", "VAULT"), ("banco", "BANCO / ATM")]):
-    m.banca(t, n, 17, -30 + 20 * i, -1, 0)
-m.banca("oficina", "OFICINA", 0, 37, 0, -1, 22, 13)
-for i in range(6): m.add("luz", -6, -38 + 13 * i); m.add("luz", 6, -38 + 13 * i)
-m.add("bandeira", -5.5, -47.5); m.add("bandeira", 5.5, -47.5); m.add("bandeira", 0, 23)
-m.add("veiculo", 0, -58, "CARROS")
-m.caminhos += [[(0, -54), (0, 30)]]
+m = M("safe2", "Rua do comercio", ["Area de 56 x 110 m, 1 entrada", "Rua reta com 4 cantinhos de cada lado",
+      "Oficina e hangar com heliponto no fim da rua", "Pista de aviao do lado de fora"], 76, 0, 18)
+m.ret(56, 110, 8); m.zona = 62
+for i, (t, n) in enumerate(SAFE8[:4]): m.banca(t, n, -21, -42 + 16 * i, 1, 0)
+for i, (t, n) in enumerate(SAFE8[4:]): m.banca(t, n, 21, -42 + 16 * i, -1, 0)
+m.banca("oficina", "OFICINA", -14, 46, 0, -1, 22, 13)
+m.banca("hangar", "", 15, 44, 0, -1, 20, 18)
+m.add("heliponto", 15, 26)
+for i in range(7): m.add("luz", -6, -48 + 14 * i); m.add("luz", 6, -48 + 14 * i)
+m.add("bandeira", -5.5, -56.5); m.add("bandeira", 5.5, -56.5); m.add("bandeira", 0, 30)
+m.add("veiculo", -10, -66, "CARROS")
+pista_direita(m, 52)
+m.caminhos += [[(0, -64), (0, 36)]]
 modelos.append(m)
 
-m = M("safe3", "Fortaleza", ["Muro quadrado de 84 x 84 m, 1 portao", "Cantinhos encostados nos muros",
-      "Praca no meio com bandeira DZ", "Torres de luz nos 4 cantos"], 60, -2)
-m.ret(84, 84, 9); m.zona = 60
-for i, (t, n) in enumerate([("armas", "ARMAS"), ("equip", "EQUIPAMENTOS"), ("roupas", "ROUPAS")]):
-    m.banca(t, n, -35, -20 + 18 * i, 1, 0)
-for i, (t, n) in enumerate([("mercado", "MERCADO"), ("vault", "VAULT"), ("banco", "BANCO / ATM")]):
-    m.banca(t, n, 35, -20 + 18 * i, -1, 0)
-m.banca("oficina", "OFICINA", 0, 33, 0, -1, 22, 14)
-for cx in (-38, 38):
-    for cy in (-38, 38): m.add("torre", cx, cy)
-m.add("bandeira", 0, 0); m.add("bandeira", -6, -43.5); m.add("bandeira", 6, -43.5)
+m = M("safe3", "Fortaleza", ["Muro quadrado de 100 x 100 m, 1 portao", "Cantinhos encostados nos muros",
+      "Praca no meio, hangar e oficina no fundo", "Pista de aviao do lado de fora"], 80, -2, 16)
+m.ret(100, 100, 9); m.zona = 72
+for i, (t, n) in enumerate(SAFE8[:4]): m.banca(t, n, -43, -30 + 17 * i, 1, 0)
+for i, (t, n) in enumerate(SAFE8[4:]): m.banca(t, n, 43, -30 + 17 * i, -1, 0)
+m.banca("oficina", "OFICINA", -17, 41, 0, -1, 22, 14)
+m.banca("hangar", "", 17, 40, 0, -1, 20, 18)
+m.add("heliponto", 17, 22)
+for cx in (-46, 46):
+    for cy in (-46, 46): m.add("torre", cx, cy)
+m.add("bandeira", 0, 0); m.add("bandeira", -6, -51.5); m.add("bandeira", 6, -51.5)
 for p in [(-12, 0), (12, 0), (0, 12), (0, -12)]: m.add("luz", *p)
-m.add("veiculo", 0, -49, "CARROS")
-m.caminhos += [[(0, -52), (0, 26)], [(-30, 0), (30, 0)]]
+m.add("veiculo", -10, -60, "CARROS")
+pista_direita(m, 72)
+m.caminhos += [[(0, -58), (0, 30)], [(-36, 0), (36, 0)]]
 m.areas.append(("praca", 0, 0, 13))
 modelos.append(m)
 
 # ======================= MERCADO NEGRO =======================
-NEGRO = [("armas_n", "ARMAS PESADAS"), ("tatico", "TATICO"), ("explosivos", "EXPLOSIVOS")]
-m = M("negro1", "Bunker redondo", ["Cerca redonda de 70 m, so 1 entrada", "3 cantinhos: armas, tatico e explosivos",
-      "Hangar com heliponto dentro (heli ja decola)", "Caixas pra se proteger no patio"], 42)
-m.circulo(35, 6)
-arco(m, NEGRO, 24, -70, 70)
-m.banca("hangar", "HANGAR", -18, -8, 1, -0.2, 18, 14)
-m.add("heliponto", 6, -12)
-for p in [(14, 2), (20, -10), (-4, 4), (12, -24)]: m.add("caixa", *p)
-for p in [(-25, 20), (25, 20), (-14, -28), (14, -28), (0, 6), (28, -6)]: m.add("luz", *p)
-m.add("bandeira", -4.5, -36.5); m.add("bandeira", 4.5, -36.5)
-m.caminhos += [[(0, -45), (0, 14)]]
+NEGRO = [("armas_n", "ARMAS PESADAS"), ("tatico", "TATICO"), ("raid", "RAID")]
+m = M("negro1", "Bunker redondo", ["Cerca redonda de 80 m, so 1 entrada", "Armas pesadas, tatico e RAID",
+      "Hangar com heliponto (helis raros)", "Pista de aviao do lado de fora"], 66, 0, 16)
+m.circulo(40, 6)
+arco(m, NEGRO, 27, -65, 65)
+m.banca("hangar", "HANGAR", -21, -14, 1, 0, 20, 18)
+m.add("heliponto", 6, -14)
+for p in [(20, -4), (24, -16), (-2, 6), (14, -30)]: m.add("caixa", *p)
+for p in [(-28, 24), (28, 24), (-16, -33), (16, -33), (0, 8), (33, -8)]: m.add("luz", *p)
+m.add("bandeira", -4.5, -41.5); m.add("bandeira", 4.5, -41.5)
+pista_direita(m, 56)
+m.caminhos += [[(0, -50), (0, 16)], [(40, -40), (46, -40)]]
 modelos.append(m)
 
-m = M("negro2", "Corredor da morte", ["Quadrado de 70 x 70 m", "Entrada por corredor estreito em curva",
-      "Ninguem atira de fora no comerciante", "Hangar com heliponto no canto"], 46)
-m.seg((-35, -35), (-35, 35)); m.seg((-35, 35), (35, 35)); m.seg((35, 35), (35, -35)); m.seg((35, -35), (-35, -35), (-24, -35, 5))
-m.entrada = (-24, -35)
-m.seg((-21.5, -35), (-21.5, -16)); m.seg((-21.5, -16), (2, -16))
-m.seg((-26.5, -35), (-26.5, -11)); m.seg((-26.5, -11), (2, -11))
-for i, (t, n) in enumerate(NEGRO): m.banca(t, n, -18 + 18 * i, 28, 0, -1)
-m.banca("hangar", "HANGAR", 25, -2, -1, 0, 18, 14)
-m.add("heliponto", 8, 0)
-for p in [(-20, 8), (-10, 12), (22, -25)]: m.add("caixa", *p)
-for p in [(-24, -24), (-12, -13.5), (0, 12), (-30, 30), (30, 30), (-30, -30)]: m.add("luz", *p)
-m.add("bandeira", -28.5, -37); m.add("bandeira", -19.5, -37)
-m.caminhos += [[(-24, -46), (-24, -13.5), (4, -13.5), (4, 0), (0, 22)]]
+m = M("negro2", "Corredor da morte", ["Quadrado de 80 x 80 m", "Entrada por corredor estreito em curva",
+      "Hangar com heliponto no canto", "Pista de aviao do lado de fora"], 68, 0, 14)
+m.seg((-40, -40), (-40, 40)); m.seg((-40, 40), (40, 40)); m.seg((40, 40), (40, -40)); m.seg((40, -40), (-40, -40), (-28, -40, 5))
+m.entrada = (-28, -40)
+m.seg((-25.5, -40), (-25.5, -20)); m.seg((-25.5, -20), (0, -20))
+m.seg((-30.5, -40), (-30.5, -15)); m.seg((-30.5, -15), (0, -15))
+for i, (t, n) in enumerate(NEGRO): m.banca(t, n, -22 + 18 * i, 33, 0, -1)
+m.banca("hangar", "HANGAR", 29, -4, -1, 0, 20, 18)
+m.add("heliponto", 9, -2)
+for p in [(-24, 10), (-12, 14), (24, -28)]: m.add("caixa", *p)
+for p in [(-28, -28), (-14, -17.5), (0, 14), (-35, 35), (35, 35), (-35, -35)]: m.add("luz", *p)
+m.add("bandeira", -32.5, -42); m.add("bandeira", -23.5, -42)
+pista_direita(m, 58)
+m.caminhos += [[(-28, -52), (-28, -17.5), (2, -17.5), (2, 4), (-4, 26)]]
 modelos.append(m)
 
-m = M("negro3", "Galpao do contrabando", ["Retangulo de 70 x 50 m, 1 portao", "3 cantinhos no fundo do galpao",
-      "Hangar no lado com heliponto", "Pilhas de caixas formando corredores"], 46, 0)
-m.ret(70, 50, 7)
-for i, (t, n) in enumerate(NEGRO): m.banca(t, n, -24 + 14 * i, 19, 0, -1, 12, 9)
-m.banca("hangar", "HANGAR", 24, 12, 0, -1, 18, 14)
-m.add("heliponto", 24, -6)
-for x in (-28, -22):
-    for y in (-16, -9, -2): m.add("caixa", x, y)
-for p in [(-8, -10), (-12, 4)]: m.add("caixa", *p)
-for p in [(-30, 20), (-6, 8), (8, -18), (-30, -20), (30, -20), (12, 4)]: m.add("luz", *p)
-m.add("bandeira", -4.5, -26.5); m.add("bandeira", 4.5, -26.5)
-m.caminhos += [[(0, -36), (0, 2), (-8, 14)]]
+m = M("negro3", "Galpao do contrabando", ["Retangulo de 80 x 60 m, 1 portao", "3 cantinhos no fundo do galpao",
+      "Hangar no lado com heliponto", "Pista de aviao do lado de fora"], 68, -2, 14)
+m.ret(80, 60, 7)
+for i, (t, n) in enumerate(NEGRO): m.banca(t, n, -28 + 15 * i, 23, 0, -1, 12, 9)
+m.banca("hangar", "HANGAR", 25, 18, 0, -1, 20, 18)
+m.add("heliponto", 25, -2)
+for x in (-34, -28):
+    for y in (-18, -11, -4): m.add("caixa", x, y)
+for p in [(-12, -12), (-14, 4)]: m.add("caixa", *p)
+for p in [(-35, 25), (-8, 10), (8, -22), (-35, -25), (35, -25), (12, 6)]: m.add("luz", *p)
+m.add("bandeira", -4.5, -31.5); m.add("bandeira", 4.5, -31.5)
+pista_direita(m, 56)
+m.caminhos += [[(0, -42), (0, 4), (-13, 16)]]
 modelos.append(m)
 
 # ======================= CACADOR =======================
 m = M("cacador1", "Acampamento", ["Sem cerca, aberto no meio do mato", "Cantinho com couros, chifres e carne",
-      "Fogueira, barracas e lampioes", "Bandeira DZ do lado do cacador"], 22)
-m.banca("cacador", "CACADOR", 0, 7, 0, -1, 11, 7)
-m.add("fogueira", 0, -3); m.add("barraca", -11, 2); m.add("barraca", 11, 2)
-m.add("varal", -7, -8); m.add("varal", 7, -8)
-for p in [(-10, -12), (10, -12), (-8, 13), (8, 13)]: m.add("luz", *p)
-m.add("bandeira", 7, 12)
-m.areas.append(("clareira", 0, 0, 17)); m.entrada = (0, -17)
-m.caminhos += [[(0, -22), (0, -5)]]
+      "Fogueira, barracas e lampioes", "Hangar com heliponto do lado"], 34, 0, 8)
+m.banca("cacador", "CACADOR", -6, 7, 0, -1, 11, 7)
+m.add("fogueira", -6, -3); m.add("barraca", -17, 2); m.add("barraca", 5, 2)
+m.add("varal", -13, -8); m.add("varal", 1, -8)
+for p in [(-16, -12), (4, -12), (-14, 13), (2, 13)]: m.add("luz", *p)
+m.add("bandeira", 1, 12)
+m.banca("hangar", "", 22, 12, 0, -1, 20, 18)
+m.add("heliponto", 22, -8)
+m.areas.append(("clareira", -6, 0, 17)); m.entrada = (-6, -17)
+m.caminhos += [[(-6, -24), (-6, -5)]]
 modelos.append(m)
 
-m = M("cacador2", "Cabana cercada", ["Cerca redonda de 36 m, 1 entrada", "Cantinho do cacador no fundo",
-      "Fogueira no meio, varais de carne", "Bandeira DZ na entrada"], 22)
-m.circulo(18, 5)
-m.banca("cacador", "CACADOR", 0, 9, 0, -1, 11, 7)
-m.add("fogueira", 0, -3); m.add("varal", -9, -2); m.add("varal", 9, -2); m.add("barraca", -10, -10)
-for p in [(-12, 8), (12, 8), (8, -12)]: m.add("luz", *p)
-m.add("bandeira", -4, -19.5); m.add("bandeira", 4, -19.5)
-m.caminhos += [[(0, -24), (0, 4)]]
+m = M("cacador2", "Cabana cercada", ["Cerca redonda de 40 m, 1 entrada", "Cantinho do cacador no fundo",
+      "Fogueira no meio, varais de carne", "Hangar com heliponto do lado de fora"], 36, 0, 10)
+m.circulo(20, 5)
+m.banca("cacador", "CACADOR", 0, 10, 0, -1, 11, 7)
+m.add("fogueira", 0, -3); m.add("varal", -10, -2); m.add("varal", 10, -2); m.add("barraca", -11, -10)
+for p in [(-13, 9), (13, 9), (9, -13)]: m.add("luz", *p)
+m.add("bandeira", -4, -21.5); m.add("bandeira", 4, -21.5)
+m.banca("hangar", "", 34, 10, 0, -1, 20, 18)
+m.add("heliponto", 34, -10)
+m.caminhos += [[(0, -28), (0, 5)], [(4, -24), (34, -18)]]
 modelos.append(m)
 
-m = M("cacador3", "Posto de caca", ["Quadrado de 32 x 32 m, 1 portao", "Cantinho do cacador com balcao",
-      "Torre de vigia com bandeira DZ", "Varais de couro nas laterais"], 22)
-m.ret(32, 32, 5)
-m.banca("cacador", "CACADOR", -3, 10, 0, -1, 11, 7)
-m.add("torre", 12, 12); m.add("bandeira", 12, 12)
-m.add("varal", -12, -4); m.add("varal", -12, 3); m.add("varal", 12, -4)
+m = M("cacador3", "Posto de caca", ["Quadrado de 36 x 36 m, 1 portao", "Cantinho do cacador com balcao",
+      "Torre de vigia com bandeira DZ", "Hangar com heliponto do lado de fora"], 36, 0, 10)
+m.ret(36, 36, 5)
+m.banca("cacador", "CACADOR", -3, 11, 0, -1, 11, 7)
+m.add("torre", 14, 14); m.add("bandeira", 14, 14)
+m.add("varal", -14, -4); m.add("varal", -14, 4); m.add("varal", 14, -4)
 m.add("fogueira", 3, -5)
-for p in [(-13, -13), (13, -13), (8, 8)]: m.add("luz", *p)
-m.add("bandeira", -3.5, -17.5); m.add("bandeira", 3.5, -17.5)
-m.caminhos += [[(0, -24), (-3, 5)]]
+for p in [(-15, -15), (15, -15), (8, 8)]: m.add("luz", *p)
+m.add("bandeira", -3.5, -19.5); m.add("bandeira", 3.5, -19.5)
+m.banca("hangar", "", 34, 10, 0, -1, 20, 18)
+m.add("heliponto", 34, -10)
+m.caminhos += [[(0, -28), (-3, 6)], [(3, -24), (34, -18)]]
 modelos.append(m)
 
 # ======================= DESENHO =======================
@@ -188,6 +206,8 @@ TEMA = {  # piso, cor do NPC, letra, o que o NPC segura
     "oficina": ((88, 88, 92), (240, 200, 40), "O"), "armas_n": ((70, 50, 60), (200, 40, 40), "A"),
     "tatico": ((60, 65, 60), (110, 150, 90), "T"), "explosivos": ((80, 60, 45), (250, 150, 30), "X"),
     "hangar": ((85, 88, 95), (170, 170, 190), "H"), "cacador": ((100, 80, 55), (140, 170, 70), "C"),
+    "comida": ((90, 105, 80), (90, 190, 80), "C"), "remedios": ((150, 155, 160), (240, 240, 240), "+"),
+    "construtor": ((105, 95, 70), (250, 190, 40), "B"), "raid": ((80, 60, 45), (250, 150, 30), "R"),
 }
 
 def terreno(w, h, seed, tipo):
@@ -204,7 +224,7 @@ def desenhar(m, tipo, num, PX=1000):
     img = Image.new("RGB", (W, H), PRETO); img.paste(terreno(PX, PX, sum(map(ord, m.cod)), tipo), (0, TOP))
     d = ImageDraw.Draw(img, "RGBA")
     cy0 = TOP + PX / 2 + m.cy * esc
-    def P(x, y): return (W / 2 + x * esc, cy0 - y * esc)
+    def P(x, y): return (W / 2 + (x - m.cx) * esc, cy0 - y * esc)
     def circ(x, y, r, **k):
         px, py = P(x, y); r *= esc; d.ellipse([px - r, py - r, px + r, py + r], **k)
     def rq(x, y, hw, hh, **k):
@@ -243,6 +263,23 @@ def desenhar(m, tipo, num, PX=1000):
             for p in ao_longo(dd * .5, 2, -w / 3, w / 3): rq(*p, .5, .5, fill=(110, 90, 40, 255), outline=(60, 50, 20, 255))
             if tema == "armas_n":
                 for p in ao_longo(dd - 1.3, 2, -w / 4, w / 4): arma(p, 2.2, (60, 70, 50, 255))
+        elif tema == "comida":
+            cores = [(220, 60, 50), (240, 200, 50), (90, 180, 70), (240, 140, 40), (250, 250, 250)]
+            for j, v in enumerate((dd - .5, dd - 1.4)):
+                for i, p in enumerate(ao_longo(v, 8)): circ(*p, .28, fill=cores[(i + j) % 5] + (255,))
+            for u in (-w / 2 + .5, w / 2 - .5): lateral(u, 3, lambda p: rq(*p, .4, .4, fill=(200, 160, 90, 255), outline=(90, 60, 30, 255)))
+        elif tema == "remedios":
+            for p in ao_longo(dd - .6, 5):
+                rq(*p, .45, .45, fill=(245, 245, 245, 255), outline=(200, 30, 30, 255), width=2)
+                px_, py_ = P(*p); k = .25 * esc
+                d.line([px_ - k, py_, px_ + k, py_], fill=(210, 30, 30, 255), width=3); d.line([px_, py_ - k, px_, py_ + k], fill=(210, 30, 30, 255), width=3)
+            lateral(-w / 2 + .5, 3, lambda p: rq(*p, .35, .5, fill=(220, 220, 225, 255), outline=(120, 120, 130, 255)))
+            lateral(w / 2 - .7, 2, lambda p: rq(*p, .5, 1.0, fill=(240, 240, 240, 255), outline=(150, 150, 150, 255)))
+        elif tema == "construtor":
+            for p in ao_longo(dd - .7, 3): rq(*p, 1.4, .35, fill=(170, 130, 80, 255), outline=(90, 60, 30, 255))
+            for p in ao_longo(dd - 1.6, 3): rq(*p, 1.2, .3, fill=(150, 150, 155, 255), outline=(80, 80, 80, 255))
+            lateral(-w / 2 + .7, 2, lambda p: rq(*p, .6, .6, fill=(125, 90, 50, 255), outline=(70, 50, 25, 255), width=2))
+            lateral(w / 2 - .7, 2, lambda p: rq(*p, .6, .6, fill=(240, 190, 40, 255), outline=(60, 50, 20, 255), width=2))
         elif tema == "mercado":
             cores = [(220, 60, 50), (240, 200, 50), (90, 180, 70), (240, 140, 40), (250, 250, 250)]
             for j, v in enumerate((dd - .5, dd - 1.4)):
@@ -264,7 +301,7 @@ def desenhar(m, tipo, num, PX=1000):
                 for p in ao_longo(v, 6): rq(*p, .4, .4, fill=(120, 125, 135, 255), outline=(50, 50, 55, 255), width=2)
         elif tema == "banco":
             for p in ao_longo(dd - .6, 3): rq(*p, .55, .4, fill=(60, 70, 85, 255), outline=(40, 220, 140, 255), width=3)
-        elif tema == "explosivos":
+        elif tema in ("explosivos", "raid"):
             for p in ao_longo(dd - .6, 6): circ(*p, .4, fill=(190, 40, 30, 255), outline=(40, 20, 20, 255))
             lateral(-w / 2 + .6, 3, lambda p: rq(*p, .5, .4, fill=(230, 190, 40, 255), outline=(20, 20, 20, 255), width=2))
             lateral(w / 2 - .6, 3, lambda p: rq(*p, .5, .4, fill=(110, 110, 60, 255), outline=(20, 20, 20, 255), width=2))
@@ -289,6 +326,8 @@ def desenhar(m, tipo, num, PX=1000):
             for p in ao_longo(dd - 1.6, 2, -w / 4, w / 4):
                 px, py = P(*p); d.line([px - .8 * esc, py - .6 * esc, px, py, px + .8 * esc, py - .6 * esc], fill=(230, 220, 190, 255), width=3)
         # balcao e NPC atras dele
+        if not nome:
+            return
         if tema not in ("hangar", "oficina"):
             linha(L(-w / 4, dd * .38), L(w / 4, dd * .38), (120, 85, 50, 255), .7)
             npc = L(0, dd * .58)
@@ -296,6 +335,16 @@ def desenhar(m, tipo, num, PX=1000):
             npc = L(-w / 2 + 1.6, 1.4)
         rotulos.append((P(*npc), cor, letra, nome))
 
+    for (x, y, fx, fy, comp, larg, nome) in m.pistas:
+        rq(x, y, larg / 2, comp / 2, fill=(48, 48, 52, 255), outline=(230, 230, 230, 255), width=2)
+        for k in range(int(comp / 8)):
+            yy = y - comp / 2 + 4 + k * 8
+            rq(x, yy, .4, 2, fill=(240, 240, 240, 255))
+        for k in range(int(comp / 10) + 1):
+            for sx_ in (-1, 1):
+                circ(x + sx_ * (larg / 2 + 1.2), y - comp / 2 + k * 10, .6, fill=(255, 140, 40, 255))
+        px, py = P(x, y + comp / 2 + 3)
+        d.text((px, py - 4), nome, font=f(16), fill=LAR, anchor="mb")
     rotulos = []
     for b in m.bancas: banca(*b)
     for a, b in m.cercas:
@@ -327,8 +376,8 @@ def desenhar(m, tipo, num, PX=1000):
             rq(x, y, 1.6, .4, fill=(120, 85, 50, 255))
         elif t == "heliponto":
             circ(x, y, 7, fill=(55, 55, 58, 255), outline=(240, 240, 240, 255), width=3)
-            d.text((px, py), "H", font=f(int(5 * esc)), fill=BRANCO, anchor="mm")
-            d.text((px, py + 7 * esc + 14), "HELI DECOLA AQUI", font=f(14), fill=LAR, anchor="mm")
+            d.text((px, py), "H", font=f(max(14, int(5 * esc))), fill=BRANCO, anchor="mm")
+            d.text((px, py + 7 * esc + 14), "HELIPONTO", font=f(14), fill=LAR, anchor="mm")
         elif t == "veiculo":
             box = [px - 4.5 * esc, py - 3.5 * esc, px + 4.5 * esc, py + 3.5 * esc]
             d.rectangle(box, outline=LAR + (255,), width=3, fill=(30, 30, 30, 120))
@@ -373,9 +422,9 @@ def rodape(W, tipo):
     for cor, txt in itens:
         d.rectangle([x, 20, x + 20, 40], fill=cor, outline=(120, 120, 120)); d.text((x + 28, 30), txt, font=f(18, False), fill=BRANCO, anchor="lm")
         x += 46 + d.textlength(txt, font=f(18, False)) + 24
-    nota = {"safe": "Cada NPC segura o item da loja dele (arma, comida, roupa...). Os enfeites dos cantinhos sao so de enfeite: ninguem pega.",
-            "negro": "NPCs com arma pesada, colete e C4 na mao. Heli comprado nasce no heliponto, pronto pra decolar. Enfeites nao podem ser pegos.",
-            "cacador": "Cacador com faca e rifle de caca na mao, couros e chifres pendurados. Ele compra o que voce caca e paga em dinheiro."}[tipo]
+    nota = {"safe": "Cada NPC segura o item da loja dele. Enfeites nao podem ser pegos. Hangar com heliponto pra pousar e pista de aviao do lado de fora.",
+            "negro": "Armas e itens mais raros que a safe + RAID (C4 e explosivos). Heli/aviao raro comprado no hangar sai no heliponto ou na pista.",
+            "cacador": "Cacador compra o que voce caca e paga em dinheiro. Hangar com heliponto do lado pra pousar."}[tipo]
     d.text((24, 78), nota, font=f(20, False), fill=(220, 220, 220), anchor="lm")
     return img
 
@@ -392,20 +441,22 @@ print("ok")
 
 # ======================= CANTINHOS DE PERTO =======================
 CANT = [("armas", "ARMAS", "safe", "NPC com fuzil na mao", "Armas nas 3 paredes, caixas de municao"),
-        ("mercado", "MERCADO", "safe", "NPC com lata de comida", "Prateleiras de comida e bebida, armario de remedios"),
-        ("roupas", "ROUPAS", "safe", "NPC de jaqueta e bone", "Manequins vestidos e araras de roupa"),
-        ("equip", "EQUIPAMENTOS", "safe", "NPC de mochila nas costas", "Mochilas, coletes e ferramentas na parede"),
-        ("vault", "VAULT", "safe", "NPC seguranca", "Cofres empilhados no fundo"),
-        ("banco", "BANCO / ATM", "safe", "NPC gerente", "3 caixas eletronicos (ATM)"),
+        ("roupas", "ROUPAS", "safe", "NPC de camiseta", "Manequins vestidos e araras de roupa"),
+        ("equip", "EQUIPAMENTOS", "safe", "NPC com mochila e radio", "Mochilas, coletes e ferramentas na parede"),
+        ("construtor", "CONSTRUTOR", "safe", "NPC de capacete com martelo", "Tabuas, paredes, caixas e geradores"),
+        ("comida", "COMIDA", "safe", "NPC com lata e pao", "Prateleiras de comida e bebida"),
+        ("remedios", "REMEDIOS", "safe", "NPC com kit medico", "Kits medicos, armario e maca"),
+        ("vault", "VAULT", "safe", "NPC de terno com maleta", "Cofres empilhados no fundo"),
+        ("banco", "BANCO / ATM", "safe", "Caixa eletronico", "3 caixas eletronicos"),
         ("oficina", "OFICINA", "safe", "Mecanico com chave inglesa", "Elevador com carro, pneus, bancada"),
-        ("cacador", "CACADOR", "cacador", "Cacador com faca e rifle de caca", "Couros, chifres e carne pendurada"),
-        ("armas_n", "ARMAS PESADAS", "negro", "NPC com metralhadora", "Fuzis, snipers e lanca-misseis na parede"),
-        ("tatico", "TATICO", "negro", "NPC de colete e capacete", "Manequins com roupa militar e ghillie"),
-        ("explosivos", "EXPLOSIVOS", "negro", "NPC com C4 na mao", "Barris e caixas de explosivo"),
-        ("hangar", "HANGAR", "negro", "Piloto", "Heli guardado e combustivel; o comprado sai no heliponto")]
+        ("cacador", "CACADOR", "cacador", "Cacador com rifle e carne", "Couros, chifres e carne pendurada"),
+        ("armas_n", "ARMAS PESADAS", "negro", "NPC de capuz com metralhadora", "Snipers, fuzis e lanca-misseis"),
+        ("tatico", "TATICO", "negro", "NPC de colete e capacete", "Manequins com colete, ghillie e capacete"),
+        ("raid", "RAID", "negro", "NPC com C4 na mao", "C4, cargas e explosivos de raid"),
+        ("hangar", "HANGAR", "negro", "Piloto", "Helis e avioes raros; heli sai no heliponto, aviao na pista")]
 tiles = []
 for tema, nome, tipo, npc, enf in CANT:
-    w, dd = {"oficina": (16, 12), "hangar": (18, 14)}.get(tema, (12, 9))
+    w, dd = {"oficina": (16, 12), "hangar": (20, 18)}.get(tema, (12, 9))
     mm = M("c_" + tema, nome, [], max(w, dd) * .62, -1.5); mm.mostrar_entrada = False
     mm.banca(tema, nome, 0, 0, 0, -1, w, dd)
     globals()["ESC_NPC"] = 1.5

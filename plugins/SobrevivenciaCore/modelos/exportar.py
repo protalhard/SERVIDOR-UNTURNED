@@ -5,22 +5,30 @@ Linhas:
   modelo  <peca>  x y fx fy [extra]      (fx,fy = pra onde a peca fica virada)
 x = direita de quem entra, y = pra dentro; a entrada fica em y negativo."""
 import math, sys
-src = open(sys.argv[1] if len(sys.argv) > 1 else "gerar_modelos.py").read()
+src = open(sys.argv[1] if len(sys.argv) > 1 else "gerar2.py").read()
 ns = {}
 exec(src[:src.index("# ======================= DESENHO")].replace('os.makedirs(OUT, exist_ok=True)', ''), ns)
 modelos = ns["modelos"]
 
-NPC = {"armas": 51240, "mercado": 51241, "roupas": 51242, "equip": 51244, "oficina": 51245, "vault": 51246,
-       "armas_n": 51247, "cacador": 51248, "banco": 51249, "tatico": 51250, "explosivos": 51251, "hangar": 51252}
+NPC = {"armas": 51240, "mercado": 51241, "comida": 51241, "roupas": 51242, "remedios": 51243, "equip": 51244,
+       "oficina": 51245, "vault": 51246, "armas_n": 51247, "cacador": 51248, "banco": 51249, "tatico": 51250,
+       "explosivos": 51251, "raid": 51251, "hangar": 51252, "construtor": 51254}
 # o que vai exposto nos mostruarios (o plugin pega itens dessa loja/categoria)
 EXPOE = {"armas": "armas", "armas_n": "negro:Snipers,Rifles fortes,Metralhadoras", "mercado": "comida",
-         "equip": "equipamentos:Mochilas,Coletes", "tatico": "negro:Elite e torres", "explosivos": "negro:Explosivos"}
+         "equip": "equipamentos:Mochilas,Coletes", "tatico": "negro:Elite e torres", "explosivos": "negro:Explosivos", "raid": "negro:Explosivos",
+         "comida": "comida", "remedios": "remedios", "construtor": "construcao:Bau e armazem,Energia e luz"}
 
-def pecas_banca(tema, cx, cy, fx, fy, w, dd):
+def pecas_banca(tema, cx, cy, fx, fy, w, dd, nome="X"):
     sx, sy = fy, -fx
     def L(u, v): return (cx + sx * u + fx * (dd / 2 - v), cy + sy * u + fy * (dd / 2 - v))
     out = []
     def p(kind, pt, dx, dy, extra=""): out.append((kind, pt[0], pt[1], dx, dy, extra))
+    if tema == "hangar":
+        # o hangar é uma peça só (modelo DZ_Hangar), com o NPC piloto na frente se tiver nome
+        p("hangar", L(0, dd / 2), fx, fy)
+        if nome: p("npc", L(-w / 2 - 1.5, 0.5), fx, fy, NPC[tema])
+        p("luz", L(-w / 2 - .8, -.5), fx, fy); p("luz", L(w / 2 + .8, -.5), fx, fy)
+        return out
     for a, b in [((-w / 2, 0), (-w / 2, dd)), ((-w / 2, dd), (w / 2, dd)), ((w / 2, dd), (w / 2, 0))]:
         out.append(("parede",) + L(*a) + L(*b))
     def fundo(n, v=None):
@@ -40,6 +48,12 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd):
     elif tema == "mercado":
         for q in fundo(4): p("prateleira", q, fx, fy, "comida")
         for q, d in lados(2): p("prateleira", q, *d, extra="remedios")
+    elif tema in ("comida", "remedios"):
+        for q in fundo(4): p("prateleira", q, fx, fy, ex)
+        for q, d in lados(2): p("prateleira" if tema == "comida" else "mesa", q, *d, extra=ex if tema == "comida" else "")
+    elif tema == "construtor":
+        for q in fundo(3): p("caixa", q, fx, fy)
+        for q, d in lados(2): p("prateleira", q, *d, extra=ex)
     elif tema in ("roupas", "tatico"):
         for q in fundo(4, dd - 1.1): p("manequim", q, fx, fy, "roupas" if tema == "roupas" else "negro:Elite e torres")
         for q, d in lados(2): p("prateleira", q, *d, extra="roupas" if tema == "roupas" else ex)
@@ -50,7 +64,7 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd):
         for q in fundo(4): p("cofre", q, fx, fy)
     elif tema == "banco":
         for q in fundo(3): p("cofre", q, fx, fy)
-    elif tema == "explosivos":
+    elif tema in ("explosivos", "raid"):
         for q in fundo(5): p("barril", q, fx, fy)
         for q, d in lados(2): p("caixa", q, *d)
     elif tema == "oficina":
@@ -80,9 +94,18 @@ with open(sys.argv[2] if len(sys.argv) > 2 else "montar_modelos.tsv", "w") as fo
         if m.zona: fo.write(f"{c}\tzona\t{m.zona}\n")
         for a, b in m.cercas: fo.write(f"{c}\tcerca\t{a[0]:.2f}\t{a[1]:.2f}\t{b[0]:.2f}\t{b[1]:.2f}\n")
         for (tema, nome, x, y, fx, fy, w, dd) in m.bancas:
-            for pc in pecas_banca(tema, x, y, fx, fy, w, dd):
+            for pc in pecas_banca(tema, x, y, fx, fy, w, dd, nome):
                 if pc[0] == "parede": fo.write(f"{c}\tparede\t{pc[1]:.2f}\t{pc[2]:.2f}\t{pc[3]:.2f}\t{pc[4]:.2f}\n")
                 else: fo.write(f"{c}\t{pc[0]}\t{pc[1]:.2f}\t{pc[2]:.2f}\t{pc[3]:.3f}\t{pc[4]:.3f}\t{pc[5]}\n")
+        for (x, y, fx, fy, comp, larg, nome) in getattr(m, "pistas", []):
+            n = max(1, round(comp / 30))
+            for i in range(n):
+                yy = y - comp / 2 + comp * (i + .5) / n
+                fo.write(f"{c}\tpista\t{x:.2f}\t{yy:.2f}\t{fx:.3f}\t{fy:.3f}\t\n")
+            fo.write(f"{c}\tpista_inicio\t{x:.2f}\t{y - comp / 2 + 12:.2f}\t{fx:.3f}\t{fy:.3f}\t\n")
+            for k in range(int(comp / 15) + 1):
+                for sx in (-1, 1):
+                    fo.write(f"{c}\tluz\t{x + sx * (larg / 2 + 1.5):.2f}\t{y - comp / 2 + k * 15:.2f}\t0\t1\t\n")
         for t, x, y, nome in m.itens:
             # virado pro centro do modelo
             dx, dy = -x, -y

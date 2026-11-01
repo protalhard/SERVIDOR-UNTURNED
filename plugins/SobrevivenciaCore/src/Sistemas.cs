@@ -132,6 +132,9 @@ namespace SobrevivenciaCore
         public bool AtmSoNaSafe = true;
         // segundos que o aviso grande de entrada na safe fica na tela
         public float SafeAvisoSegundos = 8f;
+        // foto dos itens na loja ({id} = ID do item). Os PNGs ficam na pasta icones do site do servidor.
+        public string IconeUrl = "http://54.94.93.87/icones/{id}.png";
+        public string IconeVeiculoUrl = "http://54.94.93.87/icones/v{id}.png";
         // Raid de base: só no horário (Brasília). Dias: "todos" ou "sex,sab,dom"...
         public bool RaidHorarioLigado = true;
         public int RaidInicioHora = 18;
@@ -177,6 +180,7 @@ namespace SobrevivenciaCore
             "cofre=6957", "caixa=4449", "caixa_grande=6956", "barril=4587",
             "luz=7130", "fogueira=7130", "torre=6956", "barraca=0", "banco_praca=4893",
             "bandeira=51253", "bandeira_placa=4996",
+            "hangar=51256", "heliponto=51255", "pista=51257",
         };
 
         /// <summary>Preenche o que estiver faltando (config antiga). Devolve true se mudou algo.</summary>
@@ -230,6 +234,15 @@ namespace SobrevivenciaCore
             {
                 if (MontarPecas != null) MontarPecas = MontarPecas.ConvertAll(x => x.Replace(" ", "") == "manequim=0" ? "manequim=4575" : x);
                 VersaoPadroes = 7;
+                mudou = true;
+            }
+            // v8: hangar, heliponto e pista (peças DZ)
+            if (VersaoPadroes < 8)
+            {
+                if (MontarPecas != null)
+                    foreach (var x in new[] { "hangar=51256", "heliponto=51255", "pista=51257" })
+                        if (!MontarPecas.Exists(y => y.StartsWith(x.Split('=')[0] + "="))) MontarPecas.Add(x);
+                VersaoPadroes = 8;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

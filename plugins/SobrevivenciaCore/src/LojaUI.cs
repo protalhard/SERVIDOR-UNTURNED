@@ -23,7 +23,7 @@ namespace SobrevivenciaCore
         {
             { 51240, "armas" }, { 51241, "comida" }, { 51242, "roupas" }, { 51243, "remedios" }, { 51244, "equipamentos" },
             { 51245, "garagem" }, { 51247, "negro" }, { 51248, "cacador" },
-            { 51250, "negro" }, { 51251, "negro" }, { 51252, "negro" },
+            { 51250, "negro" }, { 51251, "negro" }, { 51252, "negro" }, { 51254, "construcao" },
         };
 
         /// <summary>NPCs que mostram só parte da loja (categorias). Mercado negro dividido em cantinhos.
@@ -36,7 +36,7 @@ namespace SobrevivenciaCore
         };
         static readonly string[] NegroArmas = { "Snipers", "Rifles fortes", "Metralhadoras", "Pistolas e escopetas", "Municao rara" };
 
-        public static bool EhNpc(ushort id) => id >= 51240 && id <= 51252;
+        public static bool EhNpc(ushort id) => (id >= 51240 && id <= 51252) || id == 51254;
 
         class EstadoLoja
         {
@@ -56,6 +56,18 @@ namespace SobrevivenciaCore
 
         static void LT(UnturnedPlayer p, string nome, string texto) => EffectManager.sendUIEffectText(LojaKey, Con(p), true, nome, texto ?? "");
         static void LV(UnturnedPlayer p, string nome, bool on) => EffectManager.sendUIEffectVisibility(LojaKey, Con(p), true, nome, on);
+        // foto do item: S.IconeUrl com {id} (itens) e S.IconeVeiculoUrl (veículos). Só manda se mudou.
+        readonly Dictionary<string, string> iconeEnviado = new Dictionary<string, string>();
+        void LI(UnturnedPlayer p, string nome, ItemLoja it)
+        {
+            var modelo = it == null ? null : it.Veiculo ? S.IconeVeiculoUrl : S.IconeUrl;
+            if (string.IsNullOrEmpty(modelo)) return;
+            var url = modelo.Replace("{id}", it.Id.ToString());
+            var chave = Id(p) + "/" + nome;
+            if (iconeEnviado.TryGetValue(chave, out var antes) && antes == url) return;
+            iconeEnviado[chave] = url;
+            EffectManager.sendUIEffectImageURL(LojaKey, Con(p), true, nome, url, true, false);
+        }
 
         void LigarLojas()
         {
@@ -119,6 +131,38 @@ namespace SobrevivenciaCore
                 cfg.VersaoLojas = 3;
                 mudou = true;
             }
+            // v4: comida e remédios separados de novo (NPCs próprios) e loja do construtor
+            if (cfg.VersaoLojas < 4)
+            {
+                var comida = cfg.Lojas.FirstOrDefault(l => l.Id == "comida");
+                var rem = cfg.Lojas.FirstOrDefault(l => l.Id == "remedios");
+                if (comida != null && rem != null)
+                {
+                    var ids = new HashSet<ushort>(rem.Itens.Select(i => i.Id));
+                    var catsRem = new HashSet<string>(rem.Itens.Select(i => i.Categoria ?? ""));
+                    comida.Itens.RemoveAll(i => ids.Contains(i.Id) && catsRem.Contains(i.Categoria ?? ""));
+                    if (comida.Nome == "Mercado") comida.Nome = "Comida";
+                }
+                if (!cfg.Lojas.Any(l => l.Id == "construcao"))
+                {
+                    var c = LojasPadrao.Construcao();
+                    var eq = cfg.Lojas.FirstOrDefault(l => l.Id == "equipamentos");
+                    if (eq != null)
+                    {
+                        // a categoria Base sai dos equipamentos e vai pro construtor (mantém preço editado)
+                        foreach (var i in eq.Itens.Where(i => i.Categoria == "Base").ToList())
+                        {
+                            eq.Itens.Remove(i);
+                            var j = c.Itens.FirstOrDefault(x => x.Id == i.Id);
+                            if (j != null) { j.Compra = i.Compra; j.Venda = i.Venda; } else c.Itens.Add(i);
+                        }
+                        c.X = eq.X; c.Y = eq.Y; c.Z = eq.Z; c.Raio = eq.Raio;
+                    }
+                    cfg.Lojas.Add(c);
+                }
+                cfg.VersaoLojas = 4;
+                mudou = true;
+            }
             if (!cfg.Notas.Any(n => n.Id == 7012))
             {
                 cfg.Notas.Add(new Nota(7012, 10000) { SoAceita = true });
@@ -146,6 +190,7 @@ namespace SobrevivenciaCore
                 var pos = drop.model.position;
                 ushort id = drop.asset.id;
                 if (id == NpcVault) { AbrirVaultNpc(p); return; }
+                if (id == NpcBanco && AbrirAtm(p, pos)) return;
                 if (id == NpcBanco)
                 {
                     Chat.Info(p, $"Banco: ${Banco.Saldo(Id(p)):N0}  |  No bolso: ${Dinheiro.NoBolso(p):N0}");
@@ -202,6 +247,7 @@ namespace SobrevivenciaCore
             var e = new EstadoLoja { Loja = loja, Npc = npc, SoCats = soCats };
             e.Vender = !loja.Itens.Any(i => i.Compra > 0);
             lojasAbertas[Id(p)] = e;
+            foreach (var k in iconeEnviado.Keys.Where(k => k.StartsWith(Id(p) + "/")).ToList()) iconeEnviado.Remove(k);
             EffectManager.SendUIEffect(asset, LojaKey, Con(p), true);
             p.Player.enablePluginWidgetFlag(EPluginWidgetFlags.Modal);
             LT(p, "Loja_Titulo", Chat.Limpar(loja.Nome).ToUpperInvariant());
@@ -279,6 +325,7 @@ namespace SobrevivenciaCore
                 var it = e.Lista[idx];
                 LV(p, n, true);
                 LT(p, n + "_Nome", Chat.Limpar(NomeDe(it)).ToUpperInvariant());
+                LI(p, n + "_Icone", it);
                 LT(p, n + "_Preco", "$ " + (e.Vender ? it.Venda : it.Compra).ToString("N0"));
                 LV(p, n + "_Sel", idx == e.Sel);
             }
@@ -298,6 +345,7 @@ namespace SobrevivenciaCore
             if (it.Veiculo) e.Qtd = 1;
             long preco = e.Vender ? it.Venda : it.Compra;
             LT(p, "Det_Nome", Chat.Limpar(NomeDe(it)).ToUpperInvariant());
+            LI(p, "Det_Icone", it);
             string desc = it.Veiculo ? "Veiculo. Aparece aqui do lado, trancado pra voce."
                 : (Assets.find(EAssetType.ITEM, it.Id) as ItemAsset)?.itemDescription ?? "";
             if (e.Vender) desc = $"Voce tem {Itens.Contar(p, it.Id)}. " + desc;
@@ -371,8 +419,12 @@ namespace SobrevivenciaCore
                 if (asset == null) { AvisoLoja(p, "Veiculo invalido na configuracao.", false); return; }
                 Vector3 onde = e.Loja.VX != 0 || e.Loja.VZ != 0 ? new Vector3(e.Loja.VX, e.Loja.VY, e.Loja.VZ)
                     : p.Position + p.Player.transform.forward * 8f;
+                float giro = p.Player.transform.eulerAngles.y;
+                // avião nasce na cabeceira da pista, virado pra ela
+                if (asset.engine == EEngine.PLANE && (e.Loja.AX != 0 || e.Loja.AZ != 0))
+                { onde = new Vector3(e.Loja.AX, e.Loja.AY, e.Loja.AZ); giro = e.Loja.AR; }
                 if (!Dinheiro.Pagar(p, preco)) { AvisoLoja(p, "Dinheiro insuficiente.", false); return; }
-                VehicleManager.spawnLockedVehicleForPlayerV2(asset, onde + Vector3.up * 3f, Quaternion.Euler(0, p.Player.transform.eulerAngles.y, 0), p.Player);
+                VehicleManager.spawnLockedVehicleForPlayerV2(asset, onde + Vector3.up * 3f, Quaternion.Euler(0, giro, 0), p.Player);
                 Rocket.Core.Logging.Logger.Log($"[LOJA] {p.CharacterName} comprou veiculo {asset.vehicleName} por {preco}");
             }
             else

@@ -25,6 +25,25 @@ namespace SobrevivenciaCore
 
         static Loja Limpa(Loja l) { l.Itens.RemoveAll(i => i == null); return l; }
 
+        /// <summary>NPC construtor (safe): tudo pra montar base.</summary>
+        public static Loja Construcao() => Limpa(L("construcao", "Construtor", "safe",
+            Cat("Paredes"),
+            I(4435, 60), I(4438, 30), I(4867, 80), I(4168, 120), I(4161, 60), I(6071, 200),
+            I(4564, 300), I(4557, 150), I(7201, 300), I(7133, 400), I(7200, 500),
+            Cat("Muros e portoes"),
+            I(6201, 300), I(6202, 350), I(6203, 450), I(6196, 400), I(6207, 500), I(6208, 550), I(6209, 700),
+            I(6204, 900), I(6205, 950), I(6206, 1200), I(378, 250), I(1089, 200), I(457, 400),
+            Cat("Cercas"),
+            I(7120, 40), I(4188, 50), I(7132, 100), I(7121, 120), I(7122, 200), I(7046, 600),
+            Cat("Bau e armazem"),
+            I(4448, 250), I(4590, 250), I(4459, 300), I(4449, 600), I(4743, 600), I(6956, 1500), I(6957, 2000),
+            Cat("Energia e luz"),
+            I(4467, 20), I(4577, 100), I(6155, 150), I(6184, 1200),
+            Cat("Moveis"),
+            I(4893, 60), I(4463, 80), I(4446, 150),
+            Cat("Base"),
+            I(4995, 1500)));
+
         public static List<Loja> Criar() => new List<Loja>
         {
             // ===================== SAFE ZONE =====================

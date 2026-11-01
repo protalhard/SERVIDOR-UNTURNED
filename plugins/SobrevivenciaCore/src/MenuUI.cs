@@ -321,6 +321,7 @@ namespace SobrevivenciaCore
             {
                 var p = UnturnedPlayer.FromPlayer(pl);
                 if (p == null) return;
+                if (CliqueAtm(p, botao)) return;
                 if (CliqueLoja(p, botao)) return;
                 if (!menus.TryGetValue(Id(p), out var e)) return;
                 if (botao.StartsWith("Adm_")) { CliqueAdmin(p, e, botao); return; }
@@ -431,7 +432,7 @@ namespace SobrevivenciaCore
             try
             {
                 var p = UnturnedPlayer.FromPlayer(pl);
-                if (p == null || DigitouLoja(p, campo, texto) || !menus.ContainsKey(Id(p))) return;
+                if (p == null || DigitouAtm(p, campo, texto) || DigitouLoja(p, campo, texto) || !menus.ContainsKey(Id(p))) return;
                 if (campo.StartsWith("Adm_")) DigitouAdmin(p, campo, texto);
             }
             catch (Exception ex) { Rocket.Core.Logging.Logger.LogException(ex); }

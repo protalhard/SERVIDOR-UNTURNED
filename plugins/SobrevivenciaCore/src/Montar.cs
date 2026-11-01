@@ -183,15 +183,28 @@ namespace SobrevivenciaCore
                             if (id == 51249) cfg.Atms.Add(new Ponto("ATM " + (cfg.Atms.Count + 1), 4f) { X = pos.x, Y = pos.y, Z = pos.z });
                             break;
                         }
-                        case "heliponto":
                         case "veiculo":
                         {
+                            // carro comprado na garagem da safe nasce aqui
                             var v = Mundo(pc.X, pc.Y);
-                            var loja = cfg.Lojas.FirstOrDefault(l => l.Id == (pc.Tipo == "heliponto" ? "negro" : "garagem"));
-                            if (loja != null) { loja.VX = v.x; loja.VY = v.y; loja.VZ = v.z; }
-                            if (pc.Tipo == "heliponto")
-                                foreach (var k in new[] { (6f, 0f), (-6f, 0f), (0f, 6f), (0f, -6f) })
-                                    Guardar(Colocar(IdPeca("luz", area), Mundo(pc.X + k.Item1, pc.Y + k.Item2), 0, dono));
+                            var loja = cfg.Lojas.FirstOrDefault(l => l.Id == "garagem");
+                            if (loja != null && area == "safe") { loja.VX = v.x; loja.VY = v.y; loja.VZ = v.z; }
+                            break;
+                        }
+                        case "heliponto":
+                        {
+                            var v = Mundo(pc.X, pc.Y);
+                            Guardar(Colocar(IdPeca("heliponto", area), v, Yaw(0, 1), dono));
+                            // no mercado negro o heli comprado nasce no heliponto
+                            var loja = cfg.Lojas.FirstOrDefault(l => l.Id == "negro");
+                            if (loja != null && area == "negro") { loja.VX = v.x; loja.VY = v.y; loja.VZ = v.z; }
+                            break;
+                        }
+                        case "pista_inicio":
+                        {
+                            var v = Mundo(pc.X, pc.Y);
+                            var loja = cfg.Lojas.FirstOrDefault(l => l.Id == "negro");
+                            if (loja != null && area == "negro") { loja.AX = v.x; loja.AY = v.y; loja.AZ = v.z; loja.AR = Yaw(pc.X2, pc.Y2); }
                             break;
                         }
                         case "bandeira":
@@ -235,7 +248,7 @@ namespace SobrevivenciaCore
             }
 
             // lojas da área apontam pro centro (o NPC mais perto do tipo abre a loja)
-            var ids = area == "safe" ? new[] { "armas", "comida", "roupas", "remedios", "equipamentos", "garagem" }
+            var ids = area == "safe" ? new[] { "armas", "comida", "roupas", "remedios", "equipamentos", "garagem", "construcao" }
                 : new[] { area };
             foreach (var idLoja in ids)
             {

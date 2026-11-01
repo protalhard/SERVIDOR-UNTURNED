@@ -38,6 +38,7 @@ func main() {
 	pasta := flag.String("dados", dados.PastaPadrao, "pasta do plugin SobrevivenciaCore")
 	arqSegredo := flag.String("segredo", "/home/unturned/dz-site/segredo", "arquivo com a chave dos cookies")
 	flag.StringVar(&ip, "ip", "54.94.93.87:27015", "IP:porta do servidor do jogo")
+	pastaIcones := flag.String("icones", pastaIconesPadrao(), "pasta com os PNGs dos itens (<id>.png)")
 	flag.Parse()
 	fonte = dados.Fonte{Pasta: *pasta}
 	segredo = carregarSegredo(*arqSegredo)
@@ -46,6 +47,21 @@ func main() {
 	arquivos := http.FileServer(http.FS(web))
 
 	mux := http.NewServeMux()
+	// fotos dos itens pra janela da loja no jogo: /icones/<id>.png (sem a foto, manda a padrão)
+	mux.HandleFunc("/icones/", func(w http.ResponseWriter, r *http.Request) {
+		nome := filepath.Base(r.URL.Path)
+		if !strings.HasSuffix(nome, ".png") || strings.Contains(nome, "..") {
+			http.NotFound(w, r)
+			return
+		}
+		arq := filepath.Join(*pastaIcones, nome)
+		if _, err := os.Stat(arq); err != nil {
+			arq = filepath.Join(*pastaIcones, "sem_foto.png")
+		}
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Header().Set("Content-Type", "image/png")
+		http.ServeFile(w, r, arq)
+	})
 	mux.HandleFunc("/api/status", apiStatus)
 	mux.HandleFunc("/api/ranking", apiRanking)
 	mux.HandleFunc("/api/kits", apiKits)
@@ -266,4 +282,13 @@ func lerSessao(r *http.Request) string {
 		return ""
 	}
 	return p[0]
+}
+
+// pastaIconesPadrao: <repo>/server-files/icones (o binário fica em <repo>/painel/bin).
+func pastaIconesPadrao() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "icones"
+	}
+	return filepath.Join(filepath.Dir(exe), "..", "..", "server-files", "icones")
 }

@@ -64,6 +64,11 @@ namespace SobrevivenciaCore
         [XmlAttribute] public float VX;
         [XmlAttribute] public float VY;
         [XmlAttribute] public float VZ;
+        // onde nasce o avião comprado (cabeceira da pista) e pra onde fica virado
+        [XmlAttribute] public float AX;
+        [XmlAttribute] public float AY;
+        [XmlAttribute] public float AZ;
+        [XmlAttribute] public float AR;
         public List<ItemLoja> Itens = new List<ItemLoja>();
         public bool Definido => !(X == 0 && Y == 0 && Z == 0);
     }
