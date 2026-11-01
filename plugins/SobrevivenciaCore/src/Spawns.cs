@@ -196,6 +196,34 @@ namespace SobrevivenciaCore
             return maior?.id ?? S.MochilaItens;
         }
 
+        /// <summary>/por tirar: tira a peça que você está olhando (só peça colocada pelo dono) e devolve pro inventário.</summary>
+        public string TirarNaMira(UnturnedPlayer p)
+        {
+            var olho = p.Player.look.aim;
+            if (!Physics.Raycast(olho.position, olho.forward, out var hit, 12f, RayMasks.BARRICADE | RayMasks.STRUCTURE)) return "Olhe pra peca (ate 12 m).";
+            var bd = BarricadeManager.FindBarricadeByRootTransform(hit.transform.root) ?? BarricadeManager.FindBarricadeByRootTransform(hit.transform);
+            if (bd != null && BarricadeManager.tryGetRegion(bd.model, out var bx, out var by, out var plant, out _))
+            {
+                if (bd.GetServersideData()?.owner != Id(p) && !EhDono(bd.GetServersideData()?.owner ?? 0)) return "Essa peca nao foi colocada por voce.";
+                var id = bd.asset.id;
+                if (bd.interactable is InteractableStorage bau) bau.items.clear();
+                BarricadeManager.destroyBarricade(bd, bx, by, plant);
+                pecasMontadas = null;
+                p.Inventory.forceAddItem(new Item(id, true), true);
+                return "Tirado e devolvido pro inventario.";
+            }
+            var sd = StructureManager.FindStructureByRootTransform(hit.transform.root) ?? StructureManager.FindStructureByRootTransform(hit.transform);
+            if (sd != null && StructureManager.tryGetRegion(sd.model, out var sx, out var sy, out _))
+            {
+                if (sd.GetServersideData()?.owner != Id(p) && !EhDono(sd.GetServersideData()?.owner ?? 0)) return "Essa peca nao foi colocada por voce.";
+                var id = sd.asset.id;
+                StructureManager.destroyStructure(sd, sx, sy, Vector3.zero);
+                p.Inventory.forceAddItem(new Item(id, true), true);
+                return "Tirado e devolvido pro inventario.";
+            }
+            return "Nao achei peca ai.";
+        }
+
         public string EntregarPendentes(UnturnedPlayer p)
         {
             if (!itensPendentes.TryGetValue(Id(p), out var lista) || lista.Count == 0) return "Nao tem mais pecas pra entregar.";
@@ -218,7 +246,13 @@ namespace SobrevivenciaCore
             if (eq.asset is ItemStructureAsset sa)
                 ok = StructureManager.dropReplicatedStructure(new Structure(sa, sa.health), hit.point, Quaternion.Euler(-90f, yaw, 0f), Id(p), p.Player.quests.groupID.m_SteamID);
             else if (eq.asset is ItemBarricadeAsset ba)
-                ok = BarricadeManager.dropNonPlantedBarricade(new Barricade(ba), hit.point, Quaternion.Euler(-90f, yaw, 0f), Id(p), p.Player.quests.groupID.m_SteamID) != null;
+            {
+                // igual ao /montar: a origem da barricada fica "offset" acima do chão (senão o NPC afunda)
+                var pos = hit.point + Vector3.up * ba.offset;
+                float rotX = EhNpc(ba.id) ? S.MontarRotacaoXNpc : S.MontarRotacaoX;
+                ok = BarricadeManager.dropNonPlantedBarricade(new Barricade(ba), pos, Quaternion.Euler(rotX, yaw, 0f), Id(p), EhNpc(ba.id) ? 0 : p.Player.quests.groupID.m_SteamID) != null;
+                if (ok) pecasMontadas = null;
+            }
             else return "Isso nao e uma peca de construcao.";
             if (!ok) return "O jogo nao deixou colocar aqui.";
             // gasta a peça da mão
@@ -325,10 +359,11 @@ namespace SobrevivenciaCore
     {
         public override string Name => "por";
         public override string Help => "Coloca a peca que esta na sua mao onde voce olha, ate em lugar travado do mapa (dono).";
-        public override string Syntax => "[giro em graus]";
+        public override string Syntax => "[giro em graus] | tirar";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
+            if (a.Length > 0 && a[0].Equals("tirar", StringComparison.OrdinalIgnoreCase)) { Chat.Info(p, P.TirarNaMira(p)); return; }
             float giro = a.Length > 0 && float.TryParse(a[0], out var g) ? g : 0f;
             Chat.Info(p, P.PorNaMira(p, giro));
         }
