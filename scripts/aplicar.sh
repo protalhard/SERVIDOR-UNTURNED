@@ -105,6 +105,20 @@ for u in dz-backup.service dz-backup.timer; do
 done
 if [ "$bk" = 1 ]; then systemctl daemon-reload; systemctl enable --now dz-backup.timer; echo "backup diario ligado"; fi
 
+# 6c) Painel admin: pasta compartilhada (site, bot e executor) e o executor de wipe/reinício
+install -d -o unturned -g unturned -m 750 /home/unturned/dz-painel
+if ! cmp -s "$REPO/scripts/dz-painel-exec.py" /usr/local/bin/dz-painel-exec.py; then
+  install -m 755 "$REPO/scripts/dz-painel-exec.py" /usr/local/bin/dz-painel-exec.py
+  echo "executor do painel atualizado"
+fi
+pn=0
+for u in dz-painel.service dz-painel.timer; do
+  if ! cmp -s "$REPO/scripts/$u" "/etc/systemd/system/$u"; then
+    cp "$REPO/scripts/$u" "/etc/systemd/system/$u"; pn=1
+  fi
+done
+if [ "$pn" = 1 ]; then systemctl daemon-reload; systemctl enable --now dz-painel.timer; echo "executor do painel ligado"; fi
+
 # 7) Reinício: só com o servidor vazio. Com gente online, fica pendente e o
 #    sincronizador tenta de novo a cada 5 min (no máximo 6 h esperando).
 PENDENTE="$ESTADO/reiniciar-pendente"

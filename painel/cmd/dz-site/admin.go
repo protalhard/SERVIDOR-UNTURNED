@@ -26,6 +26,7 @@ type acessoAdmin struct {
 	Staff bool   `json:"staff"`
 	Dono  bool   `json:"dono"`
 	Ban   bool   `json:"ban"`
+	Mundo bool   `json:"mundo"` // anúncios e mensagens (aba Mensagens)
 }
 
 // permissoesAdmin: as mesmas do plugin (Plugin.PermissoesAdmin).
@@ -38,7 +39,7 @@ func acessoDe(id string) acessoAdmin {
 	}
 	for _, d := range strings.FieldsFunc(fonte.LerConfig().Donos, func(r rune) bool { return r == ',' || r == ' ' || r == ';' }) {
 		if d == id {
-			a.Dono, a.Staff, a.Ban = true, true, true
+			a.Dono, a.Staff, a.Ban, a.Mundo = true, true, true, true
 		}
 	}
 	for _, c := range lerTSV("staff.tsv", 0) {
@@ -48,6 +49,9 @@ func acessoDe(id string) acessoAdmin {
 			for _, p := range strings.Split(c[2], ",") {
 				if p == "Ban" {
 					a.Ban = true
+				}
+				if p == "Mundo" {
+					a.Mundo = true
 				}
 			}
 		}
@@ -188,8 +192,11 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 			return
 		}
 		arq := "admin_log.txt"
-		if r.URL.Query().Get("q") == "guard" {
+		switch r.URL.Query().Get("q") {
+		case "guard":
 			arq = "guard_log.txt"
+		case "raid":
+			arq = "raid_log.txt"
 		}
 		l := []string{}
 		linhas := lerTSV(arq, 400)

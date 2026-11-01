@@ -1,0 +1,7 @@
+[Unit]
+Description=Executor do painel admin (wipe e reinicio agendados)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/dz-painel-exec.py
+TimeoutStartSec=15min

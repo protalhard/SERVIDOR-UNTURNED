@@ -99,6 +99,7 @@ func main() {
 	mux.HandleFunc("/vincular", vincular)
 	mux.HandleFunc("/vincular/retorno", vincularRetorno)
 	registrarAdmin(mux, web)
+	registrarPainel(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := strings.Trim(r.URL.Path, "/")
 		switch p {

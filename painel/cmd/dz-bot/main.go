@@ -43,6 +43,8 @@ type Estado struct {
 	// canal -> discord do dono (tickets abertos e salas de voz particulares)
 	Tickets map[string]string `json:"tickets,omitempty"`
 	Salas   map[string]string `json:"salas,omitempty"`
+	// enquetes criadas pelo painel admin (pra mostrar os votos lá)
+	Enquetes []dados.EnqueteDiscord `json:"enquetes,omitempty"`
 }
 
 var (
@@ -92,6 +94,8 @@ func main() {
 	go laco(dg, 10*time.Second, enviarLogsGuard)
 	go laco(dg, 20*time.Second, conferirVinculos)
 	go laco(dg, 2*time.Minute, limparSalas)
+	go laco(dg, 3*time.Second, processarFilaPainel)
+	go laco(dg, time.Minute, exportarDiscord)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)

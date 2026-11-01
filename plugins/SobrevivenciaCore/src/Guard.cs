@@ -621,6 +621,17 @@ namespace SobrevivenciaCore
                     else Rocket.Core.Logging.Logger.Log("[ADMIN] site: " + r);
                     continue;
                 }
+                // anúncio no chat do jogo (painel do site, aba Mensagens): precisa de "Mundo" ou ser dono
+                if (c[0] == "anuncio")
+                {
+                    if (!EhDono(quem) && !(staff.TryGetValue(quem, out var ma) && ma.Perms.Contains("Mundo")))
+                    { LogGuard($"COMANDO NEGADO do site: anuncio por {quem} (sem permissao Mundo)"); continue; }
+                    var txt = Chat.Limpar(c.Length > 4 ? c[4] : "").Trim();
+                    if (txt == "") continue;
+                    for (int i = 0; i < 2; i++) Chat.Todos(Chat.Cor(S.CorDestaque, Chat.Forte("ANUNCIO: ")) + Chat.Cor("#FFFFFF", Chat.Forte(txt)));
+                    LogAdminNome(NomeDe(quem) + " (site)", quem, "ANUNCIO: " + txt);
+                    continue;
+                }
                 // confere de novo a permissão aqui (o site já conferiu)
                 bool podeBan = EhDono(quem) || (staff.TryGetValue(quem, out var m) && m.Perms.Contains("Ban"));
                 if (!podeBan) { LogGuard($"COMANDO NEGADO do site: {c[0]} por {quem} (sem permissao Ban)"); continue; }

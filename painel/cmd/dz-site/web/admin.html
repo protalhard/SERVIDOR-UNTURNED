@@ -4,53 +4,202 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#050506">
 <title>Painel Admin · DAY Z BRASIL</title>
 <link rel="icon" href="/img/icon64.png" type="image/png">
 <link rel="stylesheet" href="/site.css?v=10">
-<link rel="stylesheet" href="/admin.css?v=2">
+<link rel="stylesheet" href="/admin.css?v=4">
 </head>
 <body class="adm">
-<header class="adm-topo">
-  <a class="marca" href="/"><img src="/img/icon64.png" alt=""><span>DAY Z <b>BRASIL</b></span></a>
-  <span class="adm-titulo">PAINEL ADMIN · <b>DZ GUARD</b></span>
-  <span id="quem" class="adm-quem"></span>
-</header>
-<main class="adm-main">
-  <section id="fora" class="adm-caixa" hidden>
-    <h2>Área da staff</h2>
-    <p>Entre com a Steam. Só dono e staff do servidor conseguem ver.</p>
-    <a class="adm-btn" href="/admin/entrar">Entrar com a Steam</a>
+<section id="fora" class="adm-login" hidden>
+  <div class="adm-login-caixa">
+    <img src="/img/icon64.png" alt="" width="56" height="56">
+    <h1>DAY Z <b>BRASIL</b></h1>
+    <p class="mono fraco">PAINEL ADMIN</p>
+    <p>Entre com a Steam. Só o dono e a staff do servidor conseguem ver.</p>
+    <a class="botao" href="/admin/entrar">Entrar com a Steam</a>
     <p id="naostaff" class="adm-erro" hidden>Sua conta Steam não está na staff.</p>
-  </section>
-  <section id="dentro" hidden>
-    <nav class="adm-abas" id="abas">
-      <button data-aba="banidos" class="ativa">Banidos <span id="n-banidos"></span></button>
-      <button data-aba="suspeitos">Suspeitos <span id="n-suspeitos"></span></button>
-      <button data-aba="reports">Reports <span id="n-reports"></span></button>
-      <button data-aba="banir">Banir por Steam ID</button>
-      <button data-aba="logs">Logs</button>
-      <button data-aba="staff" id="aba-staff" hidden>Staff</button>
+  </div>
+</section>
+
+<div id="dentro" class="adm-app" hidden>
+  <aside class="adm-lado" id="lado">
+    <a class="adm-marca" href="/admin"><img src="/img/icon64.png" alt=""><span>DAY Z <b>BRASIL</b><small>PAINEL ADMIN</small></span></a>
+    <nav class="adm-menu" id="abas">
+      <p class="adm-grupo">Geral</p>
+      <button data-aba="dashboard" class="ativa"><i data-i="painel"></i>Dashboard</button>
+      <button data-aba="mensagens" data-precisa="mundo"><i data-i="msg"></i>Mensagens</button>
+      <button data-aba="wipe"><i data-i="wipe"></i>Wipe</button>
+      <p class="adm-grupo">Jogadores</p>
+      <button data-aba="jogadores"><i data-i="gente"></i>Jogadores <span id="n-jogadores"></span></button>
+      <button data-aba="banidos"><i data-i="ban"></i>Banidos <span id="n-banidos"></span></button>
+      <button data-aba="suspeitos"><i data-i="olho"></i>Suspeitos <span id="n-suspeitos"></span></button>
+      <button data-aba="reports"><i data-i="flag"></i>Reports <span id="n-reports"></span></button>
+      <button data-aba="banir" data-precisa="ban"><i data-i="martelo"></i>Banir por Steam ID</button>
+      <p class="adm-grupo">Servidor</p>
+      <button data-aba="logs"><i data-i="log"></i>Logs</button>
+      <button data-aba="staff" data-precisa="dono"><i data-i="escudo"></i>Staff</button>
     </nav>
-    <div class="adm-barra">
-      <input id="busca" placeholder="Buscar nome ou Steam ID" autocomplete="off">
-      <span id="aviso" class="adm-aviso"></span>
-    </div>
-    <div id="lista" class="adm-lista"></div>
-    <form id="form-banir" class="adm-caixa" hidden>
-      <h2>Banir jogador (online ou offline)</h2>
-      <label>Steam ID <input name="steam" placeholder="7656119..." required pattern="7656[0-9]{13}"></label>
-      <label>Horas (0 ou vazio = permanente) <input name="horas" type="number" min="0" step="0.5"></label>
-      <label>Motivo <input name="motivo" maxlength="200" required></label>
-      <button class="adm-btn perigo" type="submit">BANIR</button>
-    </form>
-    <div id="staff" class="adm-lista" hidden></div>
-    <div id="logs" hidden>
-      <div class="adm-sub"><button data-log="admin" class="ativa">Ações da staff</button><button data-log="guard">DZ GUARD</button></div>
+    <div class="adm-eu" id="quem"></div>
+  </aside>
+
+  <main class="adm-main">
+    <header class="adm-cabeca">
+      <div>
+        <h1 id="titulo">Dashboard</h1>
+        <p id="subtitulo" class="fraco"></p>
+      </div>
+      <div class="adm-cabeca-dir">
+        <span id="pilula-servidor" class="adm-pilula">…</span>
+        <span id="pilula-bot" class="adm-pilula">…</span>
+      </div>
+    </header>
+    <div id="aviso" class="adm-aviso" role="status" hidden></div>
+
+    <!-- DASHBOARD -->
+    <section data-painel="dashboard">
+      <div class="adm-secao"><h2>Desempenho da máquina</h2><span class="adm-aovivo" id="aovivo">ao vivo</span></div>
+      <div class="adm-desemp" id="desemp"></div>
+      <div class="adm-jogo-linha" id="desemp-jogo"></div>
+      <div class="adm-secao"><h2>Servidor e comunidade</h2></div>
+      <div class="adm-tiles" id="tiles"></div>
+      <div class="adm-grade">
+        <article class="adm-bloco" id="b-agendado"></article>
+        <article class="adm-bloco"><h2>Online agora</h2><div id="b-online"></div></article>
+        <article class="adm-bloco"><h2>Discord</h2><div id="b-discord"></div></article>
+        <article class="adm-bloco"><h2>Enquetes</h2><div id="b-enquetes"></div></article>
+        <article class="adm-bloco"><h2>Backups</h2><div id="b-backups"></div></article>
+        <article class="adm-bloco"><h2>Histórico</h2><div id="b-historico"></div></article>
+      </div>
+    </section>
+
+    <!-- MENSAGENS -->
+    <section data-painel="mensagens" hidden>
+      <div class="adm-duas">
+        <form id="form-msg" class="adm-bloco adm-form">
+          <h2>Nova mensagem</h2>
+          <fieldset>
+            <legend>Para onde vai</legend>
+            <div class="adm-chips">
+              <label class="adm-chip"><input type="checkbox" name="jogo" checked><span>🎮 Chat do jogo</span></label>
+              <label class="adm-chip"><input type="checkbox" name="discord" checked><span>💬 Discord</span></label>
+            </div>
+            <label class="adm-campo" data-so="discord">Canal do Discord<select name="canal" id="msg-canal"></select></label>
+          </fieldset>
+          <fieldset>
+            <legend>Tipo</legend>
+            <div class="adm-seg" id="msg-tipo">
+              <button type="button" data-tipo="mensagem" class="ativa">Mensagem</button>
+              <button type="button" data-tipo="aviso">Aviso em destaque</button>
+              <button type="button" data-tipo="enquete">Enquete</button>
+            </div>
+          </fieldset>
+          <label class="adm-campo" data-tipos="aviso enquete"><span id="lbl-titulo">Título</span><input name="titulo" maxlength="250" autocomplete="off"></label>
+          <label class="adm-campo" data-tipos="mensagem aviso enquete"><span id="lbl-texto">Mensagem</span><textarea name="texto" rows="5" maxlength="3500"></textarea></label>
+          <div class="adm-campo" data-tipos="enquete">
+            <span>Opções (2 a 10)</span>
+            <div id="msg-opcoes" class="adm-opcoes"></div>
+            <button type="button" class="botao fantasma pequeno" id="mais-opcao">+ opção</button>
+          </div>
+          <div class="adm-linha" data-tipos="enquete">
+            <label class="adm-campo">Duração<select name="horas">
+              <option value="1">1 hora</option><option value="4">4 horas</option><option value="8">8 horas</option>
+              <option value="24" selected>1 dia</option><option value="72">3 dias</option><option value="168">7 dias</option></select></label>
+            <label class="adm-check"><input type="checkbox" name="multi"> Pode marcar mais de uma</label>
+          </div>
+          <div class="adm-campo" data-tipos="aviso">
+            <span>Cor</span>
+            <div class="adm-cores" id="msg-cores"></div>
+          </div>
+          <label class="adm-campo" data-tipos="aviso">Imagem (link https, opcional)<input name="imagem" placeholder="https://..." autocomplete="off"></label>
+          <label class="adm-campo" data-so="discord">Marcar no Discord<select name="mencao">
+            <option value="">Ninguém</option><option value="here">@here (quem está online)</option><option value="everyone">@everyone (todo mundo)</option></select></label>
+          <button class="botao" type="submit">Enviar</button>
+          <div id="msg-resultado" class="adm-resultado"></div>
+        </form>
+        <aside class="adm-bloco">
+          <h2>Prévia</h2>
+          <p class="fraco pequeno" id="prev-onde"></p>
+          <div class="adm-previa" id="previa"></div>
+          <div class="adm-previa-jogo" id="previa-jogo"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- WIPE -->
+    <section data-painel="wipe" hidden>
+      <article class="adm-bloco" id="w-agendado"></article>
+      <div class="adm-duas">
+        <form id="form-enquete-wipe" class="adm-bloco adm-form">
+          <h2>1. Enquete: já pode ter wipe?</h2>
+          <p class="fraco">Manda uma enquete no Discord e avisa no chat do jogo. Os votos aparecem aqui.</p>
+          <label class="adm-campo">Pergunta<input name="titulo" value="Bora de WIPE? 🔄" maxlength="250"></label>
+          <div class="adm-campo"><span>Opções</span><div id="w-opcoes" class="adm-opcoes"></div></div>
+          <div class="adm-linha">
+            <label class="adm-campo">Canal<select name="canal" id="w-canal-enquete"></select></label>
+            <label class="adm-campo">Duração<select name="horas">
+              <option value="24">1 dia</option><option value="48" selected>2 dias</option><option value="72">3 dias</option><option value="168">7 dias</option></select></label>
+          </div>
+          <label class="adm-check"><input type="checkbox" name="jogo" checked> Avisar no chat do jogo também</label>
+          <button class="botao" type="submit">Enviar enquete</button>
+          <div class="adm-resultado" id="w-res-enquete"></div>
+          <div id="w-votos"></div>
+        </form>
+
+        <form id="form-wipe" class="adm-bloco adm-form">
+          <h2>2. Marcar o wipe</h2>
+          <div class="adm-seg" id="w-preset">
+            <button type="button" data-preset="bases">Só bases</button>
+            <button type="button" data-preset="completo">Wipe completo</button>
+            <button type="button" data-preset="limpar">Limpar marcações</button>
+          </div>
+          <fieldset><legend>O que vai ser apagado</legend><div id="w-itens" class="adm-itens"></div></fieldset>
+          <div class="adm-linha">
+            <label class="adm-campo">Quando<input type="datetime-local" name="quando" required></label>
+            <div class="adm-campo"><span>&nbsp;</span><div class="adm-chips" id="w-rapido">
+              <button type="button" class="botao fantasma pequeno" data-min="5">Em 5 min</button>
+              <button type="button" class="botao fantasma pequeno" data-min="60">Em 1 hora</button>
+              <button type="button" class="botao fantasma pequeno" data-amanha="1">Amanhã 18h</button></div></div>
+          </div>
+          <label class="adm-campo">Recado pros jogadores (opcional)<textarea name="motivo" rows="2" maxlength="500"></textarea></label>
+          <label class="adm-check"><input type="checkbox" name="anunciar" checked> Anunciar no Discord (com @everyone)</label>
+          <label class="adm-campo">Canal do anúncio<select name="canal" id="w-canal-anuncio"></select></label>
+          <label class="adm-campo"><span>Pra confirmar, digite <b>WIPE</b></span><input name="confirmar" autocomplete="off" placeholder="WIPE"></label>
+          <p class="adm-nota">Antes de apagar, o servidor faz um backup completo. O jogo avisa os jogadores 60, 30, 15, 10, 5, 2 e 1 minuto antes.</p>
+          <button class="botao perigo" type="submit" id="w-botao">Marcar wipe</button>
+          <p class="adm-erro" id="w-so-dono" hidden>Só o dono do servidor pode marcar wipe.</p>
+        </form>
+      </div>
+      <article class="adm-bloco"><h2>Wipes anteriores</h2><div id="w-historico"></div></article>
+    </section>
+
+    <!-- LISTAS -->
+    <section data-painel="lista" hidden>
+      <div class="adm-barra"><input id="busca" placeholder="Buscar nome ou Steam ID" autocomplete="off"></div>
+      <div id="lista" class="adm-lista"></div>
+    </section>
+
+    <section data-painel="banir" hidden>
+      <form id="form-banir" class="adm-bloco adm-form adm-estreito">
+        <h2>Banir jogador (online ou offline)</h2>
+        <label class="adm-campo">Steam ID <input name="steam" placeholder="7656119..." required pattern="7656[0-9]{13}"></label>
+        <label class="adm-campo">Horas (0 ou vazio = permanente) <input name="horas" type="number" min="0" step="0.5"></label>
+        <label class="adm-campo">Motivo <input name="motivo" maxlength="200" required></label>
+        <button class="botao perigo" type="submit">BANIR</button>
+      </form>
+    </section>
+
+    <section data-painel="logs" hidden>
+      <div class="adm-seg" id="sub-logs">
+        <button data-log="admin" class="ativa">Ações da staff</button><button data-log="guard">DZ GUARD</button><button data-log="raid">Raids</button>
+      </div>
       <pre id="log-texto" class="adm-log"></pre>
-    </div>
-  </section>
-</main>
+    </section>
+
+    <section data-painel="staff" hidden><div id="staff" class="adm-lista"></div></section>
+  </main>
+</div>
 <div id="zoom" class="adm-zoom" hidden><img alt=""></div>
-<script src="/admin.js?v=2"></script>
+<script src="/admin.js?v=4"></script>
 </body>
 </html>

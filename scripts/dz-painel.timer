@@ -1,0 +1,10 @@
+[Unit]
+Description=Confere a cada minuto se o painel admin agendou wipe ou reinicio
+
+[Timer]
+OnCalendar=*-*-* *:*:05
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target
