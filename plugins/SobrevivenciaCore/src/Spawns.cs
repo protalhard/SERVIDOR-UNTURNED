@@ -209,6 +209,10 @@ namespace SobrevivenciaCore
                 ushort cerca = IdPeca("cerca", area);
                 if (cerca == 0 || !Itens.Existe(cerca)) cerca = IdPeca("parede", area);
                 if (cerca != 0 && Itens.Existe(cerca)) for (int i = 0; i < 6 * npcs; i++) lista.Add(cerca);
+                // terminal da garagem (tira/guarda carro) e 4 placas de vaga; as vagas se gravam com /vaga add
+                if (Itens.Existe(TerminalId)) lista.Add(TerminalId);
+                var placaVaga = IdPeca("vaga", area);
+                if (placaVaga != 0 && Itens.Existe(placaVaga)) for (int i = 0; i < 4; i++) lista.Add(placaVaga);
             }
             if (lista.Count == 0) return "Esse modelo nao tem pecas.";
             // mochila grande primeiro (se ele estiver sem mochila, já veste)
@@ -287,7 +291,19 @@ namespace SobrevivenciaCore
                 var pos = hit.point + Vector3.up * ba.offset;
                 float rotX = EhNpc(ba.id) ? S.MontarRotacaoXNpc : S.MontarRotacaoX;
                 ok = BarricadeManager.dropNonPlantedBarricade(new Barricade(ba), pos, Quaternion.Euler(rotX, yaw, 0f), Id(p), EhNpc(ba.id) ? 0 : p.Player.quests.groupID.m_SteamID) != null;
-                if (ok) pecasMontadas = null;
+                if (ok)
+                {
+                    pecasMontadas = null;
+                    // placa de vaga ou heliponto colocados à mão já viram vaga da garagem
+                    string tipoVaga = ba.id == IdPeca("vaga", "safe") ? "carro" : ba.id == IdPeca("heliponto", "safe") ? "heli" : null;
+                    if (tipoVaga != null)
+                    {
+                        var cfg = Configuration.Instance;
+                        (cfg.Vagas = cfg.Vagas ?? new List<Vaga>()).Add(new Vaga { Tipo = tipoVaga, X = hit.point.x, Y = hit.point.y, Z = hit.point.z, R = p.Player.look.yaw });
+                        Configuration.Save();
+                        return $"Colocado e gravado como vaga de {tipoVaga}.";
+                    }
+                }
             }
             else return "Isso nao e uma peca de construcao.";
             if (!ok) return "O jogo nao deixou colocar aqui.";
@@ -402,6 +418,46 @@ namespace SobrevivenciaCore
             if (a.Length > 0 && a[0].Equals("tirar", StringComparison.OrdinalIgnoreCase)) { Chat.Info(p, P.TirarNaMira(p)); return; }
             float giro = a.Length > 0 && float.TryParse(a[0], out var g) ? g : 0f;
             Chat.Info(p, P.PorNaMira(p, giro));
+        }
+    }
+
+    /// <summary>/vaga add [carro|heli|aviao]: grava uma vaga onde você está (o carro tirado no terminal aparece nela).</summary>
+    public class CmdVaga : ComandoSistema
+    {
+        public override string Name => "vaga";
+        public override string Help => "Grava, lista ou apaga vagas de veiculo da garagem (dono).";
+        public override string Syntax => "<add [carro|heli|aviao] | del | list>";
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
+            var cfg = P.Configuration.Instance;
+            cfg.Vagas = cfg.Vagas ?? new List<Vaga>();
+            var sub = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+            if (sub == "add")
+            {
+                var tipo = a.Length > 1 ? a[1].ToLowerInvariant() : "carro";
+                if (tipo != "carro" && tipo != "heli" && tipo != "aviao") { Chat.Erro(p, "Tipo: carro, heli ou aviao."); return; }
+                cfg.Vagas.Add(new Vaga { Tipo = tipo, X = p.Position.x, Y = p.Position.y, Z = p.Position.z, R = p.Player.look.yaw });
+                P.Configuration.Save();
+                int n = cfg.Vagas.Count(v => (new Vector3(v.X, v.Y, v.Z) - p.Position).sqrMagnitude < 80f * 80f);
+                Chat.Ok(p, $"Vaga de {tipo} gravada aqui, virada pra onde voce olha ({n} vaga(s) nesta area). Coloque o TERMINAL da garagem perto (ate 80 m).");
+                return;
+            }
+            if (sub == "del")
+            {
+                var perto = cfg.Vagas.OrderBy(v => (new Vector3(v.X, v.Y, v.Z) - p.Position).sqrMagnitude).FirstOrDefault();
+                if (perto == null || (new Vector3(perto.X, perto.Y, perto.Z) - p.Position).sqrMagnitude > 25f) { Chat.Erro(p, "Nao tem vaga a menos de 5 m de voce."); return; }
+                cfg.Vagas.Remove(perto); P.Configuration.Save();
+                Chat.Ok(p, $"Vaga de {perto.Tipo} apagada.");
+                return;
+            }
+            if (sub == "list")
+            {
+                var l = cfg.Vagas.Where(v => (new Vector3(v.X, v.Y, v.Z) - p.Position).sqrMagnitude < 200f * 200f).ToList();
+                Chat.Info(p, l.Count == 0 ? "Nenhuma vaga nesta area." : $"{l.Count} vaga(s) aqui perto: " + string.Join(", ", l.Select(v => $"{v.Tipo} a {Mathf.RoundToInt(Vector3.Distance(p.Position, new Vector3(v.X, v.Y, v.Z)))} m")));
+                return;
+            }
+            Chat.Info(p, "Use: /vaga add (carro), /vaga add heli, /vaga add aviao, /vaga del, /vaga list");
         }
     }
 }
