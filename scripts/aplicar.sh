@@ -79,7 +79,7 @@ if [ -f "$REPO/painel/bin/dz-site" ]; then
   if ! cmp -s "$REPO/scripts/dz-site.service" /etc/systemd/system/dz-site.service; then
     cp "$REPO/scripts/dz-site.service" /etc/systemd/system/dz-site.service
     systemctl daemon-reload; systemctl enable dz-site; site=1
-    command -v ufw >/dev/null && ufw allow 80/tcp >/dev/null 2>&1 || true
+    command -v ufw >/dev/null && { ufw allow 80/tcp; ufw allow 443/tcp; } >/dev/null 2>&1 || true
   fi
   if [ "$site" = 1 ]; then echo "site atualizado"; systemctl restart dz-site; fi
 fi
