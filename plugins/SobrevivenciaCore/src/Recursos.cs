@@ -47,7 +47,7 @@ namespace SobrevivenciaCore
             Homes = new Casas(Directory);
             proximaLimpeza = S.LimpezaMinutos > 0 ? Time.realtimeSinceStartup + S.LimpezaMinutos * 60 : float.MaxValue;
             proximoAnuncio = Time.realtimeSinceStartup + S.AnuncioSegundos;
-            ValidarItens();
+            // ValidarItens roda depois que o mapa carrega (ConferirMenu): os itens dos mods do Workshop chegam depois do plugin
         }
 
         void PararSistemas()
