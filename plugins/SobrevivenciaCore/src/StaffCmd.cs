@@ -97,4 +97,44 @@ namespace SobrevivenciaCore
             Chat.Ok(p, $"{qtd}x {Chat.Limpar(it.itemName)} para {Chat.Limpar(alvo.CharacterName)}.");
         }
     }
+
+    public partial class Plugin
+    {
+        /// <summary>Skills no máximo (todas) ou zeradas, num jogador. Fica no log de admin.</summary>
+        internal string MudarSkills(UnturnedPlayer adm, UnturnedPlayer alvo, bool max)
+        {
+            var sk = alvo.Player.skills;
+            if (max) sk.ServerUnlockAllSkills();
+            else
+                for (int s = 0; s < sk.skills.Length; s++)
+                    for (int k = 0; k < sk.skills[s].Length; k++)
+                        sk.ServerSetSkillLevel(s, k, 0);
+            LogAdmin(adm, (max ? "SKILLS FULL em " : "SKILLS ZERADAS em ") + $"{alvo.CharacterName} ({Id(alvo)})");
+            if (Id(alvo) != Id(adm)) Chat.Ok(alvo, max ? "Um admin deixou suas skills no maximo." : "Um admin zerou suas skills.");
+            return Chat.Limpar(alvo.CharacterName) + (max ? ": skills no maximo." : ": skills zeradas.");
+        }
+    }
+
+    /// <summary>/skills [jogador] max|zerar: deixa as skills no máximo ou zera (staff com permissão Skills).</summary>
+    public class CmdSkills : ComandoSistema
+    {
+        public override string Name => "skills";
+        public override string Help => "Skills no maximo ou zeradas (staff).";
+        public override string Syntax => "[jogador] max|zerar";
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (!P.Pode(p, "Skills")) { Chat.Erro(p, "Voce nao tem permissao."); return; }
+            if (a.Length < 1) { Chat.Info(p, "Use: /skills max  |  /skills zerar  |  /skills <jogador> max"); return; }
+            var acao = a[a.Length - 1].ToLowerInvariant();
+            bool max = acao == "max" || acao == "full" || acao == "tudo";
+            if (!max && acao != "zerar" && acao != "zero") { Chat.Info(p, "Use: /skills [jogador] max|zerar"); return; }
+            var alvo = p;
+            if (a.Length > 1)
+            {
+                alvo = UnturnedPlayer.FromName(string.Join(" ", a.Take(a.Length - 1)));
+                if (alvo == null) { Chat.Erro(p, "Jogador nao encontrado."); return; }
+            }
+            Chat.Ok(p, P.MudarSkills(p, alvo, max));
+        }
+    }
 }

@@ -29,7 +29,7 @@ type acessoAdmin struct {
 }
 
 // permissoesAdmin: as mesmas do plugin (Plugin.PermissoesAdmin).
-var permissoesAdmin = []string{"Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos", "Kits"}
+var permissoesAdmin = []string{"Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos", "Kits", "Skills"}
 
 func acessoDe(id string) acessoAdmin {
 	a := acessoAdmin{Steam: id}

@@ -18,7 +18,7 @@ namespace SobrevivenciaCore
 
         /// <summary>Permissões que o dono marca pra cada staff.</summary>
         public static readonly string[] PermissoesAdmin =
-            { "Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos", "Kits" };
+            { "Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos", "Kits", "Skills" };
 
         // botão -> permissão
         static readonly Dictionary<string, string> BotaoPermissao = new Dictionary<string, string>
@@ -26,6 +26,7 @@ namespace SobrevivenciaCore
             { "Adm_Kick", "Kick" }, { "Adm_Ban", "Ban" }, { "Adm_IrAte", "Tp" }, { "Adm_Trazer", "Trazer" },
             { "Adm_Curar", "Curar" }, { "Adm_Matar", "Matar" }, { "Adm_Congelar", "Congelar" }, { "Adm_Spy", "Spy" },
             { "Adm_Reiniciar", "Reiniciar" }, { "Adm_Visao", "Visao" }, { "Adm_Deus", "Deus" }, { "Adm_Precos", "Precos" },
+            { "Adm_SkillsMax", "Skills" }, { "Adm_SkillsZerar", "Skills" },
         };
 
         class EstadoAdmin
@@ -328,6 +329,12 @@ namespace SobrevivenciaCore
                     a.Teleport(p.Position + p.Player.transform.forward * 1.5f + Vector3.up * 0.5f, a.Rotation);
                     Chat.Aviso(a, "Um admin te puxou ate ele.");
                     AvisoAdm(p, Chat.Limpar(a.CharacterName) + " foi trazido.", true);
+                    break;
+
+                case "Adm_SkillsMax":
+                case "Adm_SkillsZerar":
+                    if (!AlvoValido(p, a, true)) return;
+                    AvisoAdm(p, MudarSkills(p, a, botao == "Adm_SkillsMax"), true);
                     break;
 
                 case "Adm_Curar":

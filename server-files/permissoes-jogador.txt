@@ -47,3 +47,4 @@ espiao
 item
 staff
 bomba
+skills
