@@ -36,6 +36,9 @@ type Estado struct {
 	Convite     string            `json:"convite"`
 	LogAdminPos *int64            `json:"logAdminPos,omitempty"`
 	LogRaidPos  *int64            `json:"logRaidPos,omitempty"`
+	// discord -> steam já avisado do vínculo; alertas de raid desligados
+	Vinculados      map[string]string `json:"vinculados,omitempty"`
+	AlertaDesligado map[string]bool   `json:"alertaDesligado,omitempty"`
 }
 
 var (
@@ -49,7 +52,9 @@ func main() {
 	tokenArq := flag.String("token", "/home/unturned/discord-token", "arquivo com o token do bot")
 	pasta := flag.String("dados", dados.PastaPadrao, "pasta do plugin SobrevivenciaCore")
 	flag.StringVar(&arqEstado, "estado", "/home/unturned/dz-bot/estado.json", "arquivo de estado do bot")
+	arqChave := flag.String("chave-vinculo", dados.ArqChavePadrao, "chave dividida com o site pra vincular Discord e Steam")
 	flag.Parse()
+	chaveVinculo = dados.Chave(*arqChave)
 	fonte = dados.Fonte{Pasta: *pasta}
 
 	tk, err := os.ReadFile(*tokenArq)
@@ -79,6 +84,7 @@ func main() {
 	go laco(dg, 10*time.Minute, atualizarContador)
 	go laco(dg, 20*time.Second, enviarLogsAdmin)
 	go laco(dg, 15*time.Second, enviarLogsRaid)
+	go laco(dg, 20*time.Second, conferirVinculos)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
@@ -169,11 +175,15 @@ var estrutura = []categoriaDef{
 		{"anuncios", "📢│anúncios", "Novidades do servidor.", discordgo.ChannelTypeGuildText, true, false},
 		{"wipe", "🔄│wipe", "Datas de wipe e troca de mapa.", discordgo.ChannelTypeGuildText, true, false},
 		{"updates", "🛠│updates", "Mudanças e correções.", discordgo.ChannelTypeGuildText, true, false},
+		{"vincular", "🔗│vincular", "Vincule sua Steam: kit Discord, alerta de raid e stats.", discordgo.ChannelTypeGuildText, true, false},
+		{"regrasraid", "🏠│raid-e-proteção", "Horário de raid, proteção offline e Claim Flag.", discordgo.ChannelTypeGuildText, true, false},
 	}},
 	{"cat_servidor", "🎮 SERVIDOR", []canalDef{
 		{"status", "🟢│status-servidor", "Atualizado a cada minuto.", discordgo.ChannelTypeGuildText, true, false},
 		{"top", "🏆│top-jogadores", "Ranking atualizado a cada 10 minutos.", discordgo.ChannelTypeGuildText, true, false},
-		{"raid", "🚨│raid-alert", "Alertas de raid (em breve).", discordgo.ChannelTypeGuildText, true, false},
+		{"stats", "📊│stats", "Suas estatísticas PvP e PvE.", discordgo.ChannelTypeGuildText, true, false},
+		{"raid", "🚨│raid-alert", "Alerta de raid na sua DM.", discordgo.ChannelTypeGuildText, true, false},
+		{"lojavip", "💎│loja-vip", "Kits VIP, cofres e o DZ Supremo.", discordgo.ChannelTypeGuildText, true, false},
 		{"banimentos", "🔨│banimentos", "Jogadores banidos.", discordgo.ChannelTypeGuildText, true, false},
 	}},
 	{"cat_comunidade", "💬 COMUNIDADE", []canalDef{
@@ -184,6 +194,7 @@ var estrutura = []categoriaDef{
 	}},
 	{"cat_suporte", "🎫 SUPORTE", []canalDef{
 		{"ticket", "🎫│abrir-ticket", "Fale com a staff.", discordgo.ChannelTypeGuildText, true, false},
+		{"voz_suporte", "🎧 Suporte", "", discordgo.ChannelTypeGuildVoice, false, false},
 	}},
 	{"cat_voz", "🔊 VOZ", []canalDef{
 		{"voz_geral", "🔊 Geral", "", discordgo.ChannelTypeGuildVoice, false, false},
@@ -207,6 +218,11 @@ func prepararGuild(s *discordgo.Session, g *discordgo.Guild) {
 	defer garantirConvite(s)
 	defer atualizarComoJogar(s)
 	if estado.Montado {
+		if err := criarCanais(s, g); err != nil {
+			log.Println("canais novos:", err)
+		}
+		salvarEstado()
+		go garantirPaineis(s)
 		return
 	}
 	log.Println("montando o servidor", g.Name)
@@ -218,6 +234,7 @@ func prepararGuild(s *discordgo.Session, g *discordgo.Guild) {
 	estado.Montado = true
 	salvarEstado()
 	log.Println("servidor montado")
+	go garantirPaineis(s)
 }
 
 // garantirConvite cria um convite permanente no canal de boas-vindas e grava em
@@ -279,27 +296,8 @@ func montar(s *discordgo.Session, g *discordgo.Guild) error {
 		log.Println("editar servidor:", err)
 	}
 
-	// cargos
-	cargos := []struct {
-		chave, nome string
-		cor         int
-		perms       int64
-	}{
-		{"staff", "🛡 Staff", corLaranja, discordgo.PermissionManageMessages | discordgo.PermissionKickMembers |
-			discordgo.PermissionBanMembers | discordgo.PermissionModerateMembers | discordgo.PermissionManageChannels},
-		{"vip", "⭐ VIP", corAmbar, 0},
-		{"sobrevivente", "Sobrevivente", 0xC9CDD3, 0},
-	}
-	for _, c := range cargos {
-		if estado.Cargos[c.chave] != "" {
-			continue
-		}
-		cor, perms, hoist := c.cor, c.perms, true
-		r, err := s.GuildRoleCreate(g.ID, &discordgo.RoleParams{Name: c.nome, Color: &cor, Permissions: &perms, Hoist: &hoist})
-		if err != nil {
-			return fmt.Errorf("cargo %s: %w", c.nome, err)
-		}
-		estado.Cargos[c.chave] = r.ID
+	if err := criarCargos(s, g); err != nil {
+		return err
 	}
 
 	// servidor novo: apaga os canais padrão do Discord
@@ -311,43 +309,10 @@ func montar(s *discordgo.Session, g *discordgo.Guild) error {
 		}
 	}
 
-	everyone := g.ID
-	staff := estado.Cargos["staff"]
-	for _, cat := range estrutura {
-		if estado.Canais[cat.chave] == "" {
-			var ow []*discordgo.PermissionOverwrite
-			if cat.chave == "cat_staff" {
-				ow = ocultoPraTodos(everyone, staff)
-			}
-			ch, err := s.GuildChannelCreateComplex(g.ID, discordgo.GuildChannelCreateData{
-				Name: cat.nome, Type: discordgo.ChannelTypeGuildCategory, PermissionOverwrites: ow})
-			if err != nil {
-				return fmt.Errorf("categoria %s: %w", cat.nome, err)
-			}
-			estado.Canais[cat.chave] = ch.ID
-		}
-		for _, c := range cat.canais {
-			if estado.Canais[c.chave] != "" {
-				continue
-			}
-			var ow []*discordgo.PermissionOverwrite
-			switch {
-			case c.oculto:
-				ow = ocultoPraTodos(everyone, staff)
-			case c.soLeitura:
-				ow = []*discordgo.PermissionOverwrite{
-					{ID: everyone, Type: discordgo.PermissionOverwriteTypeRole, Allow: verCanal | historico | reagir, Deny: enviar},
-					{ID: staff, Type: discordgo.PermissionOverwriteTypeRole, Allow: enviar},
-				}
-			}
-			ch, err := s.GuildChannelCreateComplex(g.ID, discordgo.GuildChannelCreateData{
-				Name: c.nome, Type: c.tipo, Topic: c.topico, ParentID: estado.Canais[cat.chave], PermissionOverwrites: ow})
-			if err != nil {
-				return fmt.Errorf("canal %s: %w", c.nome, err)
-			}
-			estado.Canais[c.chave] = ch.ID
-		}
+	if err := criarCanais(s, g); err != nil {
+		return err
 	}
+	everyone := g.ID
 
 	// contador de jogadores (canal de voz trancado no topo)
 	if estado.Canais["contador"] == "" {
@@ -375,17 +340,6 @@ func montar(s *discordgo.Session, g *discordgo.Guild) error {
 	postar(s, "comojogar", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{{
 		Title: "Como jogar", Description: textoComoJogar, Color: corLaranja,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: iconeURL}, Footer: &discordgo.MessageEmbedFooter{Text: rodape},
-	}}})
-	postar(s, "ticket", &discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{{Title: "🎫 Suporte", Description: textoTicket, Color: corLaranja,
-			Footer: &discordgo.MessageEmbedFooter{Text: rodape}}},
-		Components: []discordgo.MessageComponent{discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			discordgo.Button{Label: "Abrir ticket", Style: discordgo.PrimaryButton, CustomID: "abrir_ticket", Emoji: &discordgo.ComponentEmoji{Name: "🎫"}},
-		}}},
-	})
-	postar(s, "raid", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{{
-		Title: "🚨 Alerta de raid", Color: corVermelho,
-		Description: "Em breve: vincule sua Steam e receba aviso na DM quando mexerem na sua base.",
 	}}})
 	return nil
 }
@@ -418,15 +372,19 @@ func postar(s *discordgo.Session, canal string, m *discordgo.MessageSend) {
 
 func aoEntrarMembro(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	mu.Lock()
-	cargo, geral, regras := estado.Cargos["sobrevivente"], estado.Canais["geral"], estado.Canais["regras"]
+	cargo, geral, regras, vinc := estado.Cargos["sobrevivente"], estado.Canais["bemvindo"], estado.Canais["regras"], estado.Canais["vincular"]
+	if geral == "" {
+		geral = estado.Canais["geral"]
+	}
 	mu.Unlock()
 	if cargo != "" {
 		_ = s.GuildMemberRoleAdd(m.GuildID, m.User.ID, cargo)
 	}
 	if geral != "" {
-		_, _ = s.ChannelMessageSendComplex(geral, &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{{
-			Description: fmt.Sprintf("👋 <@%s> chegou no **DAY Z BRASIL OFICIAL**! Leia as <#%s> e bom jogo.", m.User.ID, regras),
-			Color:       corLaranja,
+		_, _ = s.ChannelMessageSendComplex(geral, &discordgo.MessageSend{Content: "<@" + m.User.ID + ">", Embeds: []*discordgo.MessageEmbed{{
+			Title:       "👋 Chegou mais um sobrevivente",
+			Description: fmt.Sprintf("Bem-vindo(a) ao **DAY Z BRASIL**, <@%s>!\n📜 Leia as regras: <#%s>\n🔗 Vincule a Steam: <#%s>", m.User.ID, regras, vinc),
+			Color:       corLaranja, Image: &discordgo.MessageEmbedImage{URL: capaURL},
 		}}})
 	}
 	if dm, err := s.UserChannelCreate(m.User.ID); err == nil {
@@ -511,7 +469,7 @@ func embedTop(por string) *discordgo.MessageEmbed {
 }
 
 // manterMensagem edita a mensagem salva; se não existir mais, posta outra.
-func manterMensagem(s *discordgo.Session, canal string, msgID *string, e *discordgo.MessageEmbed) {
+func manterMensagem(s *discordgo.Session, canal string, msgID *string, e *discordgo.MessageEmbed, comps ...discordgo.MessageComponent) {
 	mu.Lock()
 	ch := estado.Canais[canal]
 	id := *msgID
@@ -521,11 +479,14 @@ func manterMensagem(s *discordgo.Session, canal string, msgID *string, e *discor
 	}
 	if id != "" {
 		embeds := []*discordgo.MessageEmbed{e}
-		if _, err := s.ChannelMessageEditComplex(&discordgo.MessageEdit{ID: id, Channel: ch, Embeds: &embeds}); err == nil {
+		if comps == nil {
+			comps = []discordgo.MessageComponent{}
+		}
+		if _, err := s.ChannelMessageEditComplex(&discordgo.MessageEdit{ID: id, Channel: ch, Embeds: &embeds, Components: &comps}); err == nil {
 			return
 		}
 	}
-	m, err := s.ChannelMessageSendComplex(ch, &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{e}})
+	m, err := s.ChannelMessageSendComplex(ch, &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{e}, Components: comps})
 	if err != nil {
 		log.Println("mensagem fixa:", err)
 		return
@@ -537,7 +498,16 @@ func manterMensagem(s *discordgo.Session, canal string, msgID *string, e *discor
 }
 
 func atualizarStatus(s *discordgo.Session) {
-	manterMensagem(s, "status", &estado.MsgStatus, embedStatus())
+	mu.Lock()
+	conv := estado.Convite
+	mu.Unlock()
+	e := embedStatus()
+	if conv != "" {
+		e.Fields = append(e.Fields, &discordgo.MessageEmbedField{Name: "💬 Chama a galera", Value: "`" + conv + "`"})
+	}
+	b := []discordgo.MessageComponent{discordgo.Button{Label: "Ir para o site", Style: discordgo.LinkButton, URL: siteURL, Emoji: &discordgo.ComponentEmoji{Name: "🌐"}},
+		discordgo.Button{Label: "Loja VIP", Style: discordgo.LinkButton, URL: siteURL + "/loja", Emoji: &discordgo.ComponentEmoji{Name: "💎"}}}
+	manterMensagem(s, "status", &estado.MsgStatus, e, linha(b...))
 }
 func atualizarTop(s *discordgo.Session) { manterMensagem(s, "top", &estado.MsgTop, embedTop("abates")) }
 
@@ -608,9 +578,12 @@ func aoInteragir(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			responder(s, i, embedPerfil(d.Options[0].StringValue()), false)
 		}
 	case discordgo.InteractionMessageComponent:
+		if tratarComponente(s, i) {
+			return
+		}
 		switch i.MessageComponentData().CustomID {
 		case "abrir_ticket":
-			abrirTicket(s, i)
+			abrirTicket(s, i, "outro")
 		case "fechar_ticket":
 			_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -660,7 +633,10 @@ func embedPerfil(nome string) *discordgo.MessageEmbed {
 	}
 }
 
-func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate) {
+var nomesMotivo = map[string]string{"denuncia": "Denúncia de jogador", "bug": "Bug ou problema no servidor", "itens": "Perdi itens / reembolso",
+	"vip": "VIP e pagamentos", "unban": "Pedido de unban", "outro": "Outro assunto"}
+
+func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo string) {
 	if i.Member == nil {
 		return
 	}
@@ -668,7 +644,10 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	cat, staff := estado.Canais["cat_suporte"], estado.Cargos["staff"]
 	mu.Unlock()
 	u := i.Member.User
-	nome := "ticket-" + strings.ToLower(strings.Map(func(r rune) rune {
+	if nomesMotivo[motivo] == "" {
+		motivo = "outro"
+	}
+	nome := motivo + "-" + strings.ToLower(strings.Map(func(r rune) rune {
 		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
 			return r
 		}
@@ -687,11 +666,93 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	_, _ = s.ChannelMessageSendComplex(ch.ID, &discordgo.MessageSend{
 		Content: fmt.Sprintf("<@%s> <@&%s>", u.ID, staff),
-		Embeds: []*discordgo.MessageEmbed{{Title: "🎫 Ticket aberto", Color: corLaranja,
-			Description: "Conte o que aconteceu com o máximo de detalhes. Mande prints ou vídeo se tiver.\nA staff responde aqui."}},
+		Embeds: []*discordgo.MessageEmbed{{Title: "🎫 Ticket aberto: " + nomesMotivo[motivo], Color: corLaranja,
+			Description: "Conte o que aconteceu com o máximo de detalhes. Mande prints ou vídeo se tiver.\nA staff responde aqui." + steamDoTicket(u.ID)}},
 		Components: []discordgo.MessageComponent{discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{Label: "Fechar ticket", Style: discordgo.DangerButton, CustomID: "fechar_ticket", Emoji: &discordgo.ComponentEmoji{Name: "🔒"}},
 		}}},
 	})
 	responder(s, i, &discordgo.MessageEmbed{Description: fmt.Sprintf("Ticket aberto: <#%s>", ch.ID), Color: corVerde}, true)
+}
+
+func criarCargos(s *discordgo.Session, g *discordgo.Guild) error {
+	// cargos
+	cargos := []struct {
+		chave, nome string
+		cor         int
+		perms       int64
+	}{
+		{"staff", "🛡 Staff", corLaranja, discordgo.PermissionManageMessages | discordgo.PermissionKickMembers |
+			discordgo.PermissionBanMembers | discordgo.PermissionModerateMembers | discordgo.PermissionManageChannels},
+		{"vip", "⭐ VIP", corAmbar, 0},
+		{"sobrevivente", "Sobrevivente", 0xC9CDD3, 0},
+		{"vinculado", "🔗 Steam vinculada", 0xFF8A3D, 0},
+	}
+	for _, c := range cargos {
+		if estado.Cargos[c.chave] != "" {
+			continue
+		}
+		cor, perms, hoist := c.cor, c.perms, true
+		r, err := s.GuildRoleCreate(g.ID, &discordgo.RoleParams{Name: c.nome, Color: &cor, Permissions: &perms, Hoist: &hoist})
+		if err != nil {
+			return fmt.Errorf("cargo %s: %w", c.nome, err)
+		}
+		estado.Cargos[c.chave] = r.ID
+	}
+
+	return nil
+}
+
+// criarCanais cria as categorias e canais que ainda não existem (servidor novo ou canais novos numa versão nova do bot).
+func criarCanais(s *discordgo.Session, g *discordgo.Guild) error {
+	if err := criarCargos(s, g); err != nil {
+		return err
+	}
+	everyone := g.ID
+	staff := estado.Cargos["staff"]
+	for _, cat := range estrutura {
+		if estado.Canais[cat.chave] == "" {
+			var ow []*discordgo.PermissionOverwrite
+			if cat.chave == "cat_staff" {
+				ow = ocultoPraTodos(everyone, staff)
+			}
+			ch, err := s.GuildChannelCreateComplex(g.ID, discordgo.GuildChannelCreateData{
+				Name: cat.nome, Type: discordgo.ChannelTypeGuildCategory, PermissionOverwrites: ow})
+			if err != nil {
+				return fmt.Errorf("categoria %s: %w", cat.nome, err)
+			}
+			estado.Canais[cat.chave] = ch.ID
+		}
+		for _, c := range cat.canais {
+			if estado.Canais[c.chave] != "" {
+				continue
+			}
+			var ow []*discordgo.PermissionOverwrite
+			switch {
+			case c.oculto:
+				ow = ocultoPraTodos(everyone, staff)
+			case c.soLeitura:
+				ow = []*discordgo.PermissionOverwrite{
+					{ID: everyone, Type: discordgo.PermissionOverwriteTypeRole, Allow: verCanal | historico | reagir, Deny: enviar},
+					{ID: staff, Type: discordgo.PermissionOverwriteTypeRole, Allow: enviar},
+				}
+			}
+			ch, err := s.GuildChannelCreateComplex(g.ID, discordgo.GuildChannelCreateData{
+				Name: c.nome, Type: c.tipo, Topic: c.topico, ParentID: estado.Canais[cat.chave], PermissionOverwrites: ow})
+			if err != nil {
+				return fmt.Errorf("canal %s: %w", c.nome, err)
+			}
+			estado.Canais[c.chave] = ch.ID
+		}
+	}
+
+	return nil
+}
+
+// steamDoTicket mostra pra staff a Steam vinculada de quem abriu o ticket.
+func steamDoTicket(discord string) string {
+	if st := fonte.SteamDoDiscord(discord); st != "" {
+		return fmt.Sprintf("\n\nSteam vinculada: [%s](https://steamcommunity.com/profiles/%s)", st, st)
+	}
+	return ""
 }
