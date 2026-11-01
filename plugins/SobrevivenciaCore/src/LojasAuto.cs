@@ -11,7 +11,7 @@ namespace SobrevivenciaCore
     /// Itens que já estão em alguma loja ficam como estão (preço editado não muda). Roda uma vez por versão do catálogo.</summary>
     public partial class Plugin
     {
-        public const int VersaoCatalogo = 1;
+        public const int VersaoCatalogo = 2;
 
         // raridade a partir da qual a arma vai pro mercado negro
         const EItemRarity RaridadeNegro = EItemRarity.EPIC;
@@ -175,8 +175,11 @@ namespace SobrevivenciaCore
             if (armas != null && negro != null)
                 foreach (var i in armas.Itens.ToList())
                 {
-                    if (i.Veiculo || !(Assets.find(EAssetType.ITEM, i.Id) is ItemGunAsset g)) continue;
+                    if (i.Veiculo) continue;
+                    var g = todos.FirstOrDefault(x => x != null && x.id == i.Id) as ItemGunAsset ?? Assets.find(EAssetType.ITEM, i.Id) as ItemGunAsset;
+                    if (g == null) continue;
                     var c = Classificar(g);
+                    Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: arma {i.Id} {g.itemName} {g.rarity} {g.action} -> {(c == null ? "fora" : c.Value.loja)}");
                     if (c == null || c.Value.loja != "negro") continue;
                     armas.Itens.Remove(i);
                     negro.Itens.Add(new ItemLoja(i.Id, Math.Max(i.Compra, c.Value.preco), 0) { Categoria = c.Value.cat });
