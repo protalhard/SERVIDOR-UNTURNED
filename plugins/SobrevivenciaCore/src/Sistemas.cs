@@ -130,11 +130,20 @@ namespace SobrevivenciaCore
         public bool LojaXpSoNaSafe = true;
         // ATM só funciona dentro da safe zone (no mercado negro e no caçador não tem)
         public bool AtmSoNaSafe = true;
-        // /montar: barricada da cerca (7200 = Hatched Metal Wall do California 2), distância entre peças, largura da entrada
-        public ushort MontarCercaId = 7121; // Metal Fence (barricada); 7200 e estrutura
+        // /montar (antigo, sem uso desde os modelos)
+        public ushort MontarCercaId = 7121;
         public float MontarCercaEspaco = 3.5f;
         public float MontarEntrada = 6f;
+        // /montar <safe|negro|cacador> <1-3>: rotação X das barricadas (modelo do Unturned vem deitado: -90)
         public float MontarRotacaoX = -90f;
+        // mesma coisa pros NPCs DZ (feitos no Unity, frente +Z)
+        public float MontarRotacaoXNpc = -90f;
+        // giro extra (graus) das peças de cerca/parede pra ficarem ao longo da linha
+        public float MontarGiroParede = 0f;
+        public float MontarEspacoCerca = 3f;
+        public float MontarEspacoParede = 2f;
+        // peça=id ou peça@area=id (area: safe, negro, cacador). id 0 = não coloca.
+        public List<string> MontarPecas;
 
         public List<Patente> Patentes;
         public List<Kit> Kits;
@@ -146,6 +155,17 @@ namespace SobrevivenciaCore
         // Versão dos padrões já aplicada (pra adicionar kits/pacotes novos em config antiga)
         public int VersaoPadroes = 0;
 
+        public static List<string> MontarPecasPadrao() => new List<string>
+        {
+            "cerca@safe=7122", "cerca@negro=7121", "cerca@cacador=7120",
+            "parede@safe=6204", "parede@negro=6196", "parede@cacador=6201",
+            "balcao=6148", "balcao@cacador=4446",
+            "rack=4459", "prateleira=4968", "manequim=0", "mesa=4885", "mesa@cacador=4463",
+            "cofre=6957", "caixa=4449", "caixa_grande=6956", "barril=4587",
+            "luz=7130", "fogueira=7130", "torre=6956", "barraca=0", "banco_praca=4893",
+            "bandeira=51253", "bandeira_placa=4996",
+        };
+
         /// <summary>Preenche o que estiver faltando (config antiga). Devolve true se mudou algo.</summary>
         public bool Completar()
         {
@@ -156,6 +176,7 @@ namespace SobrevivenciaCore
             if (Vaults == null || Vaults.Count == 0) { Vaults = VaultsPadrao(); mudou = true; }
             if (Anuncios == null) { Anuncios = AnunciosPadrao(); mudou = true; }
             if (AirdropKits == null || AirdropKits.Count == 0) { AirdropKits = AirdropPadrao(); mudou = true; }
+            if (MontarPecas == null || MontarPecas.Count == 0) { MontarPecas = MontarPecasPadrao(); mudou = true; }
             if (Tutorial == null) { Tutorial = TutorialPadrao(); mudou = true; }
             // padrões novos (v2, v3 = kits do California 2): adiciona kits e pacotes que ainda não existem, sem mexer nos que o admin editou
             if (VersaoPadroes < 3)

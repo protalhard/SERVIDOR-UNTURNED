@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using Rocket.Unturned.Player;
@@ -8,14 +9,50 @@ using UnityEngine;
 
 namespace SobrevivenciaCore
 {
-    /// <summary>/montar safe|negro|cacador [raio]: monta a área em volta do admin (cerca com uma entrada só
-    /// na direção pra onde ele olha, NPCs com nome, ATM na safe) e registra a zona/loja. /desmontar desfaz a última.</summary>
+    /// <summary>/montar safe|negro|cacador 1-3: monta o modelo escolhido em volta do admin (ele fica no centro,
+    /// olhando pra onde quer a entrada). Os modelos vêm de montar_modelos.tsv (gerado por modelos/exportar.py;
+    /// um arquivo com esse nome na pasta do plugin substitui o embutido). /desmontar desfaz a última.</summary>
     public partial class Plugin
     {
         string ArqMontagens => Path.Combine(Directory, "montagens.tsv");
         HashSet<uint> pecasMontadas;
 
-        /// <summary>Peças do /montar não quebram (cerca do mercado negro fica na zona PvP).</summary>
+        class PecaModelo
+        {
+            public string Tipo, Extra;
+            public float X, Y, X2, Y2;
+        }
+
+        Dictionary<string, List<PecaModelo>> modelosMontar;
+
+        Dictionary<string, List<PecaModelo>> ModelosMontar()
+        {
+            if (modelosMontar != null) return modelosMontar;
+            string texto = null;
+            var arq = Path.Combine(Directory, "montar_modelos.tsv");
+            try
+            {
+                if (File.Exists(arq)) texto = File.ReadAllText(arq);
+                else
+                    using (var st = typeof(Plugin).Assembly.GetManifestResourceStream("montar_modelos.tsv"))
+                    using (var r = new StreamReader(st)) texto = r.ReadToEnd();
+            }
+            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            var res = new Dictionary<string, List<PecaModelo>>();
+            foreach (var l in (texto ?? "").Split('\n'))
+            {
+                if (l.StartsWith("#") || l.Trim() == "") continue;
+                var c = l.TrimEnd('\r').Split('\t');
+                if (c.Length < 3) continue;
+                float F(int i) => c.Length > i && float.TryParse(c[i], NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0f;
+                var pc = new PecaModelo { Tipo = c[1], X = F(2), Y = F(3), X2 = F(4), Y2 = F(5), Extra = c.Length > 6 ? c[6] : "" };
+                if (!res.TryGetValue(c[0], out var lista)) res[c[0]] = lista = new List<PecaModelo>();
+                lista.Add(pc);
+            }
+            return modelosMontar = res;
+        }
+
+        /// <summary>Peças do /montar não quebram e não abrem (enfeite).</summary>
         public bool PecaMontada(Transform t)
         {
             if (pecasMontadas == null)
@@ -32,123 +69,207 @@ namespace SobrevivenciaCore
                 }
                 catch { }
             }
+            if (pecasMontadas.Count == 0) return false;
             var d = BarricadeManager.FindBarricadeByRootTransform(t);
             return d != null && pecasMontadas.Contains(d.instanceID);
         }
 
-        static readonly (ushort npc, string nome)[] NpcsSafe =
+        ushort IdPeca(string peca, string area)
         {
-            (51240, "Armas"), (51241, "Comida"), (51242, "Roupas"), (51243, "Remedios"),
-            (51244, "Equipamentos"), (51245, "Garagem"), (51246, "Vault"), (51249, "ATM"),
-        };
+            string Achar(string chave)
+            {
+                foreach (var s in S.MontarPecas ?? new List<string>())
+                {
+                    var i = s.IndexOf('=');
+                    if (i > 0 && s.Substring(0, i).Trim().Equals(chave, StringComparison.OrdinalIgnoreCase)) return s.Substring(i + 1).Trim();
+                }
+                return null;
+            }
+            var v = Achar(peca + "@" + area) ?? Achar(peca);
+            return ushort.TryParse(v, out var id) ? id : (ushort)0;
+        }
 
         static float Chao(Vector3 pos)
         {
-            // pega o chão de verdade (terreno ou objeto), senão a altura do terreno
-            var de = new Vector3(pos.x, pos.y + 30f, pos.z);
-            if (Physics.Raycast(de, Vector3.down, out var hit, 80f, RayMasks.BLOCK_COLLISION)) return hit.point.y;
+            // chão de verdade (terreno, estrada, prédio), ignorando barricadas já colocadas
+            int mascara = RayMasks.GROUND | RayMasks.GROUND2 | RayMasks.ENVIRONMENT | RayMasks.LARGE | RayMasks.MEDIUM;
+            var de = new Vector3(pos.x, pos.y + 25f, pos.z);
+            if (Physics.Raycast(de, Vector3.down, out var hit, 60f, mascara)) return hit.point.y;
             return LevelGround.getHeight(pos);
         }
 
-        static Quaternion Olhando(Vector3 de, Vector3 para)
+        float? rotXDetectada;
+
+        /// <summary>Olha as barricadas que os jogadores já colocaram no mapa e vê como o jogo deixa elas (X = -90 ou 0).</summary>
+        float RotacaoX()
         {
-            var d = para - de; d.y = 0;
-            return d.sqrMagnitude < 0.01f ? Quaternion.identity : Quaternion.LookRotation(d.normalized);
+            if (rotXDetectada.HasValue) return rotXDetectada.Value;
+            var conta = new Dictionary<int, int>();
+            foreach (var reg in BarricadeManager.regions)
+                foreach (var d in reg.drops)
+                {
+                    if (d.asset == null || EhNpc(d.asset.id) || d.model == null) continue;
+                    int x = Mathf.RoundToInt(Mathf.DeltaAngle(0, d.model.rotation.eulerAngles.x));
+                    conta.TryGetValue(x, out var n); conta[x] = n + 1;
+                }
+            if (conta.Values.Sum() < 5) return S.MontarRotacaoX;
+            rotXDetectada = conta.OrderByDescending(k => k.Value).First().Key;
+            Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: /montar usa rotacao X {rotXDetectada} (visto em {conta.Values.Sum()} barricadas)");
+            return rotXDetectada.Value;
         }
 
-        uint Colocar(ushort id, Vector3 pos, Quaternion rot, ulong dono)
+        BarricadeDrop Colocar(ushort id, Vector3 pos, float yaw, ulong dono, bool npc = false)
         {
-            if (!(Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset asset)) return 0;
+            if (id == 0 || !(Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset asset)) return null;
+            var rot = Quaternion.Euler(npc ? S.MontarRotacaoXNpc : RotacaoX(), yaw, 0f);
             var t = BarricadeManager.dropNonPlantedBarricade(new Barricade(asset), pos, rot, dono, 0);
-            var d = t != null ? BarricadeManager.FindBarricadeByRootTransform(t) : null;
-            return d?.instanceID ?? 0;
+            return t != null ? BarricadeManager.FindBarricadeByRootTransform(t) : null;
         }
 
-        public string Montar(UnturnedPlayer adm, string tipo, float raio)
+        /// <summary>Itens pra expor: "loja" ou "loja:Categoria,Categoria".</summary>
+        List<ushort> ItensExpostos(string spec)
         {
+            if (string.IsNullOrEmpty(spec)) return new List<ushort>();
+            var partes = spec.Split(':');
+            var loja = Configuration.Instance.Lojas.FirstOrDefault(l => l.Id == partes[0]);
+            if (loja == null) return new List<ushort>();
+            var cats = partes.Length > 1 ? partes[1].Split(',') : null;
+            return loja.Itens.Where(i => !i.Veiculo && (cats == null || cats.Contains(i.Categoria)) && Itens.Existe(i.Id))
+                .Select(i => i.Id).Distinct().ToList();
+        }
+
+        public string Montar(UnturnedPlayer adm, string area, int modelo)
+        {
+            if (!ModelosMontar().TryGetValue(area + modelo, out var pecas)) return "Modelo nao existe. Use /montar safe|negro|cacador 1|2|3";
+            var faltaNpc = pecas.Where(x => x.Tipo == "npc" && ushort.TryParse(x.Extra, out var n) && !(Assets.find(EAssetType.ITEM, n) is ItemBarricadeAsset))
+                .Select(x => x.Extra).Distinct().ToList();
+            if (faltaNpc.Count > 0) return "Os NPCs " + string.Join(", ", faltaNpc) + " ainda nao estao no mod DZ Menu. Atualize o mod no Workshop e reinicie antes de montar.";
+
             var centro = adm.Position;
             var frente = adm.Player.transform.forward; frente.y = 0; frente.Normalize();
-            float angEntrada = Mathf.Atan2(frente.x, frente.z);
-            var colocados = new List<uint>();
-            ulong dono = Id(adm);
-            int npcs = 0, cerca = 0;
-
-            // cerca em círculo com uma abertura (entrada) na frente do admin
-            if (S.MontarCercaId != 0 && Assets.find(EAssetType.ITEM, S.MontarCercaId) is ItemBarricadeAsset)
+            var direita = new Vector3(frente.z, 0, -frente.x);
+            Vector3 Mundo(float x, float y) { var v = centro - direita * x - frente * y; v.y = Chao(v); return v; }
+            float Yaw(float fx, float fy)
             {
-                float passo = Mathf.Max(1f, S.MontarCercaEspaco);
-                int pecas = Mathf.Max(8, Mathf.RoundToInt(2 * Mathf.PI * raio / passo));
-                float abertura = Mathf.Max(S.MontarEntrada, passo) / raio; // em radianos
-                for (int i = 0; i < pecas; i++)
-                {
-                    float a = 2 * Mathf.PI * i / pecas;
-                    float dif = Mathf.Abs(Mathf.DeltaAngle(a * Mathf.Rad2Deg, angEntrada * Mathf.Rad2Deg)) * Mathf.Deg2Rad;
-                    if (dif < abertura / 2f + 0.01f) continue;
-                    var pos = centro + new Vector3(Mathf.Sin(a), 0, Mathf.Cos(a)) * raio;
-                    pos.y = Chao(pos);
-                    var rot = Quaternion.Euler(S.MontarRotacaoX, a * Mathf.Rad2Deg, 0f);
-                    var id = Colocar(S.MontarCercaId, pos, rot, dono);
-                    if (id != 0) { colocados.Add(id); cerca++; }
-                }
-            }
-
-            // NPCs virados pro centro
-            void Npc(ushort id, Vector3 pos)
-            {
-                pos.y = Chao(pos);
-                var rot = Quaternion.Euler(S.MontarRotacaoX, Olhando(pos, centro).eulerAngles.y, 0f);
-                var iid = Colocar(id, pos, rot, dono);
-                if (iid != 0) { colocados.Add(iid); npcs++; }
+                var w = -direita * fx - frente * fy;
+                return w.sqrMagnitude < 1e-4f ? adm.Player.transform.eulerAngles.y : Mathf.Atan2(w.x, w.z) * Mathf.Rad2Deg;
             }
 
             var cfg = Configuration.Instance;
-            void Loja(string idLoja)
+            var colocados = new List<uint>();
+            ulong dono = Id(adm);
+            int nPecas = 0, nNpcs = 0, nExpostos = 0;
+            var expostos = new Dictionary<string, int>();
+            void Guardar(BarricadeDrop d) { if (d != null) { colocados.Add(d.instanceID); nPecas++; } }
+
+            foreach (var pc in pecas)
             {
-                var l = cfg.Lojas.FirstOrDefault(x => x.Id == idLoja);
-                if (l == null) return;
-                l.X = centro.x; l.Y = centro.y; l.Z = centro.z; l.Raio = raio;
-                if (idLoja == "garagem" || idLoja == "negro")
+                try
                 {
-                    // veículos aparecem do lado de fora da entrada
-                    var v = centro + frente * (raio + 8f);
-                    l.VX = v.x; l.VY = Chao(v); l.VZ = v.z;
+                    switch (pc.Tipo)
+                    {
+                        case "zona":
+                            if (area == "safe")
+                                cfg.ZonasSeguras.Add(new Ponto("Safe " + (cfg.ZonasSeguras.Count + 1), pc.X) { X = centro.x, Y = centro.y, Z = centro.z });
+                            break;
+                        case "cerca":
+                        case "parede":
+                        {
+                            ushort id = IdPeca(pc.Tipo, area);
+                            if (id == 0) break;
+                            float comp = Mathf.Sqrt((pc.X2 - pc.X) * (pc.X2 - pc.X) + (pc.Y2 - pc.Y) * (pc.Y2 - pc.Y));
+                            float esp = Mathf.Max(0.5f, pc.Tipo == "cerca" ? S.MontarEspacoCerca : S.MontarEspacoParede);
+                            int n = Mathf.Max(1, Mathf.RoundToInt(comp / esp));
+                            // virada perpendicular à linha (a largura da peça fica ao longo da linha)
+                            float yaw = Yaw(-(pc.Y2 - pc.Y), pc.X2 - pc.X) + S.MontarGiroParede;
+                            for (int i = 0; i < n; i++)
+                            {
+                                float t = (i + .5f) / n;
+                                Guardar(Colocar(id, Mundo(pc.X + (pc.X2 - pc.X) * t, pc.Y + (pc.Y2 - pc.Y) * t), yaw, dono));
+                            }
+                            break;
+                        }
+                        case "npc":
+                        {
+                            if (!ushort.TryParse(pc.Extra, out var id)) break;
+                            var pos = Mundo(pc.X, pc.Y);
+                            var d = Colocar(id, pos, Yaw(pc.X2, pc.Y2), dono, true);
+                            if (d == null) break;
+                            Guardar(d); nNpcs++;
+                            if (id == 51249) cfg.Atms.Add(new Ponto("ATM " + (cfg.Atms.Count + 1), 4f) { X = pos.x, Y = pos.y, Z = pos.z });
+                            break;
+                        }
+                        case "heliponto":
+                        case "veiculo":
+                        {
+                            var v = Mundo(pc.X, pc.Y);
+                            var loja = cfg.Lojas.FirstOrDefault(l => l.Id == (pc.Tipo == "heliponto" ? "negro" : "garagem"));
+                            if (loja != null) { loja.VX = v.x; loja.VY = v.y; loja.VZ = v.z; }
+                            if (pc.Tipo == "heliponto")
+                                foreach (var k in new[] { (6f, 0f), (-6f, 0f), (0f, 6f), (0f, -6f) })
+                                    Guardar(Colocar(IdPeca("luz", area), Mundo(pc.X + k.Item1, pc.Y + k.Item2), 0, dono));
+                            break;
+                        }
+                        case "bandeira":
+                        {
+                            var pos = Mundo(pc.X, pc.Y); float yaw = Yaw(pc.X2, pc.Y2);
+                            var d = Colocar(IdPeca("bandeira", area), pos, yaw, dono);
+                            if (d == null)
+                            {
+                                d = Colocar(IdPeca("bandeira_placa", area), pos, yaw, dono);
+                                if (d?.interactable is InteractableSign placa) BarricadeManager.ServerSetSignText(placa, "DZ BRASIL");
+                            }
+                            Guardar(d);
+                            break;
+                        }
+                        default:
+                        {
+                            var d = Colocar(IdPeca(pc.Tipo, area), Mundo(pc.X, pc.Y), Yaw(pc.X2, pc.Y2), dono);
+                            if (d == null) break;
+                            Guardar(d);
+                            if (d.interactable is InteractableFire fogo) BarricadeManager.ServerSetFireLit(fogo, true);
+                            if (d.interactable is InteractableStorage bau && !string.IsNullOrEmpty(pc.Extra))
+                            {
+                                // enfeite: coloca um item da loja no mostruário (ninguém consegue abrir)
+                                var lista = ItensExpostos(pc.Extra);
+                                if (lista.Count == 0) break;
+                                expostos.TryGetValue(pc.Extra, out var k);
+                                expostos[pc.Extra] = k + 1;
+                                var item = new Item(lista[k % lista.Count], EItemOrigin.ADMIN);
+                                if (bau.items.tryAddItem(item))
+                                {
+                                    nExpostos++;
+                                    if (bau.isDisplay) BarricadeManager.sendStorageDisplay(d.model, item, 0, 0, "", "");
+                                    bau.rebuildState();
+                                }
+                            }
+                            break;
+                        }
+                    }
                 }
+                catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             }
 
-            switch (tipo)
+            // lojas da área apontam pro centro (o NPC mais perto do tipo abre a loja)
+            var ids = area == "safe" ? new[] { "armas", "comida", "roupas", "remedios", "equipamentos", "garagem" }
+                : new[] { area };
+            foreach (var idLoja in ids)
             {
-                case "safe":
-                    float r = Mathf.Max(6f, raio * 0.45f);
-                    for (int i = 0; i < NpcsSafe.Length; i++)
-                    {
-                        // espalha os NPCs num arco do lado oposto à entrada
-                        float a = angEntrada + Mathf.PI + (i - (NpcsSafe.Length - 1) / 2f) * (Mathf.PI * 1.3f / NpcsSafe.Length);
-                        var pos = centro + new Vector3(Mathf.Sin(a), 0, Mathf.Cos(a)) * r;
-                        Npc(NpcsSafe[i].npc, pos);
-                        if (NpcsSafe[i].npc == 51249)
-                            cfg.Atms.Add(new Ponto("ATM " + (cfg.Atms.Count + 1), 4f) { X = pos.x, Y = Chao(pos), Z = pos.z });
-                    }
-                    var zona = new Ponto("Safe " + (cfg.ZonasSeguras.Count + 1), raio + 5f) { X = centro.x, Y = centro.y, Z = centro.z };
-                    cfg.ZonasSeguras.Add(zona);
-                    foreach (var id in new[] { "armas", "comida", "roupas", "remedios", "equipamentos", "garagem" }) Loja(id);
-                    break;
-                case "negro":
-                    Npc(51247, centro - frente * Mathf.Max(3f, raio * 0.4f));
-                    Loja("negro");
-                    break;
-                case "cacador":
-                    Npc(51248, centro - frente * Mathf.Max(3f, raio * 0.4f));
-                    Loja("cacador");
-                    break;
-                default:
-                    return "Use: /montar safe|negro|cacador [raio]";
+                var l = cfg.Lojas.FirstOrDefault(x => x.Id == idLoja);
+                if (l == null) continue;
+                l.X = centro.x; l.Y = centro.y; l.Z = centro.z;
+                if (l.Raio < 30) l.Raio = 30;
             }
             Configuration.Save();
             pecasMontadas = null;
-            try { File.AppendAllText(ArqMontagens, $"{DateTime.Now:yyyy-MM-dd HH:mm}\t{tipo}\t{string.Join(",", colocados)}{Environment.NewLine}"); } catch { }
-            LogAdmin(adm, $"MONTOU {tipo} (raio {raio}) em {centro.x:0} {centro.z:0}: {cerca} pecas de cerca, {npcs} NPCs");
-            string falta = npcs == 0 ? " Os NPCs ainda nao estao no pacote do Workshop: rode de novo depois da atualizacao (so a parte dos NPCs: /montar " + tipo + " 0)." : "";
-            return $"Montado: {cerca} pecas de cerca e {npcs} NPCs.{falta} Desfazer: /desmontar";
+            try
+            {
+                File.AppendAllText(ArqMontagens, $"{DateTime.Now:yyyy-MM-dd HH:mm}\t{area}{modelo}\t{string.Join(",", colocados)}\t" +
+                    $"{centro.x:0.0} {centro.y:0.0} {centro.z:0.0}{Environment.NewLine}");
+            }
+            catch { }
+            LogAdmin(adm, $"MONTOU {area} modelo {modelo} em {centro.x:0} {centro.z:0}: {nPecas} pecas, {nNpcs} NPCs, {nExpostos} itens expostos");
+            return $"Montado {area} modelo {modelo}: {nPecas} pecas ({nNpcs} NPCs, {nExpostos} itens nos mostruarios). Desfazer: /desmontar";
         }
 
         public string Desmontar()
@@ -165,12 +286,16 @@ namespace SobrevivenciaCore
                 {
                     var reg = BarricadeManager.regions[x, y];
                     foreach (var d in reg.drops.Where(d => ids.Contains(d.instanceID)).ToList())
-                    { BarricadeManager.destroyBarricade(d, x, y, ushort.MaxValue); tirados++; }
+                    {
+                        // esvazia antes pra não cair item no chão
+                        if (d.interactable is InteractableStorage bau) bau.items.clear();
+                        BarricadeManager.destroyBarricade(d, x, y, ushort.MaxValue); tirados++;
+                    }
                 }
             linhas.RemoveAt(linhas.Count - 1);
             pecasMontadas = null;
             File.WriteAllLines(ArqMontagens, linhas);
-            return $"Desfeito: {tirados} pecas tiradas ({ult[1]}). A zona/loja registrada continua; use /delsafe se precisar.";
+            return $"Desfeito: {tirados} pecas tiradas ({ult[1]}). A zona/ATM registrados continuam; use /delsafe se precisar.";
         }
     }
 
@@ -178,19 +303,27 @@ namespace SobrevivenciaCore
     {
         public override string Name => "montar";
         public override string Help => "Monta safe, mercado negro ou cacador em volta de voce (dono).";
-        public override string Syntax => "<safe|negro|cacador> [raio]";
+        public override string Syntax => "<safe|negro|cacador> <1|2|3>";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
-            if (a.Length < 1) { Chat.Info(p, "Fique no centro, olhe pra onde quer a entrada e use: /montar safe 40 | /montar negro 25 | /montar cacador 20"); return; }
-            var tipo = a[0].ToLowerInvariant();
-            float padrao = tipo == "safe" ? 40 : tipo == "negro" ? 25 : 20;
-            float raio = a.Length > 1 && float.TryParse(a[1], out var r) ? Mathf.Clamp(r, 0, 150) : padrao;
-            var salvo = S.MontarCercaId;
-            if (raio == 0) { S.MontarCercaId = 0; raio = padrao; } // 0 = só os NPCs
-            try { Chat.Ok(p, P.Montar(p, tipo, raio)); }
-            finally { S.MontarCercaId = salvo; }
+            if (a.Length < 1)
+            {
+                Chat.Info(p, "Fique no centro, olhe pra onde quer a ENTRADA e use: /montar safe 1 | /montar negro 2 | /montar cacador 3");
+                return;
+            }
+            var area = a[0].ToLowerInvariant();
+            if (area == "caca" || area == "caçador") area = "cacador";
+            if (area == "mercadonegro") area = "negro";
+            int modelo = a.Length > 1 && int.TryParse(a[1], out var m) ? m : 1;
+            P.ModelosRecarregar();
+            Chat.Ok(p, P.Montar(p, area, modelo));
         }
+    }
+
+    public partial class Plugin
+    {
+        public void ModelosRecarregar() => modelosMontar = null;
     }
 
     public class CmdDesmontar : ComandoSistema

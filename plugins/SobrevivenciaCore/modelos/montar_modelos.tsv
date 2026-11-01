@@ -1,0 +1,817 @@
+# gerado por exportar.py - Exporta os 9 modelos do gerar2.py pra montar_modelos.tsv (o /montar do plugin le esse arquivo).
+safe1	zona	50
+safe1	cerca	2.02	44.95	6.04	44.59
+safe1	cerca	6.04	44.59	10.01	43.87
+safe1	cerca	10.01	43.87	13.91	42.80
+safe1	cerca	13.91	42.80	17.69	41.38
+safe1	cerca	17.69	41.38	21.32	39.63
+safe1	cerca	21.32	39.63	24.79	37.56
+safe1	cerca	24.79	37.56	28.06	35.18
+safe1	cerca	28.06	35.18	31.10	32.53
+safe1	cerca	31.10	32.53	33.89	29.61
+safe1	cerca	33.89	29.61	36.41	26.45
+safe1	cerca	36.41	26.45	38.63	23.08
+safe1	cerca	38.63	23.08	40.54	19.52
+safe1	cerca	40.54	19.52	42.13	15.81
+safe1	cerca	42.13	15.81	43.38	11.97
+safe1	cerca	43.38	11.97	44.28	8.04
+safe1	cerca	44.28	8.04	44.82	4.03
+safe1	cerca	44.82	4.03	45.00	0.00
+safe1	cerca	45.00	0.00	44.82	-4.03
+safe1	cerca	44.82	-4.03	44.28	-8.04
+safe1	cerca	44.28	-8.04	43.38	-11.97
+safe1	cerca	43.38	-11.97	42.13	-15.81
+safe1	cerca	42.13	-15.81	40.54	-19.52
+safe1	cerca	40.54	-19.52	38.63	-23.08
+safe1	cerca	38.63	-23.08	36.41	-26.45
+safe1	cerca	36.41	-26.45	33.89	-29.61
+safe1	cerca	33.89	-29.61	31.10	-32.53
+safe1	cerca	31.10	-32.53	28.06	-35.18
+safe1	cerca	28.06	-35.18	24.79	-37.56
+safe1	cerca	24.79	-37.56	21.32	-39.63
+safe1	cerca	21.32	-39.63	17.69	-41.38
+safe1	cerca	17.69	-41.38	13.91	-42.80
+safe1	cerca	13.91	-42.80	10.01	-43.87
+safe1	cerca	10.01	-43.87	6.04	-44.59
+safe1	cerca	-6.04	-44.59	-10.01	-43.87
+safe1	cerca	-10.01	-43.87	-13.91	-42.80
+safe1	cerca	-13.91	-42.80	-17.69	-41.38
+safe1	cerca	-17.69	-41.38	-21.32	-39.63
+safe1	cerca	-21.32	-39.63	-24.79	-37.56
+safe1	cerca	-24.79	-37.56	-28.06	-35.18
+safe1	cerca	-28.06	-35.18	-31.10	-32.53
+safe1	cerca	-31.10	-32.53	-33.89	-29.61
+safe1	cerca	-33.89	-29.61	-36.41	-26.45
+safe1	cerca	-36.41	-26.45	-38.63	-23.08
+safe1	cerca	-38.63	-23.08	-40.54	-19.52
+safe1	cerca	-40.54	-19.52	-42.13	-15.81
+safe1	cerca	-42.13	-15.81	-43.38	-11.97
+safe1	cerca	-43.38	-11.97	-44.28	-8.04
+safe1	cerca	-44.28	-8.04	-44.82	-4.03
+safe1	cerca	-44.82	-4.03	-45.00	-0.00
+safe1	cerca	-45.00	-0.00	-44.82	4.03
+safe1	cerca	-44.82	4.03	-44.28	8.04
+safe1	cerca	-44.28	8.04	-43.38	11.97
+safe1	cerca	-43.38	11.97	-42.13	15.81
+safe1	cerca	-42.13	15.81	-40.54	19.52
+safe1	cerca	-40.54	19.52	-38.63	23.08
+safe1	cerca	-38.63	23.08	-36.41	26.45
+safe1	cerca	-36.41	26.45	-33.89	29.61
+safe1	cerca	-33.89	29.61	-31.10	32.53
+safe1	cerca	-31.10	32.53	-28.06	35.18
+safe1	cerca	-28.06	35.18	-24.79	37.56
+safe1	cerca	-24.79	37.56	-21.32	39.63
+safe1	cerca	-21.32	39.63	-17.69	41.38
+safe1	cerca	-17.69	41.38	-13.91	42.80
+safe1	cerca	-13.91	42.80	-10.01	43.87
+safe1	cerca	-10.01	43.87	-6.04	44.59
+safe1	cerca	-6.04	44.59	-2.02	44.95
+safe1	cerca	-2.02	44.95	2.02	44.95
+safe1	parede	-27.06	-2.48	-35.62	-5.26
+safe1	parede	-35.62	-5.26	-31.91	-16.68
+safe1	parede	-31.91	-16.68	-23.35	-13.90
+safe1	rack	-34.43	-6.98	0.951	0.309	armas
+safe1	rack	-33.81	-8.88	0.951	0.309	armas
+safe1	rack	-33.19	-10.78	0.951	0.309	armas
+safe1	rack	-32.57	-12.69	0.951	0.309	armas
+safe1	rack	-31.96	-14.59	0.951	0.309	armas
+safe1	rack	-29.58	-3.93	0.309	-0.951	armas
+safe1	rack	-26.24	-14.21	-0.309	0.951	armas
+safe1	rack	-32.72	-4.95	0.309	-0.951	armas
+safe1	rack	-29.38	-15.23	-0.309	0.951	armas
+safe1	balcao	-28.83	-8.10	0.951	0.309	
+safe1	balcao	-28.46	-9.25	0.951	0.309	
+safe1	balcao	-28.08	-10.39	0.951	0.309	
+safe1	npc	-30.17	-9.80	0.951	0.309	51240
+safe1	luz	-24.07	-13.29	0.951	0.309	
+safe1	parede	-21.42	16.71	-29.57	20.54
+safe1	parede	-29.57	20.54	-34.68	9.69
+safe1	parede	-34.68	9.69	-26.53	5.85
+safe1	prateleira	-29.98	18.25	0.905	-0.426	equipamentos:Mochilas,Coletes
+safe1	prateleira	-31.05	15.99	0.905	-0.426	equipamentos:Mochilas,Coletes
+safe1	prateleira	-32.11	13.73	0.905	-0.426	equipamentos:Mochilas,Coletes
+safe1	prateleira	-33.18	11.47	0.905	-0.426	equipamentos:Mochilas,Coletes
+safe1	mesa	-24.26	17.38	-0.426	-0.905	
+safe1	mesa	-28.86	7.61	0.426	0.905	
+safe1	mesa	-27.24	18.79	-0.426	-0.905	
+safe1	mesa	-31.84	9.02	0.426	0.905	
+safe1	balcao	-26.56	13.83	0.905	-0.426	
+safe1	balcao	-27.07	12.74	0.905	-0.426	
+safe1	balcao	-27.58	11.65	0.905	-0.426	
+safe1	npc	-28.70	13.51	0.905	-0.426	51244
+safe1	luz	-26.64	6.79	0.905	-0.426	
+safe1	parede	-4.18	26.85	-7.49	35.22
+safe1	parede	-7.49	35.22	-18.65	30.80
+safe1	parede	-18.65	30.80	-15.33	22.43
+safe1	manequim	-9.18	33.36	0.368	-0.930	roupas
+safe1	manequim	-11.50	32.44	0.368	-0.930	roupas
+safe1	manequim	-13.83	31.52	0.368	-0.930	roupas
+safe1	manequim	-16.15	30.60	0.368	-0.930	roupas
+safe1	prateleira	-5.78	29.28	-0.930	-0.368	roupas
+safe1	prateleira	-15.83	25.30	0.930	0.368	roupas
+safe1	prateleira	-7.00	32.35	-0.930	-0.368	roupas
+safe1	prateleira	-17.04	28.37	0.930	0.368	roupas
+safe1	balcao	-9.90	28.26	0.368	-0.930	
+safe1	balcao	-11.01	27.82	0.368	-0.930	
+safe1	balcao	-12.13	27.38	0.368	-0.930	
+safe1	npc	-11.68	29.49	0.368	-0.930	51242
+safe1	luz	-14.77	23.19	0.368	-0.930	
+safe1	parede	15.33	22.43	18.65	30.80
+safe1	parede	18.65	30.80	7.49	35.22
+safe1	parede	7.49	35.22	4.18	26.85
+safe1	prateleira	16.33	31.07	-0.368	-0.930	comida
+safe1	prateleira	14.01	31.99	-0.368	-0.930	comida
+safe1	prateleira	11.69	32.91	-0.368	-0.930	comida
+safe1	prateleira	9.36	33.83	-0.368	-0.930	comida
+safe1	prateleira	15.83	25.30	-0.930	0.368	remedios
+safe1	prateleira	5.78	29.28	0.930	-0.368	remedios
+safe1	prateleira	17.04	28.37	-0.930	0.368	remedios
+safe1	prateleira	7.00	32.35	0.930	-0.368	remedios
+safe1	balcao	12.13	27.38	-0.368	-0.930	
+safe1	balcao	11.01	27.82	-0.368	-0.930	
+safe1	balcao	9.90	28.26	-0.368	-0.930	
+safe1	npc	11.68	29.49	-0.368	-0.930	51241
+safe1	luz	5.10	27.02	-0.368	-0.930	
+safe1	parede	26.53	5.85	34.68	9.69
+safe1	parede	34.68	9.69	29.57	20.54
+safe1	parede	29.57	20.54	21.42	16.71
+safe1	cofre	33.18	11.47	-0.905	-0.426	
+safe1	cofre	32.11	13.73	-0.905	-0.426	
+safe1	cofre	31.05	15.99	-0.905	-0.426	
+safe1	cofre	29.98	18.25	-0.905	-0.426	
+safe1	balcao	27.58	11.65	-0.905	-0.426	
+safe1	balcao	27.07	12.74	-0.905	-0.426	
+safe1	balcao	26.56	13.83	-0.905	-0.426	
+safe1	npc	28.70	13.51	-0.905	-0.426	51246
+safe1	luz	22.22	16.20	-0.905	-0.426	
+safe1	parede	23.35	-13.90	31.91	-16.68
+safe1	parede	31.91	-16.68	35.62	-5.26
+safe1	parede	35.62	-5.26	27.06	-2.48
+safe1	cofre	32.16	-13.95	-0.951	0.309	
+safe1	cofre	33.19	-10.78	-0.951	0.309	
+safe1	cofre	34.22	-7.61	-0.951	0.309	
+safe1	balcao	28.08	-10.39	-0.951	0.309	
+safe1	balcao	28.46	-9.25	-0.951	0.309	
+safe1	balcao	28.83	-8.10	-0.951	0.309	
+safe1	npc	30.17	-9.80	-0.951	0.309	51249
+safe1	luz	27.29	-3.40	-0.951	0.309	
+safe1	parede	-15.00	-22.00	-27.00	-22.00
+safe1	parede	-27.00	-22.00	-27.00	-38.00
+safe1	parede	-27.00	-38.00	-15.00	-38.00
+safe1	caixa	-26.40	-24.75	1.000	0.000	
+safe1	caixa	-26.40	-28.25	1.000	0.000	
+safe1	caixa	-26.40	-31.75	1.000	0.000	
+safe1	caixa	-26.40	-35.25	1.000	0.000	
+safe1	mesa	-18.60	-22.60	0.000	-1.000	
+safe1	mesa	-18.60	-37.40	-0.000	1.000	
+safe1	mesa	-23.40	-22.60	0.000	-1.000	
+safe1	mesa	-23.40	-37.40	-0.000	1.000	
+safe1	npc	-16.40	-23.60	1.000	0.000	51245
+safe1	luz	-15.50	-37.20	1.000	0.000	
+safe1	bandeira	0.00	0.00	0.000	0.000	
+safe1	bandeira	-5.50	-46.50	0.117	0.993	
+safe1	bandeira	5.50	-46.50	-0.117	0.993	
+safe1	luz	10.61	39.60	-0.259	-0.966	
+safe1	luz	28.99	28.99	-0.707	-0.707	
+safe1	luz	39.60	10.61	-0.966	-0.259	
+safe1	luz	39.60	-10.61	-0.966	0.259	
+safe1	luz	28.99	-28.99	-0.707	0.707	
+safe1	luz	-28.99	-28.99	0.707	0.707	
+safe1	luz	-39.60	-10.61	0.966	0.259	
+safe1	luz	-39.60	10.61	0.966	-0.259	
+safe1	luz	-28.99	28.99	0.707	-0.707	
+safe1	luz	-10.61	39.60	0.259	-0.966	
+safe1	luz	-7.00	7.00	0.707	-0.707	
+safe1	luz	7.00	7.00	-0.707	-0.707	
+safe1	luz	-7.00	-7.00	0.707	0.707	
+safe1	luz	7.00	-7.00	-0.707	0.707	
+safe1	veiculo	0.00	-58.00	0.000	1.000	
+safe1	banco_praca	-10.00	-16.00	0.530	0.848	
+safe1	banco_praca	10.00	-16.00	-0.530	0.848	
+safe2	zona	52
+safe2	cerca	-24.00	-46.00	-24.00	46.00
+safe2	cerca	-24.00	46.00	24.00	46.00
+safe2	cerca	24.00	46.00	24.00	-46.00
+safe2	cerca	24.00	-46.00	4.00	-46.00
+safe2	cerca	-4.00	-46.00	-24.00	-46.00
+safe2	parede	-12.50	-24.00	-21.50	-24.00
+safe2	parede	-21.50	-24.00	-21.50	-36.00
+safe2	parede	-21.50	-36.00	-12.50	-36.00
+safe2	rack	-20.90	-26.00	1.000	0.000	armas
+safe2	rack	-20.90	-28.00	1.000	0.000	armas
+safe2	rack	-20.90	-30.00	1.000	0.000	armas
+safe2	rack	-20.90	-32.00	1.000	0.000	armas
+safe2	rack	-20.90	-34.00	1.000	0.000	armas
+safe2	rack	-15.35	-24.60	0.000	-1.000	armas
+safe2	rack	-15.35	-35.40	-0.000	1.000	armas
+safe2	rack	-18.65	-24.60	0.000	-1.000	armas
+safe2	rack	-18.65	-35.40	-0.000	1.000	armas
+safe2	balcao	-15.92	-28.80	1.000	0.000	
+safe2	balcao	-15.92	-30.00	1.000	0.000	
+safe2	balcao	-15.92	-31.20	1.000	0.000	
+safe2	npc	-17.72	-30.00	1.000	0.000	51240
+safe2	luz	-13.00	-35.20	1.000	0.000	
+safe2	parede	-12.50	-4.00	-21.50	-4.00
+safe2	parede	-21.50	-4.00	-21.50	-16.00
+safe2	parede	-21.50	-16.00	-12.50	-16.00
+safe2	prateleira	-20.90	-6.25	1.000	0.000	equipamentos:Mochilas,Coletes
+safe2	prateleira	-20.90	-8.75	1.000	0.000	equipamentos:Mochilas,Coletes
+safe2	prateleira	-20.90	-11.25	1.000	0.000	equipamentos:Mochilas,Coletes
+safe2	prateleira	-20.90	-13.75	1.000	0.000	equipamentos:Mochilas,Coletes
+safe2	mesa	-15.35	-4.60	0.000	-1.000	
+safe2	mesa	-15.35	-15.40	-0.000	1.000	
+safe2	mesa	-18.65	-4.60	0.000	-1.000	
+safe2	mesa	-18.65	-15.40	-0.000	1.000	
+safe2	balcao	-15.92	-8.80	1.000	0.000	
+safe2	balcao	-15.92	-10.00	1.000	0.000	
+safe2	balcao	-15.92	-11.20	1.000	0.000	
+safe2	npc	-17.72	-10.00	1.000	0.000	51244
+safe2	luz	-13.00	-15.20	1.000	0.000	
+safe2	parede	-12.50	16.00	-21.50	16.00
+safe2	parede	-21.50	16.00	-21.50	4.00
+safe2	parede	-21.50	4.00	-12.50	4.00
+safe2	manequim	-20.40	13.75	1.000	0.000	roupas
+safe2	manequim	-20.40	11.25	1.000	0.000	roupas
+safe2	manequim	-20.40	8.75	1.000	0.000	roupas
+safe2	manequim	-20.40	6.25	1.000	0.000	roupas
+safe2	prateleira	-15.35	15.40	0.000	-1.000	roupas
+safe2	prateleira	-15.35	4.60	-0.000	1.000	roupas
+safe2	prateleira	-18.65	15.40	0.000	-1.000	roupas
+safe2	prateleira	-18.65	4.60	-0.000	1.000	roupas
+safe2	balcao	-15.92	11.20	1.000	0.000	
+safe2	balcao	-15.92	10.00	1.000	0.000	
+safe2	balcao	-15.92	8.80	1.000	0.000	
+safe2	npc	-17.72	10.00	1.000	0.000	51242
+safe2	luz	-13.00	4.80	1.000	0.000	
+safe2	parede	12.50	-36.00	21.50	-36.00
+safe2	parede	21.50	-36.00	21.50	-24.00
+safe2	parede	21.50	-24.00	12.50	-24.00
+safe2	prateleira	20.90	-33.75	-1.000	0.000	comida
+safe2	prateleira	20.90	-31.25	-1.000	0.000	comida
+safe2	prateleira	20.90	-28.75	-1.000	0.000	comida
+safe2	prateleira	20.90	-26.25	-1.000	0.000	comida
+safe2	prateleira	15.35	-35.40	0.000	1.000	remedios
+safe2	prateleira	15.35	-24.60	-0.000	-1.000	remedios
+safe2	prateleira	18.65	-35.40	0.000	1.000	remedios
+safe2	prateleira	18.65	-24.60	-0.000	-1.000	remedios
+safe2	balcao	15.92	-31.20	-1.000	0.000	
+safe2	balcao	15.92	-30.00	-1.000	0.000	
+safe2	balcao	15.92	-28.80	-1.000	0.000	
+safe2	npc	17.72	-30.00	-1.000	0.000	51241
+safe2	luz	13.00	-24.80	-1.000	0.000	
+safe2	parede	12.50	-16.00	21.50	-16.00
+safe2	parede	21.50	-16.00	21.50	-4.00
+safe2	parede	21.50	-4.00	12.50	-4.00
+safe2	cofre	20.90	-13.75	-1.000	0.000	
+safe2	cofre	20.90	-11.25	-1.000	0.000	
+safe2	cofre	20.90	-8.75	-1.000	0.000	
+safe2	cofre	20.90	-6.25	-1.000	0.000	
+safe2	balcao	15.92	-11.20	-1.000	0.000	
+safe2	balcao	15.92	-10.00	-1.000	0.000	
+safe2	balcao	15.92	-8.80	-1.000	0.000	
+safe2	npc	17.72	-10.00	-1.000	0.000	51246
+safe2	luz	13.00	-4.80	-1.000	0.000	
+safe2	parede	12.50	4.00	21.50	4.00
+safe2	parede	21.50	4.00	21.50	16.00
+safe2	parede	21.50	16.00	12.50	16.00
+safe2	cofre	20.90	6.67	-1.000	0.000	
+safe2	cofre	20.90	10.00	-1.000	0.000	
+safe2	cofre	20.90	13.33	-1.000	0.000	
+safe2	balcao	15.92	8.80	-1.000	0.000	
+safe2	balcao	15.92	10.00	-1.000	0.000	
+safe2	balcao	15.92	11.20	-1.000	0.000	
+safe2	npc	17.72	10.00	-1.000	0.000	51249
+safe2	luz	13.00	15.20	-1.000	0.000	
+safe2	parede	11.00	30.50	11.00	43.50
+safe2	parede	11.00	43.50	-11.00	43.50
+safe2	parede	-11.00	43.50	-11.00	30.50
+safe2	caixa	7.50	42.90	0.000	-1.000	
+safe2	caixa	2.50	42.90	0.000	-1.000	
+safe2	caixa	-2.50	42.90	0.000	-1.000	
+safe2	caixa	-7.50	42.90	0.000	-1.000	
+safe2	mesa	10.40	34.35	-1.000	-0.000	
+safe2	mesa	-10.40	34.35	1.000	0.000	
+safe2	mesa	10.40	39.65	-1.000	-0.000	
+safe2	mesa	-10.40	39.65	1.000	0.000	
+safe2	npc	9.40	31.90	0.000	-1.000	51245
+safe2	luz	-10.20	31.00	0.000	-1.000	
+safe2	luz	-6.00	-38.00	0.156	0.988	
+safe2	luz	6.00	-38.00	-0.156	0.988	
+safe2	luz	-6.00	-25.00	0.233	0.972	
+safe2	luz	6.00	-25.00	-0.233	0.972	
+safe2	luz	-6.00	-12.00	0.447	0.894	
+safe2	luz	6.00	-12.00	-0.447	0.894	
+safe2	luz	-6.00	1.00	0.986	-0.164	
+safe2	luz	6.00	1.00	-0.986	-0.164	
+safe2	luz	-6.00	14.00	0.394	-0.919	
+safe2	luz	6.00	14.00	-0.394	-0.919	
+safe2	luz	-6.00	27.00	0.217	-0.976	
+safe2	luz	6.00	27.00	-0.217	-0.976	
+safe2	bandeira	-5.50	-47.50	0.115	0.993	
+safe2	bandeira	5.50	-47.50	-0.115	0.993	
+safe2	bandeira	0.00	23.00	0.000	-1.000	
+safe2	veiculo	0.00	-58.00	0.000	1.000	
+safe3	zona	60
+safe3	cerca	-42.00	-42.00	-42.00	42.00
+safe3	cerca	-42.00	42.00	42.00	42.00
+safe3	cerca	42.00	42.00	42.00	-42.00
+safe3	cerca	42.00	-42.00	4.50	-42.00
+safe3	cerca	-4.50	-42.00	-42.00	-42.00
+safe3	parede	-30.50	-14.00	-39.50	-14.00
+safe3	parede	-39.50	-14.00	-39.50	-26.00
+safe3	parede	-39.50	-26.00	-30.50	-26.00
+safe3	rack	-38.90	-16.00	1.000	0.000	armas
+safe3	rack	-38.90	-18.00	1.000	0.000	armas
+safe3	rack	-38.90	-20.00	1.000	0.000	armas
+safe3	rack	-38.90	-22.00	1.000	0.000	armas
+safe3	rack	-38.90	-24.00	1.000	0.000	armas
+safe3	rack	-33.35	-14.60	0.000	-1.000	armas
+safe3	rack	-33.35	-25.40	-0.000	1.000	armas
+safe3	rack	-36.65	-14.60	0.000	-1.000	armas
+safe3	rack	-36.65	-25.40	-0.000	1.000	armas
+safe3	balcao	-33.92	-18.80	1.000	0.000	
+safe3	balcao	-33.92	-20.00	1.000	0.000	
+safe3	balcao	-33.92	-21.20	1.000	0.000	
+safe3	npc	-35.72	-20.00	1.000	0.000	51240
+safe3	luz	-31.00	-25.20	1.000	0.000	
+safe3	parede	-30.50	4.00	-39.50	4.00
+safe3	parede	-39.50	4.00	-39.50	-8.00
+safe3	parede	-39.50	-8.00	-30.50	-8.00
+safe3	prateleira	-38.90	1.75	1.000	0.000	equipamentos:Mochilas,Coletes
+safe3	prateleira	-38.90	-0.75	1.000	0.000	equipamentos:Mochilas,Coletes
+safe3	prateleira	-38.90	-3.25	1.000	0.000	equipamentos:Mochilas,Coletes
+safe3	prateleira	-38.90	-5.75	1.000	0.000	equipamentos:Mochilas,Coletes
+safe3	mesa	-33.35	3.40	0.000	-1.000	
+safe3	mesa	-33.35	-7.40	-0.000	1.000	
+safe3	mesa	-36.65	3.40	0.000	-1.000	
+safe3	mesa	-36.65	-7.40	-0.000	1.000	
+safe3	balcao	-33.92	-0.80	1.000	0.000	
+safe3	balcao	-33.92	-2.00	1.000	0.000	
+safe3	balcao	-33.92	-3.20	1.000	0.000	
+safe3	npc	-35.72	-2.00	1.000	0.000	51244
+safe3	luz	-31.00	-7.20	1.000	0.000	
+safe3	parede	-30.50	22.00	-39.50	22.00
+safe3	parede	-39.50	22.00	-39.50	10.00
+safe3	parede	-39.50	10.00	-30.50	10.00
+safe3	manequim	-38.40	19.75	1.000	0.000	roupas
+safe3	manequim	-38.40	17.25	1.000	0.000	roupas
+safe3	manequim	-38.40	14.75	1.000	0.000	roupas
+safe3	manequim	-38.40	12.25	1.000	0.000	roupas
+safe3	prateleira	-33.35	21.40	0.000	-1.000	roupas
+safe3	prateleira	-33.35	10.60	-0.000	1.000	roupas
+safe3	prateleira	-36.65	21.40	0.000	-1.000	roupas
+safe3	prateleira	-36.65	10.60	-0.000	1.000	roupas
+safe3	balcao	-33.92	17.20	1.000	0.000	
+safe3	balcao	-33.92	16.00	1.000	0.000	
+safe3	balcao	-33.92	14.80	1.000	0.000	
+safe3	npc	-35.72	16.00	1.000	0.000	51242
+safe3	luz	-31.00	10.80	1.000	0.000	
+safe3	parede	30.50	-26.00	39.50	-26.00
+safe3	parede	39.50	-26.00	39.50	-14.00
+safe3	parede	39.50	-14.00	30.50	-14.00
+safe3	prateleira	38.90	-23.75	-1.000	0.000	comida
+safe3	prateleira	38.90	-21.25	-1.000	0.000	comida
+safe3	prateleira	38.90	-18.75	-1.000	0.000	comida
+safe3	prateleira	38.90	-16.25	-1.000	0.000	comida
+safe3	prateleira	33.35	-25.40	0.000	1.000	remedios
+safe3	prateleira	33.35	-14.60	-0.000	-1.000	remedios
+safe3	prateleira	36.65	-25.40	0.000	1.000	remedios
+safe3	prateleira	36.65	-14.60	-0.000	-1.000	remedios
+safe3	balcao	33.92	-21.20	-1.000	0.000	
+safe3	balcao	33.92	-20.00	-1.000	0.000	
+safe3	balcao	33.92	-18.80	-1.000	0.000	
+safe3	npc	35.72	-20.00	-1.000	0.000	51241
+safe3	luz	31.00	-14.80	-1.000	0.000	
+safe3	parede	30.50	-8.00	39.50	-8.00
+safe3	parede	39.50	-8.00	39.50	4.00
+safe3	parede	39.50	4.00	30.50	4.00
+safe3	cofre	38.90	-5.75	-1.000	0.000	
+safe3	cofre	38.90	-3.25	-1.000	0.000	
+safe3	cofre	38.90	-0.75	-1.000	0.000	
+safe3	cofre	38.90	1.75	-1.000	0.000	
+safe3	balcao	33.92	-3.20	-1.000	0.000	
+safe3	balcao	33.92	-2.00	-1.000	0.000	
+safe3	balcao	33.92	-0.80	-1.000	0.000	
+safe3	npc	35.72	-2.00	-1.000	0.000	51246
+safe3	luz	31.00	3.20	-1.000	0.000	
+safe3	parede	30.50	10.00	39.50	10.00
+safe3	parede	39.50	10.00	39.50	22.00
+safe3	parede	39.50	22.00	30.50	22.00
+safe3	cofre	38.90	12.67	-1.000	0.000	
+safe3	cofre	38.90	16.00	-1.000	0.000	
+safe3	cofre	38.90	19.33	-1.000	0.000	
+safe3	balcao	33.92	14.80	-1.000	0.000	
+safe3	balcao	33.92	16.00	-1.000	0.000	
+safe3	balcao	33.92	17.20	-1.000	0.000	
+safe3	npc	35.72	16.00	-1.000	0.000	51249
+safe3	luz	31.00	21.20	-1.000	0.000	
+safe3	parede	11.00	26.00	11.00	40.00
+safe3	parede	11.00	40.00	-11.00	40.00
+safe3	parede	-11.00	40.00	-11.00	26.00
+safe3	caixa	7.50	39.40	0.000	-1.000	
+safe3	caixa	2.50	39.40	0.000	-1.000	
+safe3	caixa	-2.50	39.40	0.000	-1.000	
+safe3	caixa	-7.50	39.40	0.000	-1.000	
+safe3	mesa	10.40	30.10	-1.000	-0.000	
+safe3	mesa	-10.40	30.10	1.000	0.000	
+safe3	mesa	10.40	35.90	-1.000	-0.000	
+safe3	mesa	-10.40	35.90	1.000	0.000	
+safe3	npc	9.40	27.40	0.000	-1.000	51245
+safe3	luz	-10.20	26.50	0.000	-1.000	
+safe3	torre	-38.00	-38.00	0.707	0.707	
+safe3	torre	-38.00	38.00	0.707	-0.707	
+safe3	torre	38.00	-38.00	-0.707	0.707	
+safe3	torre	38.00	38.00	-0.707	-0.707	
+safe3	bandeira	0.00	0.00	0.000	0.000	
+safe3	bandeira	-6.00	-43.50	0.137	0.991	
+safe3	bandeira	6.00	-43.50	-0.137	0.991	
+safe3	luz	-12.00	0.00	1.000	0.000	
+safe3	luz	12.00	0.00	-1.000	0.000	
+safe3	luz	0.00	12.00	0.000	-1.000	
+safe3	luz	0.00	-12.00	0.000	1.000	
+safe3	veiculo	0.00	-49.00	0.000	1.000	
+negro1	cerca	2.04	34.94	6.08	34.47
+negro1	cerca	6.08	34.47	10.04	33.53
+negro1	cerca	10.04	33.53	13.86	32.14
+negro1	cerca	13.86	32.14	17.50	30.31
+negro1	cerca	17.50	30.31	20.90	28.07
+negro1	cerca	20.90	28.07	24.02	25.46
+negro1	cerca	24.02	25.46	26.81	22.50
+negro1	cerca	26.81	22.50	29.24	19.23
+negro1	cerca	29.24	19.23	31.28	15.71
+negro1	cerca	31.28	15.71	32.89	11.97
+negro1	cerca	32.89	11.97	34.06	8.07
+negro1	cerca	34.06	8.07	34.76	4.06
+negro1	cerca	34.76	4.06	35.00	0.00
+negro1	cerca	35.00	0.00	34.76	-4.06
+negro1	cerca	34.76	-4.06	34.06	-8.07
+negro1	cerca	34.06	-8.07	32.89	-11.97
+negro1	cerca	32.89	-11.97	31.28	-15.71
+negro1	cerca	31.28	-15.71	29.24	-19.23
+negro1	cerca	29.24	-19.23	26.81	-22.50
+negro1	cerca	26.81	-22.50	24.02	-25.46
+negro1	cerca	24.02	-25.46	20.90	-28.07
+negro1	cerca	20.90	-28.07	17.50	-30.31
+negro1	cerca	17.50	-30.31	13.86	-32.14
+negro1	cerca	13.86	-32.14	10.04	-33.53
+negro1	cerca	10.04	-33.53	6.08	-34.47
+negro1	cerca	-6.08	-34.47	-10.04	-33.53
+negro1	cerca	-10.04	-33.53	-13.86	-32.14
+negro1	cerca	-13.86	-32.14	-17.50	-30.31
+negro1	cerca	-17.50	-30.31	-20.90	-28.07
+negro1	cerca	-20.90	-28.07	-24.02	-25.46
+negro1	cerca	-24.02	-25.46	-26.81	-22.50
+negro1	cerca	-26.81	-22.50	-29.24	-19.23
+negro1	cerca	-29.24	-19.23	-31.28	-15.71
+negro1	cerca	-31.28	-15.71	-32.89	-11.97
+negro1	cerca	-32.89	-11.97	-34.06	-8.07
+negro1	cerca	-34.06	-8.07	-34.76	-4.06
+negro1	cerca	-34.76	-4.06	-35.00	-0.00
+negro1	cerca	-35.00	-0.00	-34.76	4.06
+negro1	cerca	-34.76	4.06	-34.06	8.07
+negro1	cerca	-34.06	8.07	-32.89	11.97
+negro1	cerca	-32.89	11.97	-31.28	15.71
+negro1	cerca	-31.28	15.71	-29.24	19.23
+negro1	cerca	-29.24	19.23	-26.81	22.50
+negro1	cerca	-26.81	22.50	-24.02	25.46
+negro1	cerca	-24.02	25.46	-20.90	28.07
+negro1	cerca	-20.90	28.07	-17.50	30.31
+negro1	cerca	-17.50	30.31	-13.86	32.14
+negro1	cerca	-13.86	32.14	-10.04	33.53
+negro1	cerca	-10.04	33.53	-6.08	34.47
+negro1	cerca	-6.08	34.47	-2.04	34.94
+negro1	cerca	-2.04	34.94	2.04	34.94
+negro1	parede	-16.27	12.31	-24.73	15.39
+negro1	parede	-24.73	15.39	-28.83	4.11
+negro1	parede	-28.83	4.11	-20.38	1.03
+negro1	rack	-24.85	13.30	0.940	-0.342	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-25.53	11.42	0.940	-0.342	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-26.22	9.54	0.940	-0.342	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-26.90	7.66	0.940	-0.342	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-27.59	5.78	0.940	-0.342	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-19.16	12.72	-0.342	-0.940	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-22.85	2.57	0.342	0.940	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-22.26	13.85	-0.342	-0.940	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	rack	-25.95	3.70	0.342	0.940	negro:Snipers,Rifles fortes,Metralhadoras
+negro1	balcao	-21.13	8.97	0.940	-0.342	
+negro1	balcao	-21.54	7.84	0.940	-0.342	
+negro1	balcao	-21.95	6.71	0.940	-0.342	
+negro1	npc	-23.23	8.45	0.940	-0.342	51247
+negro1	luz	-20.57	1.95	0.940	-0.342	
+negro1	parede	6.00	19.50	6.00	28.50
+negro1	parede	6.00	28.50	-6.00	28.50
+negro1	parede	-6.00	28.50	-6.00	19.50
+negro1	manequim	3.75	27.40	-0.000	-1.000	negro:Elite e torres
+negro1	manequim	1.25	27.40	-0.000	-1.000	negro:Elite e torres
+negro1	manequim	-1.25	27.40	-0.000	-1.000	negro:Elite e torres
+negro1	manequim	-3.75	27.40	-0.000	-1.000	negro:Elite e torres
+negro1	prateleira	5.40	22.35	-1.000	0.000	negro:Elite e torres
+negro1	prateleira	-5.40	22.35	1.000	-0.000	negro:Elite e torres
+negro1	prateleira	5.40	25.65	-1.000	0.000	negro:Elite e torres
+negro1	prateleira	-5.40	25.65	1.000	-0.000	negro:Elite e torres
+negro1	balcao	1.20	22.92	-0.000	-1.000	
+negro1	balcao	0.00	22.92	-0.000	-1.000	
+negro1	balcao	-1.20	22.92	-0.000	-1.000	
+negro1	npc	0.00	24.72	-0.000	-1.000	51250
+negro1	luz	-5.20	20.00	-0.000	-1.000	
+negro1	parede	20.38	1.03	28.83	4.11
+negro1	parede	28.83	4.11	24.73	15.39
+negro1	parede	24.73	15.39	16.27	12.31
+negro1	barril	27.59	5.78	-0.940	-0.342	
+negro1	barril	26.90	7.66	-0.940	-0.342	
+negro1	barril	26.22	9.54	-0.940	-0.342	
+negro1	barril	25.53	11.42	-0.940	-0.342	
+negro1	barril	24.85	13.30	-0.940	-0.342	
+negro1	caixa	22.85	2.57	-0.342	0.940	
+negro1	caixa	19.16	12.72	0.342	-0.940	
+negro1	caixa	25.95	3.70	-0.342	0.940	
+negro1	caixa	22.26	13.85	0.342	-0.940	
+negro1	balcao	21.95	6.71	-0.940	-0.342	
+negro1	balcao	21.54	7.84	-0.940	-0.342	
+negro1	balcao	21.13	8.97	-0.940	-0.342	
+negro1	npc	23.23	8.45	-0.940	-0.342	51251
+negro1	luz	17.02	11.73	-0.940	-0.342	
+negro1	parede	-9.37	-0.55	-23.10	2.20
+negro1	parede	-23.10	2.20	-26.63	-15.45
+negro1	parede	-26.63	-15.45	-12.90	-18.20
+negro1	barril	-13.51	-0.33	-0.196	-0.981	
+negro1	barril	-16.80	-16.81	0.196	0.981	
+negro1	barril	-19.20	0.81	-0.196	-0.981	
+negro1	barril	-22.49	-15.67	0.196	0.981	
+negro1	npc	-11.06	-1.84	0.981	-0.196	51252
+negro1	luz	-13.23	-17.32	0.981	-0.196	
+negro1	heliponto	6.00	-12.00	-0.447	0.894	
+negro1	caixa_grande	14.00	2.00	-0.990	-0.141	
+negro1	caixa_grande	20.00	-10.00	-0.894	0.447	
+negro1	caixa_grande	-4.00	4.00	0.707	-0.707	
+negro1	caixa_grande	12.00	-24.00	-0.447	0.894	
+negro1	luz	-25.00	20.00	0.781	-0.625	
+negro1	luz	25.00	20.00	-0.781	-0.625	
+negro1	luz	-14.00	-28.00	0.447	0.894	
+negro1	luz	14.00	-28.00	-0.447	0.894	
+negro1	luz	0.00	6.00	0.000	-1.000	
+negro1	luz	28.00	-6.00	-0.978	0.210	
+negro1	bandeira	-4.50	-36.50	0.122	0.992	
+negro1	bandeira	4.50	-36.50	-0.122	0.992	
+negro2	cerca	-35.00	-35.00	-35.00	35.00
+negro2	cerca	-35.00	35.00	35.00	35.00
+negro2	cerca	35.00	35.00	35.00	-35.00
+negro2	cerca	35.00	-35.00	-21.50	-35.00
+negro2	cerca	-26.50	-35.00	-35.00	-35.00
+negro2	cerca	-21.50	-35.00	-21.50	-16.00
+negro2	cerca	-21.50	-16.00	2.00	-16.00
+negro2	cerca	-26.50	-35.00	-26.50	-11.00
+negro2	cerca	-26.50	-11.00	2.00	-11.00
+negro2	parede	-12.00	23.50	-12.00	32.50
+negro2	parede	-12.00	32.50	-24.00	32.50
+negro2	parede	-24.00	32.50	-24.00	23.50
+negro2	rack	-14.00	31.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-16.00	31.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-18.00	31.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-20.00	31.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-22.00	31.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-12.60	26.35	-1.000	-0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-23.40	26.35	1.000	0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-12.60	29.65	-1.000	-0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	rack	-23.40	29.65	1.000	0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro2	balcao	-16.80	26.92	0.000	-1.000	
+negro2	balcao	-18.00	26.92	0.000	-1.000	
+negro2	balcao	-19.20	26.92	0.000	-1.000	
+negro2	npc	-18.00	28.72	0.000	-1.000	51247
+negro2	luz	-23.20	24.00	0.000	-1.000	
+negro2	parede	6.00	23.50	6.00	32.50
+negro2	parede	6.00	32.50	-6.00	32.50
+negro2	parede	-6.00	32.50	-6.00	23.50
+negro2	manequim	3.75	31.40	0.000	-1.000	negro:Elite e torres
+negro2	manequim	1.25	31.40	0.000	-1.000	negro:Elite e torres
+negro2	manequim	-1.25	31.40	0.000	-1.000	negro:Elite e torres
+negro2	manequim	-3.75	31.40	0.000	-1.000	negro:Elite e torres
+negro2	prateleira	5.40	26.35	-1.000	-0.000	negro:Elite e torres
+negro2	prateleira	-5.40	26.35	1.000	0.000	negro:Elite e torres
+negro2	prateleira	5.40	29.65	-1.000	-0.000	negro:Elite e torres
+negro2	prateleira	-5.40	29.65	1.000	0.000	negro:Elite e torres
+negro2	balcao	1.20	26.92	0.000	-1.000	
+negro2	balcao	0.00	26.92	0.000	-1.000	
+negro2	balcao	-1.20	26.92	0.000	-1.000	
+negro2	npc	0.00	28.72	0.000	-1.000	51250
+negro2	luz	-5.20	24.00	0.000	-1.000	
+negro2	parede	24.00	23.50	24.00	32.50
+negro2	parede	24.00	32.50	12.00	32.50
+negro2	parede	12.00	32.50	12.00	23.50
+negro2	barril	22.00	31.90	0.000	-1.000	
+negro2	barril	20.00	31.90	0.000	-1.000	
+negro2	barril	18.00	31.90	0.000	-1.000	
+negro2	barril	16.00	31.90	0.000	-1.000	
+negro2	barril	14.00	31.90	0.000	-1.000	
+negro2	caixa	23.40	26.35	-1.000	-0.000	
+negro2	caixa	12.60	26.35	1.000	0.000	
+negro2	caixa	23.40	29.65	-1.000	-0.000	
+negro2	caixa	12.60	29.65	1.000	0.000	
+negro2	balcao	19.20	26.92	0.000	-1.000	
+negro2	balcao	18.00	26.92	0.000	-1.000	
+negro2	balcao	16.80	26.92	0.000	-1.000	
+negro2	npc	18.00	28.72	0.000	-1.000	51251
+negro2	luz	12.80	24.00	0.000	-1.000	
+negro2	parede	18.00	-11.00	32.00	-11.00
+negro2	parede	32.00	-11.00	32.00	7.00
+negro2	parede	32.00	7.00	18.00	7.00
+negro2	barril	22.10	-10.40	0.000	1.000	
+negro2	barril	22.10	6.40	-0.000	-1.000	
+negro2	barril	27.90	-10.40	0.000	1.000	
+negro2	barril	27.90	6.40	-0.000	-1.000	
+negro2	npc	19.40	-9.40	-1.000	0.000	51252
+negro2	luz	18.50	6.20	-1.000	0.000	
+negro2	heliponto	8.00	0.00	-1.000	0.000	
+negro2	caixa_grande	-20.00	8.00	0.928	-0.371	
+negro2	caixa_grande	-10.00	12.00	0.640	-0.768	
+negro2	caixa_grande	22.00	-25.00	-0.661	0.751	
+negro2	luz	-24.00	-24.00	0.707	0.707	
+negro2	luz	-12.00	-13.50	0.664	0.747	
+negro2	luz	0.00	12.00	0.000	-1.000	
+negro2	luz	-30.00	30.00	0.707	-0.707	
+negro2	luz	30.00	30.00	-0.707	-0.707	
+negro2	luz	-30.00	-30.00	0.707	0.707	
+negro2	bandeira	-28.50	-37.00	0.610	0.792	
+negro2	bandeira	-19.50	-37.00	0.466	0.885	
+negro3	cerca	-35.00	-25.00	-35.00	25.00
+negro3	cerca	-35.00	25.00	35.00	25.00
+negro3	cerca	35.00	25.00	35.00	-25.00
+negro3	cerca	35.00	-25.00	3.50	-25.00
+negro3	cerca	-3.50	-25.00	-35.00	-25.00
+negro3	parede	-18.00	14.50	-18.00	23.50
+negro3	parede	-18.00	23.50	-30.00	23.50
+negro3	parede	-30.00	23.50	-30.00	14.50
+negro3	rack	-20.00	22.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-22.00	22.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-24.00	22.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-26.00	22.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-28.00	22.90	0.000	-1.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-18.60	17.35	-1.000	-0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-29.40	17.35	1.000	0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-18.60	20.65	-1.000	-0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	rack	-29.40	20.65	1.000	0.000	negro:Snipers,Rifles fortes,Metralhadoras
+negro3	balcao	-22.80	17.92	0.000	-1.000	
+negro3	balcao	-24.00	17.92	0.000	-1.000	
+negro3	balcao	-25.20	17.92	0.000	-1.000	
+negro3	npc	-24.00	19.72	0.000	-1.000	51247
+negro3	luz	-29.20	15.00	0.000	-1.000	
+negro3	parede	-4.00	14.50	-4.00	23.50
+negro3	parede	-4.00	23.50	-16.00	23.50
+negro3	parede	-16.00	23.50	-16.00	14.50
+negro3	manequim	-6.25	22.40	0.000	-1.000	negro:Elite e torres
+negro3	manequim	-8.75	22.40	0.000	-1.000	negro:Elite e torres
+negro3	manequim	-11.25	22.40	0.000	-1.000	negro:Elite e torres
+negro3	manequim	-13.75	22.40	0.000	-1.000	negro:Elite e torres
+negro3	prateleira	-4.60	17.35	-1.000	-0.000	negro:Elite e torres
+negro3	prateleira	-15.40	17.35	1.000	0.000	negro:Elite e torres
+negro3	prateleira	-4.60	20.65	-1.000	-0.000	negro:Elite e torres
+negro3	prateleira	-15.40	20.65	1.000	0.000	negro:Elite e torres
+negro3	balcao	-8.80	17.92	0.000	-1.000	
+negro3	balcao	-10.00	17.92	0.000	-1.000	
+negro3	balcao	-11.20	17.92	0.000	-1.000	
+negro3	npc	-10.00	19.72	0.000	-1.000	51250
+negro3	luz	-15.20	15.00	0.000	-1.000	
+negro3	parede	10.00	14.50	10.00	23.50
+negro3	parede	10.00	23.50	-2.00	23.50
+negro3	parede	-2.00	23.50	-2.00	14.50
+negro3	barril	8.00	22.90	0.000	-1.000	
+negro3	barril	6.00	22.90	0.000	-1.000	
+negro3	barril	4.00	22.90	0.000	-1.000	
+negro3	barril	2.00	22.90	0.000	-1.000	
+negro3	barril	0.00	22.90	0.000	-1.000	
+negro3	caixa	9.40	17.35	-1.000	-0.000	
+negro3	caixa	-1.40	17.35	1.000	0.000	
+negro3	caixa	9.40	20.65	-1.000	-0.000	
+negro3	caixa	-1.40	20.65	1.000	0.000	
+negro3	balcao	5.20	17.92	0.000	-1.000	
+negro3	balcao	4.00	17.92	0.000	-1.000	
+negro3	balcao	2.80	17.92	0.000	-1.000	
+negro3	npc	4.00	19.72	0.000	-1.000	51251
+negro3	luz	-1.20	15.00	0.000	-1.000	
+negro3	parede	33.00	5.00	33.00	19.00
+negro3	parede	33.00	19.00	15.00	19.00
+negro3	parede	15.00	19.00	15.00	5.00
+negro3	barril	32.40	9.10	-1.000	-0.000	
+negro3	barril	15.60	9.10	1.000	0.000	
+negro3	barril	32.40	14.90	-1.000	-0.000	
+negro3	barril	15.60	14.90	1.000	0.000	
+negro3	npc	31.40	6.40	0.000	-1.000	51252
+negro3	luz	15.80	5.50	0.000	-1.000	
+negro3	heliponto	24.00	-6.00	-0.970	0.243	
+negro3	caixa_grande	-28.00	-16.00	0.868	0.496	
+negro3	caixa_grande	-28.00	-9.00	0.952	0.306	
+negro3	caixa_grande	-28.00	-2.00	0.997	0.071	
+negro3	caixa_grande	-22.00	-16.00	0.809	0.588	
+negro3	caixa_grande	-22.00	-9.00	0.926	0.379	
+negro3	caixa_grande	-22.00	-2.00	0.996	0.091	
+negro3	caixa_grande	-8.00	-10.00	0.625	0.781	
+negro3	caixa_grande	-12.00	4.00	0.949	-0.316	
+negro3	luz	-30.00	20.00	0.832	-0.555	
+negro3	luz	-6.00	8.00	0.600	-0.800	
+negro3	luz	8.00	-18.00	-0.406	0.914	
+negro3	luz	-30.00	-20.00	0.832	0.555	
+negro3	luz	30.00	-20.00	-0.832	0.555	
+negro3	luz	12.00	4.00	-0.949	-0.316	
+negro3	bandeira	-4.50	-26.50	0.167	0.986	
+negro3	bandeira	4.50	-26.50	-0.167	0.986	
+cacador1	parede	5.50	3.50	5.50	10.50
+cacador1	parede	5.50	10.50	-5.50	10.50
+cacador1	parede	-5.50	10.50	-5.50	3.50
+cacador1	mesa	3.00	9.90	0.000	-1.000	
+cacador1	mesa	0.00	9.90	0.000	-1.000	
+cacador1	mesa	-3.00	9.90	0.000	-1.000	
+cacador1	mesa	4.90	7.00	-1.000	-0.000	
+cacador1	mesa	-4.90	7.00	1.000	0.000	
+cacador1	balcao	1.20	6.16	0.000	-1.000	
+cacador1	balcao	0.00	6.16	0.000	-1.000	
+cacador1	balcao	-1.20	6.16	0.000	-1.000	
+cacador1	npc	0.00	7.56	0.000	-1.000	51248
+cacador1	luz	-4.70	4.00	0.000	-1.000	
+cacador1	fogueira	0.00	-3.00	0.000	1.000	
+cacador1	barraca	-11.00	2.00	0.984	-0.179	
+cacador1	barraca	11.00	2.00	-0.984	-0.179	
+cacador1	mesa	-7.00	-8.00	0.659	0.753	
+cacador1	mesa	7.00	-8.00	-0.659	0.753	
+cacador1	luz	-10.00	-12.00	0.640	0.768	
+cacador1	luz	10.00	-12.00	-0.640	0.768	
+cacador1	luz	-8.00	13.00	0.524	-0.852	
+cacador1	luz	8.00	13.00	-0.524	-0.852	
+cacador1	bandeira	7.00	12.00	-0.504	-0.864	
+cacador2	cerca	2.02	17.89	5.95	16.99
+cacador2	cerca	5.95	16.99	9.58	15.24
+cacador2	cerca	9.58	15.24	12.73	12.73
+cacador2	cerca	12.73	12.73	15.24	9.58
+cacador2	cerca	15.24	9.58	16.99	5.95
+cacador2	cerca	16.99	5.95	17.89	2.02
+cacador2	cerca	17.89	2.02	17.89	-2.02
+cacador2	cerca	17.89	-2.02	16.99	-5.95
+cacador2	cerca	16.99	-5.95	15.24	-9.58
+cacador2	cerca	15.24	-9.58	12.73	-12.73
+cacador2	cerca	12.73	-12.73	9.58	-15.24
+cacador2	cerca	9.58	-15.24	5.95	-16.99
+cacador2	cerca	5.95	-16.99	2.02	-17.89
+cacador2	cerca	-2.02	-17.89	-5.95	-16.99
+cacador2	cerca	-5.95	-16.99	-9.58	-15.24
+cacador2	cerca	-9.58	-15.24	-12.73	-12.73
+cacador2	cerca	-12.73	-12.73	-15.24	-9.58
+cacador2	cerca	-15.24	-9.58	-16.99	-5.95
+cacador2	cerca	-16.99	-5.95	-17.89	-2.02
+cacador2	cerca	-17.89	-2.02	-17.89	2.02
+cacador2	cerca	-17.89	2.02	-16.99	5.95
+cacador2	cerca	-16.99	5.95	-15.24	9.58
+cacador2	cerca	-15.24	9.58	-12.73	12.73
+cacador2	cerca	-12.73	12.73	-9.58	15.24
+cacador2	cerca	-9.58	15.24	-5.95	16.99
+cacador2	cerca	-5.95	16.99	-2.02	17.89
+cacador2	cerca	-2.02	17.89	2.02	17.89
+cacador2	parede	5.50	5.50	5.50	12.50
+cacador2	parede	5.50	12.50	-5.50	12.50
+cacador2	parede	-5.50	12.50	-5.50	5.50
+cacador2	mesa	3.00	11.90	0.000	-1.000	
+cacador2	mesa	0.00	11.90	0.000	-1.000	
+cacador2	mesa	-3.00	11.90	0.000	-1.000	
+cacador2	mesa	4.90	9.00	-1.000	-0.000	
+cacador2	mesa	-4.90	9.00	1.000	0.000	
+cacador2	balcao	1.20	8.16	0.000	-1.000	
+cacador2	balcao	0.00	8.16	0.000	-1.000	
+cacador2	balcao	-1.20	8.16	0.000	-1.000	
+cacador2	npc	0.00	9.56	0.000	-1.000	51248
+cacador2	luz	-4.70	6.00	0.000	-1.000	
+cacador2	fogueira	0.00	-3.00	0.000	1.000	
+cacador2	mesa	-9.00	-2.00	0.976	0.217	
+cacador2	mesa	9.00	-2.00	-0.976	0.217	
+cacador2	barraca	-10.00	-10.00	0.707	0.707	
+cacador2	luz	-12.00	8.00	0.832	-0.555	
+cacador2	luz	12.00	8.00	-0.832	-0.555	
+cacador2	luz	8.00	-12.00	-0.555	0.832	
+cacador2	bandeira	-4.00	-19.50	0.201	0.980	
+cacador2	bandeira	4.00	-19.50	-0.201	0.980	
+cacador3	cerca	-16.00	-16.00	-16.00	16.00
+cacador3	cerca	-16.00	16.00	16.00	16.00
+cacador3	cerca	16.00	16.00	16.00	-16.00
+cacador3	cerca	16.00	-16.00	2.50	-16.00
+cacador3	cerca	-2.50	-16.00	-16.00	-16.00
+cacador3	parede	2.50	6.50	2.50	13.50
+cacador3	parede	2.50	13.50	-8.50	13.50
+cacador3	parede	-8.50	13.50	-8.50	6.50
+cacador3	mesa	0.00	12.90	0.000	-1.000	
+cacador3	mesa	-3.00	12.90	0.000	-1.000	
+cacador3	mesa	-6.00	12.90	0.000	-1.000	
+cacador3	mesa	1.90	10.00	-1.000	-0.000	
+cacador3	mesa	-7.90	10.00	1.000	0.000	
+cacador3	balcao	-1.80	9.16	0.000	-1.000	
+cacador3	balcao	-3.00	9.16	0.000	-1.000	
+cacador3	balcao	-4.20	9.16	0.000	-1.000	
+cacador3	npc	-3.00	10.56	0.000	-1.000	51248
+cacador3	luz	-7.70	7.00	0.000	-1.000	
+cacador3	torre	12.00	12.00	-0.707	-0.707	
+cacador3	bandeira	12.00	12.00	-0.707	-0.707	
+cacador3	mesa	-12.00	-4.00	0.949	0.316	
+cacador3	mesa	-12.00	3.00	0.970	-0.243	
+cacador3	mesa	12.00	-4.00	-0.949	0.316	
+cacador3	fogueira	3.00	-5.00	-0.514	0.857	
+cacador3	luz	-13.00	-13.00	0.707	0.707	
+cacador3	luz	13.00	-13.00	-0.707	0.707	
+cacador3	luz	8.00	8.00	-0.707	-0.707	
+cacador3	bandeira	-3.50	-17.50	0.196	0.981	
+cacador3	bandeira	3.50	-17.50	-0.196	0.981	

@@ -23,9 +23,20 @@ namespace SobrevivenciaCore
         {
             { 51240, "armas" }, { 51241, "comida" }, { 51242, "roupas" }, { 51243, "remedios" }, { 51244, "equipamentos" },
             { 51245, "garagem" }, { 51247, "negro" }, { 51248, "cacador" },
+            { 51250, "negro" }, { 51251, "negro" }, { 51252, "negro" },
         };
 
-        public static bool EhNpc(ushort id) => id >= 51240 && id <= 51249;
+        /// <summary>NPCs que mostram só parte da loja (categorias). Mercado negro dividido em cantinhos.
+        /// O 51247 sozinho (sem os outros por perto) mostra tudo.</summary>
+        static readonly Dictionary<ushort, string[]> NpcCategorias = new Dictionary<ushort, string[]>
+        {
+            { 51250, new[] { "Elite e torres" } },
+            { 51251, new[] { "Explosivos", "Granadas e lancadores" } },
+            { 51252, new[] { "Veiculos" } },
+        };
+        static readonly string[] NegroArmas = { "Snipers", "Rifles fortes", "Metralhadoras", "Pistolas e escopetas", "Municao rara" };
+
+        public static bool EhNpc(ushort id) => id >= 51240 && id <= 51252;
 
         class EstadoLoja
         {
@@ -33,6 +44,7 @@ namespace SobrevivenciaCore
             public bool Vender;
             public int Cat, Pagina, Sel = -1, Qtd = 1;
             public string Busca = "";
+            public string[] SoCats;
             public Vector3 Npc;
             public List<string> Cats = new List<string>();
             public List<ItemLoja> Lista = new List<ItemLoja>();
@@ -92,6 +104,21 @@ namespace SobrevivenciaCore
                 mudou = true;
                 Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: lojas atualizadas pra versao {LojasPadrao.Versao} ({novas.Sum(l => l.Itens.Count)} itens).");
             }
+            // v3: NPC do mercado (comida) vende remedios tambem
+            if (cfg.VersaoLojas < 3)
+            {
+                var comida = cfg.Lojas.FirstOrDefault(l => l.Id == "comida");
+                var rem = cfg.Lojas.FirstOrDefault(l => l.Id == "remedios");
+                if (comida != null && rem != null)
+                {
+                    foreach (var i in rem.Itens)
+                        if (!comida.Itens.Any(x => x.Id == i.Id))
+                            comida.Itens.Add(new ItemLoja(i.Id, i.Compra, i.Venda) { Categoria = i.Categoria, Veiculo = i.Veiculo });
+                    if (comida.Nome == "Comida") comida.Nome = "Mercado";
+                }
+                cfg.VersaoLojas = 3;
+                mudou = true;
+            }
             if (!cfg.Notas.Any(n => n.Id == 7012))
             {
                 cfg.Notas.Add(new Nota(7012, 10000) { SoAceita = true });
@@ -109,7 +136,9 @@ namespace SobrevivenciaCore
             try
             {
                 var drop = BarricadeManager.FindBarricadeByRootTransform(bau.transform);
-                if (drop?.asset == null || !EhNpc(drop.asset.id)) return;
+                if (drop?.asset == null) return;
+                // mostruário do /montar é só enfeite: ninguém abre
+                if (!EhNpc(drop.asset.id)) { if (PecaMontada(bau.transform)) permitir = false; return; }
                 permitir = false;
                 var sp = PlayerTool.getSteamPlayer(quem);
                 if (sp?.player == null) return;
@@ -128,7 +157,10 @@ namespace SobrevivenciaCore
                     .Where(l => l.Id.Equals(tipo, StringComparison.OrdinalIgnoreCase) || l.Tipo.Equals(tipo, StringComparison.OrdinalIgnoreCase))
                     .OrderBy(l => l.Definido ? Vector3.Distance(pos, new Vector3(l.X, l.Y, l.Z)) : 99999f).FirstOrDefault();
                 if (loja == null) { Chat.Erro(p, "Esse vendedor ainda nao tem loja configurada."); return; }
-                AbrirLoja(p, loja, pos);
+                NpcCategorias.TryGetValue(id, out var cats);
+                // armas pesadas: se tem os outros cantinhos do negro perto, mostra só as armas
+                if (id == 51247 && NpcPerto(pos, 60f, 51250, 51251, 51252)) cats = NegroArmas;
+                AbrirLoja(p, loja, pos, cats);
             }
             catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
@@ -155,11 +187,19 @@ namespace SobrevivenciaCore
 
         // ---------- Janela ----------
 
-        public bool AbrirLoja(UnturnedPlayer p, Loja loja, Vector3 npc)
+        static bool NpcPerto(Vector3 pos, float raio, params ushort[] ids)
+        {
+            foreach (var reg in BarricadeManager.regions)
+                foreach (var d in reg.drops)
+                    if (d.asset != null && Array.IndexOf(ids, d.asset.id) >= 0 && (d.model.position - pos).sqrMagnitude < raio * raio) return true;
+            return false;
+        }
+
+        public bool AbrirLoja(UnturnedPlayer p, Loja loja, Vector3 npc, string[] soCats = null)
         {
             if (!(Assets.find(EAssetType.EFFECT, LojaId) is EffectAsset asset)) { Chat.Info(p, "Use /loja pra ver os itens (janela ainda nao instalada)."); return false; }
             if (MenuAberto(p)) FecharMenu(p);
-            var e = new EstadoLoja { Loja = loja, Npc = npc };
+            var e = new EstadoLoja { Loja = loja, Npc = npc, SoCats = soCats };
             e.Vender = !loja.Itens.Any(i => i.Compra > 0);
             lojasAbertas[Id(p)] = e;
             EffectManager.SendUIEffect(asset, LojaKey, Con(p), true);
@@ -200,7 +240,7 @@ namespace SobrevivenciaCore
 
         void Recarregar(UnturnedPlayer p, EstadoLoja e)
         {
-            var validos = e.Loja.Itens.Where(i => ValeNoModo(e, i) && (i.Veiculo ? Assets.find(EAssetType.VEHICLE, i.Id) != null : Itens.Existe(i.Id))).ToList();
+            var validos = e.Loja.Itens.Where(i => ValeNoModo(e, i) && (e.SoCats == null || Array.IndexOf(e.SoCats, i.Categoria ?? "") >= 0) && (i.Veiculo ? Assets.find(EAssetType.VEHICLE, i.Id) != null : Itens.Existe(i.Id))).ToList();
             e.Cats = validos.Select(i => string.IsNullOrEmpty(i.Categoria) ? "Geral" : i.Categoria).Distinct().ToList();
             if (e.Cats.Count > 8) e.Cats = e.Cats.Take(7).Concat(new[] { "Outros" }).ToList();
             e.Cat = Mathf.Clamp(e.Cat, 0, Math.Max(0, e.Cats.Count - 1));

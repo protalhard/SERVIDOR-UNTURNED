@@ -270,6 +270,7 @@ namespace SobrevivenciaCore
                 return;
             }
             if (botao.StartsWith("Adm_P_")) { AlternarPermissao(p, e, botao.Substring(6)); return; }
+            if (botao == "Preco_Fechar") { e.PrecosAberto = false; V(p, "Adm_Precos_Area", false); return; }
             if (botao.StartsWith("Preco_")) { if (Pode(p, "Precos")) CliquePreco(p, e, botao); return; }
             if (BotaoPermissao.TryGetValue(botao, out var perm) && !Pode(p, perm)) { AvisoAdm(p, "Voce nao tem permissao pra isso.", false); return; }
 
