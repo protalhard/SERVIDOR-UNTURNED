@@ -1,0 +1,302 @@
+[
+ {
+  "arquivo": "airglow-memory-bank.mp3",
+  "titulo": "Memory Bank",
+  "artista": "AIRGLOW",
+  "tipo": "synthwave",
+  "dur": 297,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/AIRGLOW-MemoryBank",
+  "url": "https://archive.org/download/AIRGLOW-MemoryBank/AIRGLOW - Memory Bank - 01 Memory Bank.mp3"
+ },
+ {
+  "arquivo": "popoi-east-side-manhattan.mp3",
+  "titulo": "East Side Manhattan",
+  "artista": "Popoi",
+  "tipo": "lo-fi",
+  "dur": 145,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/popoi-east-side-manhattan",
+  "url": "https://archive.org/download/popoi-east-side-manhattan/Popoi - East Side Manhattan.mp3"
+ },
+ {
+  "arquivo": "airglow-cepheid-disk.mp3",
+  "titulo": "Cepheid Disk",
+  "artista": "AIRGLOW",
+  "tipo": "synthwave",
+  "dur": 218,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/AIRGLOW-MemoryBank",
+  "url": "https://archive.org/download/AIRGLOW-MemoryBank/AIRGLOW - Memory Bank - 02 Cepheid Disk.mp3"
+ },
+ {
+  "arquivo": "popoi-georgetown-cafe.mp3",
+  "titulo": "Georgetown Cafe",
+  "artista": "Popoi",
+  "tipo": "lo-fi",
+  "dur": 148,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/popoi-georgetown-cafe",
+  "url": "https://archive.org/download/popoi-georgetown-cafe/Popoi - Georgetown Cafe.mp3"
+ },
+ {
+  "arquivo": "airglow-electrifying-landscape.mp3",
+  "titulo": "Electrifying Landscape",
+  "artista": "AIRGLOW",
+  "tipo": "synthwave",
+  "dur": 249,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/AIRGLOW-MemoryBank",
+  "url": "https://archive.org/download/AIRGLOW-MemoryBank/AIRGLOW - Memory Bank - 03 Electrifying Landscape.mp3"
+ },
+ {
+  "arquivo": "popoi-dorila-y-mello.mp3",
+  "titulo": "Dorila y Mello",
+  "artista": "Popoi",
+  "tipo": "lo-fi",
+  "dur": 165,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/popoi-dorila-y-mello",
+  "url": "https://archive.org/download/popoi-dorila-y-mello/Popoi - Dorila y Mello.mp3"
+ },
+ {
+  "arquivo": "airglow-blueshift.mp3",
+  "titulo": "Blueshift",
+  "artista": "AIRGLOW",
+  "tipo": "synthwave",
+  "dur": 324,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/AIRGLOW-MemoryBank",
+  "url": "https://archive.org/download/AIRGLOW-MemoryBank/AIRGLOW - Memory Bank - 04 Blueshift.mp3"
+ },
+ {
+  "arquivo": "popoi-smoothie.mp3",
+  "titulo": "Smoothie",
+  "artista": "Popoi",
+  "tipo": "lo-fi",
+  "dur": 158,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/popoi-smoothie",
+  "url": "https://archive.org/download/popoi-smoothie/Popoi - Smoothie.mp3"
+ },
+ {
+  "arquivo": "airglow-new-touch.mp3",
+  "titulo": "New Touch",
+  "artista": "AIRGLOW",
+  "tipo": "synthwave",
+  "dur": 290,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/AIRGLOW-MemoryBank",
+  "url": "https://archive.org/download/AIRGLOW-MemoryBank/AIRGLOW - Memory Bank - 07 New Touch.mp3"
+ },
+ {
+  "arquivo": "popoi-cafezinho-com-leite.mp3",
+  "titulo": "Cafezinho com Leite",
+  "artista": "Popoi",
+  "tipo": "lo-fi",
+  "dur": 162,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/popoi-cafezinho-com-leite",
+  "url": "https://archive.org/download/popoi-cafezinho-com-leite/Popoi - Cafezinho com Leite.mp3"
+ },
+ {
+  "arquivo": "airglow-system-shutdown.mp3",
+  "titulo": "System Shutdown",
+  "artista": "AIRGLOW",
+  "tipo": "synthwave",
+  "dur": 216,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/AIRGLOW-MemoryBank",
+  "url": "https://archive.org/download/AIRGLOW-MemoryBank/AIRGLOW - Memory Bank - 10 System Shutdown.mp3"
+ },
+ {
+  "arquivo": "popoi-madrugada.mp3",
+  "titulo": "Madrugada",
+  "artista": "Popoi",
+  "tipo": "lo-fi",
+  "dur": 148,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/popoi-madrugada",
+  "url": "https://archive.org/download/popoi-madrugada/Popoi - Madrugada.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-driving-in-the-rain.mp3",
+  "titulo": "Driving in the Rain",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 346,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/timecrawler82--osaka-lights",
+  "url": "https://archive.org/download/timecrawler82--osaka-lights/01 Driving in the Rain.mp3"
+ },
+ {
+  "arquivo": "popoi-chilling.mp3",
+  "titulo": "Chilling",
+  "artista": "Popoi",
+  "tipo": "lo-fi",
+  "dur": 145,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/popoi-chilling",
+  "url": "https://archive.org/download/popoi-chilling/Popoi - Chilling.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-mt-fuji.mp3",
+  "titulo": "Mt. Fuji",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 282,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/timecrawler82--osaka-lights",
+  "url": "https://archive.org/download/timecrawler82--osaka-lights/02 Mt. Fuji.mp3"
+ },
+ {
+  "arquivo": "broke-for-free-night-owl.mp3",
+  "titulo": "Night Owl",
+  "artista": "Broke For Free",
+  "tipo": "lo-fi",
+  "dur": 194,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/DirectionlessEP",
+  "url": "https://archive.org/download/DirectionlessEP/Broke For Free - Directionless EP - 01 Night Owl.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-street-dancing.mp3",
+  "titulo": "Street Dancing",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 324,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/timecrawler82--osaka-lights",
+  "url": "https://archive.org/download/timecrawler82--osaka-lights/03 Street Dancing.mp3"
+ },
+ {
+  "arquivo": "broke-for-free-day-bird.mp3",
+  "titulo": "Day Bird",
+  "artista": "Broke For Free",
+  "tipo": "lo-fi",
+  "dur": 223,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/DirectionlessEP",
+  "url": "https://archive.org/download/DirectionlessEP/Broke For Free - Directionless EP - 03 Day Bird.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-palms-and-seagulls.mp3",
+  "titulo": "Palms and Seagulls",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 290,
+  "licenca": "CC BY 4.0",
+  "fonte": "https://archive.org/details/timecrawler82--osaka-lights",
+  "url": "https://archive.org/download/timecrawler82--osaka-lights/04 Palms and Seagulls.mp3"
+ },
+ {
+  "arquivo": "broke-for-free-only-instrumental.mp3",
+  "titulo": "Only Instrumental",
+  "artista": "Broke For Free",
+  "tipo": "lo-fi",
+  "dur": 158,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/DirectionlessEP",
+  "url": "https://archive.org/download/DirectionlessEP/Broke For Free - Directionless EP - 06 Only Instrumental.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-infinity.mp3",
+  "titulo": "Infinity",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 235,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/jamendo-199619",
+  "url": "https://archive.org/download/jamendo-199619/01-1833808-Timecrawler 82-Infinity.mp3"
+ },
+ {
+  "arquivo": "broke-for-free-as-colourful-as-ever.mp3",
+  "titulo": "As Colourful As Ever",
+  "artista": "Broke For Free",
+  "tipo": "lo-fi",
+  "dur": 234,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/BrokeForFreeLayers",
+  "url": "https://archive.org/download/BrokeForFreeLayers/Broke For Free - Layers - 01 As Colourful As Ever.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-midnight-walk.mp3",
+  "titulo": "Midnight Walk",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 295,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/jamendo-199619",
+  "url": "https://archive.org/download/jamendo-199619/03-1833806-Timecrawler 82-Midnight Walk.mp3"
+ },
+ {
+  "arquivo": "broke-for-free-only-knows.mp3",
+  "titulo": "Only Knows",
+  "artista": "Broke For Free",
+  "tipo": "lo-fi",
+  "dur": 179,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/BrokeForFreeLayers",
+  "url": "https://archive.org/download/BrokeForFreeLayers/Broke For Free - Layers - 03 Only Knows.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-turbulence.mp3",
+  "titulo": "Turbulence",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 213,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/jamendo-199619",
+  "url": "https://archive.org/download/jamendo-199619/05-1833810-Timecrawler 82-Turbulence.mp3"
+ },
+ {
+  "arquivo": "broke-for-free-murmur.mp3",
+  "titulo": "Murmur",
+  "artista": "Broke For Free",
+  "tipo": "lo-fi",
+  "dur": 248,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/BrokeForFreeLayers",
+  "url": "https://archive.org/download/BrokeForFreeLayers/Broke For Free - Layers - 06 Murmur.mp3"
+ },
+ {
+  "arquivo": "timecrawler-82-phantasia.mp3",
+  "titulo": "Phantasia",
+  "artista": "Timecrawler 82",
+  "tipo": "synthwave",
+  "dur": 249,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/jamendo-199619",
+  "url": "https://archive.org/download/jamendo-199619/04-1833807-Timecrawler 82-Phantasia.mp3"
+ },
+ {
+  "arquivo": "kansas-beach-patrol-breakfast.mp3",
+  "titulo": "Breakfast",
+  "artista": "Kansas Beach Patrol",
+  "tipo": "chillwave",
+  "dur": 192,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/KSBPCoast2Coast",
+  "url": "https://archive.org/download/KSBPCoast2Coast/01 - breakfast.mp3"
+ },
+ {
+  "arquivo": "kansas-beach-patrol-venusian-sunset.mp3",
+  "titulo": "Venusian Sunset",
+  "artista": "Kansas Beach Patrol",
+  "tipo": "chillwave",
+  "dur": 267,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/KSBPCoast2Coast",
+  "url": "https://archive.org/download/KSBPCoast2Coast/06 - venusiansunset.mp3"
+ },
+ {
+  "arquivo": "kansas-beach-patrol-rooms.mp3",
+  "titulo": "Rooms",
+  "artista": "Kansas Beach Patrol",
+  "tipo": "chillwave",
+  "dur": 192,
+  "licenca": "CC BY 3.0",
+  "fonte": "https://archive.org/details/KSBPCoast2Coast",
+  "url": "https://archive.org/download/KSBPCoast2Coast/04 - rooms.mp3"
+ }
+]

@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -43,6 +44,7 @@ func main() {
 	arqChave := flag.String("chave-vinculo", dados.ArqChavePadrao, "chave dividida com o bot pra vincular Discord e Steam")
 	dominio := flag.String("dominio", "", "domínio do site com https (ex.: dayz.snaplag.com.br); vazio = só http")
 	dominioAdmin := flag.String("dominio-admin", "", "domínio só do painel admin (ex.: painel-dz.snaplag.com.br); com ele, /admin some do site público")
+	pastaMusicas := flag.String("musicas", "/home/unturned/dz-site/musicas", "pasta dos MP3 da DZ RÁDIO (scripts/baixar-musicas.sh)")
 	pastaCert := flag.String("certs", "/home/unturned/dz-site/certs", "pasta dos certificados https (Let's Encrypt)")
 	flag.Parse()
 	chaveVinculo = dados.Chave(*arqChave)
@@ -53,6 +55,18 @@ func main() {
 	arquivos := http.FileServer(http.FS(web))
 
 	mux := http.NewServeMux()
+	// DZ RÁDIO: MP3 baixados pelo scripts/baixar-musicas.sh (lista em web/radio.json)
+	reMusica := regexp.MustCompile(`^[a-z0-9-]+\.mp3$`)
+	mux.HandleFunc("/musicas/", func(w http.ResponseWriter, r *http.Request) {
+		nome := strings.TrimPrefix(r.URL.Path, "/musicas/")
+		if !reMusica.MatchString(nome) {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Cache-Control", "public, max-age=604800")
+		w.Header().Set("Content-Type", "audio/mpeg")
+		http.ServeFile(w, r, filepath.Join(*pastaMusicas, nome))
+	})
 	// fotos dos itens pra janela da loja no jogo: /icones/<id>.png (sem a foto, manda a padrão)
 	mux.HandleFunc("/icones/", func(w http.ResponseWriter, r *http.Request) {
 		nome := filepath.Base(r.URL.Path)

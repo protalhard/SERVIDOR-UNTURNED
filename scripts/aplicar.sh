@@ -82,6 +82,8 @@ if [ -f "$REPO/painel/bin/dz-site" ]; then
     command -v ufw >/dev/null && { ufw allow 80/tcp; ufw allow 443/tcp; } >/dev/null 2>&1 || true
   fi
   if [ "$site" = 1 ]; then echo "site atualizado"; systemctl restart dz-site; fi
+  # músicas da DZ RÁDIO (só baixa as que faltam; roda em segundo plano)
+  [ -x "$REPO/scripts/baixar-musicas.sh" ] && (REPO="$REPO" nohup flock -n /tmp/dz-musicas.lock "$REPO/scripts/baixar-musicas.sh" >/var/log/dz-musicas.log 2>&1 &)
 fi
 
 # 6) O próprio sincronizador também se atualiza
