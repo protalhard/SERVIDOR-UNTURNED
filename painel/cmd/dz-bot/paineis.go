@@ -282,6 +282,7 @@ func alternarAlerta(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 // linha do raid_log: "dd/MM HH:mm RAID: Atacante (steam) atacando base de Dono (steam) em X Z"
+var reRaidFac = regexp.MustCompile(` faccao (\d+)$`)
 var reRaid = regexp.MustCompile(`RAID: (.*) \((\d+)\) atacando base de (.*) \((\d+)\)`)
 
 func avisarRaidDM(s *discordgo.Session, l string) {
@@ -290,8 +291,17 @@ func avisarRaidDM(s *discordgo.Session, l string) {
 		return
 	}
 	atacante, dono := m[1], m[4]
+	// base de facção: avisa todos os membros com Discord vinculado
+	alvos := map[string]bool{dono: true}
+	if f := reRaidFac.FindStringSubmatch(l); f != nil {
+		if fc := fonte.FaccaoPorID(f[1]); fc != nil {
+			for _, mb := range fc.Membros {
+				alvos[mb.ID] = true
+			}
+		}
+	}
 	for _, v := range fonte.LerVinculos() {
-		if v.Steam != dono {
+		if !alvos[v.Steam] {
 			continue
 		}
 		mu.Lock()
@@ -299,7 +309,7 @@ func avisarRaidDM(s *discordgo.Session, l string) {
 		ultimo := ultimoAlerta[v.Discord]
 		mu.Unlock()
 		if off || time.Since(ultimo) < 2*time.Minute { // no máximo 1 aviso a cada 2 minutos
-			return
+			continue
 		}
 		mu.Lock()
 		ultimoAlerta[v.Discord] = time.Now()
@@ -307,7 +317,6 @@ func avisarRaidDM(s *discordgo.Session, l string) {
 		dm(s, v.Discord, &discordgo.MessageEmbed{Title: "🚨 SUA BASE ESTÁ SENDO ATACADA!", Color: corVermelho,
 			Description: fmt.Sprintf("**%s** está atacando a sua base agora.\nEntre no servidor pra defender!\n\n`%s`", atacante, ipServidor),
 			Timestamp:   time.Now().Format(time.RFC3339), Footer: &discordgo.MessageEmbedFooter{Text: rodape}})
-		return
 	}
 }
 

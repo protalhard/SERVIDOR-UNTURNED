@@ -633,6 +633,13 @@ namespace SobrevivenciaCore
                     try { File.WriteAllText(Path.Combine(Directory, c[0] + "_feito.txt"), r); } catch { }
                     continue;
                 }
+                // facção dissolvida pelo painel (só o dono): alvo = líder
+                if (c[0] == "faccao_dissolver")
+                {
+                    if (!EhDono(quem)) { LogGuard($"COMANDO NEGADO do site: {c[0]} por {quem} (nao e dono)"); continue; }
+                    LogAdminNome(NomeDe(quem) + " (site)", quem, "FACCAO: " + DissolverPelaStaff(alvo));
+                    continue;
+                }
                 // anúncio no chat do jogo (painel do site, aba Mensagens): precisa de "Mundo" ou ser dono
                 if (c[0] == "anuncio")
                 {

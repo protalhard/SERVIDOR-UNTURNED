@@ -13,22 +13,35 @@ namespace SobrevivenciaCore
     {
         readonly string pasta;
         readonly Dictionary<ulong, Items> abertos = new Dictionary<ulong, Items>();
+        // jogador -> arquivo aberto (o próprio id, ou o id da facção no baú compartilhado)
+        readonly Dictionary<ulong, ulong> arquivoDe = new Dictionary<ulong, ulong>();
         readonly HashSet<ulong> sujos = new HashSet<ulong>();
 
-        public Vaults(string pastaPlugin)
+        public Vaults(string pastaPlugin, string subpasta = "vaults")
         {
-            pasta = Path.Combine(pastaPlugin, "vaults");
+            pasta = Path.Combine(pastaPlugin, subpasta);
             Directory.CreateDirectory(pasta);
         }
 
-        string Arquivo(ulong id) => Path.Combine(pasta, id + ".txt");
+        string Arquivo(ulong id) => Path.Combine(pasta, (arquivoDe.TryGetValue(id, out var k) ? k : id) + ".txt");
 
         public bool Aberto(ulong id) => abertos.ContainsKey(id);
 
-        public void Abrir(UnturnedPlayer p, TamanhoVault tam)
+        /// <summary>Alguém está com esse arquivo aberto agora (baú da facção: um de cada vez).</summary>
+        public bool EmUso(ulong chave) => abertos.Keys.Any(j => (arquivoDe.TryGetValue(j, out var k) ? k : j) == chave);
+
+        /// <summary>Quantos itens tem no arquivo (sem abrir).</summary>
+        public int Contar(ulong chave)
+        {
+            var arq = Path.Combine(pasta, chave + ".txt");
+            return File.Exists(arq) ? File.ReadAllLines(arq).Count(l => l.Split(',').Length >= 7) : 0;
+        }
+
+        public void Abrir(UnturnedPlayer p, TamanhoVault tam, ulong chave = 0)
         {
             var id = p.CSteamID.m_SteamID;
             Fechar(p, false);
+            if (chave != 0) arquivoDe[id] = chave; else arquivoDe.Remove(id);
 
             var items = new Items(PlayerInventory.STORAGE);
             items.resize(tam.Largura, tam.Altura);
@@ -76,6 +89,7 @@ namespace SobrevivenciaCore
                 {
                     Gravar(id, abertos[id]);
                     abertos.Remove(id);
+                    arquivoDe.Remove(id);
                 }
             }
         }
@@ -86,6 +100,7 @@ namespace SobrevivenciaCore
             if (!abertos.TryGetValue(id, out var items)) return;
             Gravar(id, items);
             abertos.Remove(id);
+            arquivoDe.Remove(id);
             var inv = p.Player?.inventory;
             if (inv != null && inv.isStoring && inv.storage == null)
             {

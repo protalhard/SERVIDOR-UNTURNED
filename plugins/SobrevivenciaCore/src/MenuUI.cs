@@ -21,13 +21,14 @@ namespace SobrevivenciaCore
         public const short MenuKey = 5123;
         const int KitsPorPagina = 24;
 
-        static readonly string[] Abas = { "Inicio", "Kits", "Vips", "Vaults", "Homes", "Comandos", "Info", "Perfil", "Admin" };
+        static readonly string[] Abas = { "Inicio", "Kits", "Vips", "Vaults", "Homes", "Comandos", "Info", "Perfil", "Faccoes", "Admin" };
 
         class EstadoMenu
         {
             public string Aba = "Inicio";
             public int PaginaKit;
             public int PaginaGuia = 1;
+            public EstadoFac Fac = new EstadoFac();
         }
 
         readonly Dictionary<ulong, EstadoMenu> menus = new Dictionary<ulong, EstadoMenu>();
@@ -154,6 +155,7 @@ namespace SobrevivenciaCore
                 case "Vaults": PreencherVaults(p); break;
                 case "Homes": PreencherHomes(p); break;
                 case "Perfil": PreencherPerfil(p); break;
+                case "Faccoes": PreencherFaccoes(p, e); break;
                 case "Admin": PreencherAdmin(p); break;
             }
         }
@@ -343,6 +345,7 @@ namespace SobrevivenciaCore
                 if (!menus.TryGetValue(Id(p), out var e)) return;
                 if (botao.StartsWith("Adm_") || botao.StartsWith("Preco_")) { CliqueAdmin(p, e, botao); return; }
                 if (botao.StartsWith("Aba_")) { MostrarAba(p, e, botao.Substring(4)); return; }
+                if (botao.StartsWith("Fac_")) { CliqueFaccao(p, e, botao); return; }
                 if (botao.StartsWith("Kit_") && int.TryParse(botao.Substring(4), out var nk)) { CliqueKit(p, e, nk); return; }
                 if (botao.StartsWith("Vip_")) { CliqueVip(p, botao); return; }
                 if (botao.StartsWith("Vault_")) { CliqueVault(p, botao); return; }
@@ -451,6 +454,7 @@ namespace SobrevivenciaCore
                 var p = UnturnedPlayer.FromPlayer(pl);
                 if (p == null || DigitouAtm(p, campo, texto) || DigitouLoja(p, campo, texto) || !menus.ContainsKey(Id(p))) return;
                 if (campo.StartsWith("Adm_") || campo.StartsWith("Preco_")) DigitouAdmin(p, campo, texto);
+                else if (campo.StartsWith("Fac_") && menus.TryGetValue(Id(p), out var ef)) DigitouFaccao(p, ef, campo, texto);
             }
             catch (Exception ex) { Rocket.Core.Logging.Logger.LogException(ex); }
         }

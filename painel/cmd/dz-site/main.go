@@ -91,6 +91,7 @@ func main() {
 	mux.HandleFunc("/api/status", apiStatus)
 	mux.HandleFunc("/api/ranking", apiRanking)
 	mux.HandleFunc("/api/kits", apiKits)
+	mux.HandleFunc("/api/faccoes", apiFaccoes)
 	mux.HandleFunc("/api/jogador/", apiJogador)
 	mux.HandleFunc("/api/eu", apiEu)
 	mux.HandleFunc("/entrar", entrar)
@@ -103,7 +104,7 @@ func main() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := strings.Trim(r.URL.Path, "/")
 		switch p {
-		case "", "servidores", "ranking", "kits", "regras", "loja", "sobre", "perfil":
+		case "", "servidores", "ranking", "faccoes", "kits", "regras", "loja", "sobre", "perfil":
 			w.Header().Set("Cache-Control", "no-cache")
 			b, _ := fs.ReadFile(web, "index.html")
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -180,6 +181,18 @@ func apiRanking(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	jsonOK(w, map[string]any{"jogadores": saida, "total": len(todos)})
+}
+
+// apiFaccoes: ranking público das facções (sem o dinheiro do cofre).
+func apiFaccoes(w http.ResponseWriter, r *http.Request) {
+	l := fonte.LerFaccoes()
+	for i := range l {
+		l[i].Cofre = 0
+		for j := range l[i].Membros {
+			l[i].Membros[j].Visto = 0
+		}
+	}
+	jsonOK(w, map[string]any{"faccoes": nn(l)})
 }
 
 func apiKits(w http.ResponseWriter, r *http.Request) {

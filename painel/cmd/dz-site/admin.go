@@ -145,6 +145,12 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 		}
 		jsonOK(w, l)
 	})
+	mux.HandleFunc("/api/admin/faccoes", func(w http.ResponseWriter, r *http.Request) {
+		if _, ok := exigirStaff(w, r); !ok {
+			return
+		}
+		jsonOK(w, nn(fonte.LerFaccoes()))
+	})
 	mux.HandleFunc("/api/admin/suspeitos", func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := exigirStaff(w, r); !ok {
 			return
@@ -273,7 +279,7 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 				http.Error(w, "voce nao tem a permissao Ban", http.StatusForbidden)
 				return
 			}
-		case "perm", "staff_remover":
+		case "perm", "staff_remover", "faccao_dissolver":
 			if !a.Dono {
 				http.Error(w, "so o dono mexe na staff", http.StatusForbidden)
 				return

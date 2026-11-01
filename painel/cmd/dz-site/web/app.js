@@ -158,6 +158,23 @@
         <div id="tabela"><p class="carregando">Carregando...</p></div>`;
     },
 
+    async faccoes () {
+      const d = await api('/api/faccoes');
+      const l = d.faccoes || [];
+      const modo = ['Aberta', 'Por pedido', 'Fechada'];
+      const corModo = ['var(--ok, #3DDC84)', 'var(--c2, #FFB020)', '#FF6060'];
+      const lista = l.length ? `<div class="tabela-envolve"><table>
+          <thead><tr><th>#</th><th>Facção</th><th>Kills</th><th>Zumbis</th><th>Nível</th><th>Membros</th><th>Recrutamento</th></tr></thead>
+          <tbody>${l.map((f, i) => `<tr><td class="ord">${i + 1}</td>
+            <td><details><summary style="cursor:pointer"><b style="color:${esc(f.cor)}">[${esc(f.tag)}]</b> ${esc(f.nome)}</summary>
+              ${f.descricao ? `<p class="fraco" style="margin:6px 0">${esc(f.descricao)}</p>` : ''}
+              <div class="fraco" style="font-size:13px">${(f.membros || []).map(m => `<a href="/jogador/${m.id}" data-link>${esc(m.nome)}</a> <small>(${esc(m.nomeCargo)})</small>`).join(' · ')}</div></details></td>
+            <td>${num(f.abates)}</td><td>${num(f.zumbis)}</td><td>${f.nivel}</td><td>${(f.membros || []).length}</td>
+            <td style="color:${corModo[f.modo] || ''}">${modo[f.modo] || ''}</td></tr>`).join('')}</tbody></table></div>`
+        : `<p class="fraco carregando">Nenhuma facção ainda. Crie a sua no jogo: /menu > Facções.</p>`;
+      return cabeca('Facções', 'As facções mais <em>fortes</em>', 'Ranking pela soma dos abates dos membros. Pra criar ou entrar numa facção, abra o /menu no jogo e vá em Facções.') + lista;
+    },
+
     async kits () {
       const d = await api('/api/kits');
       const rank = d.kits.filter(k => k.abates > 0), livres = d.kits.filter(k => !k.abates && !k.permissao);

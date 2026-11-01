@@ -177,6 +177,12 @@ namespace SobrevivenciaCore
         public List<Kit> Kits;
         public List<PacoteXp> LojaXp;
         public List<TamanhoVault> Vaults;
+        // Facções: preço pra criar, espera pra trocar de facção, dias sem ninguém entrar até perder a proteção offline
+        public int FaccaoPreco = 5000;
+        public int FaccaoEsperaHoras = 24;
+        public int FaccaoDiasProtecao = 15;
+        public bool FaccaoBauSoNaSafe = true;
+        public List<NivelFaccao> FaccaoNiveis;
         public List<KitAirdrop> AirdropKits;
         public List<string> Anuncios;
         public List<string> Tutorial;
@@ -225,6 +231,7 @@ namespace SobrevivenciaCore
             if (AirdropKits == null || AirdropKits.Count == 0) { AirdropKits = AirdropPadrao(); mudou = true; }
             if (MontarPecas == null || MontarPecas.Count == 0) { MontarPecas = MontarPecasPadrao(); mudou = true; }
             if (Tutorial == null) { Tutorial = TutorialPadrao(); mudou = true; }
+            if (FaccaoNiveis == null || FaccaoNiveis.Count == 0) { FaccaoNiveis = NivelFaccao.Padrao(); mudou = true; }
             // padrões novos (v2, v3 = kits do California 2): adiciona kits e pacotes que ainda não existem, sem mexer nos que o admin editou
             if (VersaoPadroes < 3)
             {
