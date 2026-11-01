@@ -176,7 +176,7 @@ namespace SobrevivenciaCore
             }
             if (lista.Count == 0) return "Esse modelo nao tem pecas.";
             // mochila grande primeiro (se ele estiver sem mochila, já veste)
-            ushort mochila = S.MochilaItens;
+            ushort mochila = MaiorMochila();
             if (mochila != 0 && Assets.find(EAssetType.ITEM, mochila) is ItemBackpackAsset mb)
             {
                 if (p.Player.clothing.backpack == 0) p.Player.clothing.askWearBackpack(mochila, 100, mb.getState(), true);
@@ -184,6 +184,16 @@ namespace SobrevivenciaCore
             }
             itensPendentes[Id(p)] = lista;
             return $"{area} {modelo}: {lista.Count} pecas. " + EntregarPendentes(p);
+        }
+
+        /// <summary>A maior mochila do jogo (mais espaço), pra caber as peças da safe.</summary>
+        ushort MaiorMochila()
+        {
+            var todas = new List<ItemBackpackAsset>();
+            Assets.find(todas);
+            var maior = todas.Where(m => m != null && m.id != 0 && m.id < 51000 && !m.isPro && !NomeProibido.IsMatch(m.itemName ?? ""))
+                .OrderByDescending(m => m.width * m.height).ThenBy(m => m.id).FirstOrDefault();
+            return maior?.id ?? S.MochilaItens;
         }
 
         public string EntregarPendentes(UnturnedPlayer p)
