@@ -54,7 +54,7 @@ namespace SobrevivenciaCore
         public void MostrarHud(UnturnedPlayer p)
         {
             var asset = HudAsset;
-            if (asset == null || p?.Player == null || HudDesligado.Contains(Id(p))) return;
+            if (asset == null || p?.Player == null || HudDesligado.Contains(Id(p)) || MenuAberto(p)) return; // com o menu aberto o HUD some pra nao ficar por baixo dele
             EffectManager.SendUIEffect(asset, HudKey, Con(p), true);
             hudEnviado[Id(p)] = new Dictionary<string, string>();
             AtualizarHud(p);

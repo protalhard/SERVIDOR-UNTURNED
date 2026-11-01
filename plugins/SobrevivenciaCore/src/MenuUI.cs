@@ -90,6 +90,7 @@ namespace SobrevivenciaCore
             menus[Id(p)] = e;
             EffectManager.SendUIEffect((EffectAsset)Assets.find(EAssetType.EFFECT, MenuId), MenuKey, Con(p), true);
             p.Player.enablePluginWidgetFlag(EPluginWidgetFlags.Modal);
+            EsconderHud(p);
             V(p, "Aba_Admin", EhStaff(p));
             T(p, "Menu_Aviso", "");
             MostrarAba(p, e, aba);
@@ -105,6 +106,7 @@ namespace SobrevivenciaCore
                 menus[Id(p)] = new EstadoMenu();
                 EffectManager.SendUIEffect((EffectAsset)Assets.find(EAssetType.EFFECT, MenuId), MenuKey, Con(p), true);
                 p.Player.enablePluginWidgetFlag(EPluginWidgetFlags.Modal);
+                EsconderHud(p);
                 V(p, "Aba_Admin", EhStaff(p));
             }
             V(p, "DZ_Menu", false);
@@ -120,6 +122,7 @@ namespace SobrevivenciaCore
             AoFecharMenuAdmin(p);
             EffectManager.askEffectClearByID(MenuId, Con(p));
             p.Player.disablePluginWidgetFlag(EPluginWidgetFlags.Modal);
+            MostrarHud(p);
         }
 
         void Aviso(UnturnedPlayer p, string msg, bool ok) => T(p, "Menu_Aviso", C(ok ? Verde : Vermelho, msg));
