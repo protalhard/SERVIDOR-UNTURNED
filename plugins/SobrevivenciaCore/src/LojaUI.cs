@@ -202,6 +202,16 @@ namespace SobrevivenciaCore
                 mudou = true;
                 Rocket.Core.Logging.Logger.Log("SobrevivenciaCore: lojas v6 (garagem, hangar e veiculos raros no mercado negro).");
             }
+            // v7: sem pista de avião nas bases (só heliponto): avião sai das lojas
+            if (cfg.VersaoLojas < 7)
+            {
+                int tirados = 0;
+                foreach (var l in cfg.Lojas)
+                    tirados += l.Itens.RemoveAll(i => i.Veiculo && Assets.find(EAssetType.VEHICLE, i.Id) is VehicleAsset va && va.engine == EEngine.PLANE);
+                cfg.VersaoLojas = 7;
+                mudou = true;
+                Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: lojas v7 ({tirados} avioes tirados, so heliponto).");
+            }
             if (mudou) Configuration.Save();
         }
 

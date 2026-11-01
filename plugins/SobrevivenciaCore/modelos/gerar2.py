@@ -71,7 +71,7 @@ SAFE8 = [("armas", "ARMAS"), ("roupas", "ROUPAS"), ("equip", "EQUIPAMENTOS"), ("
          ("comida", "COMIDA"), ("remedios", "REMEDIOS"), ("vault", "VAULT"), ("banco", "BANCO / ATM")]
 
 def pista_direita(m, x, y0=-60, comp=120, nome="PISTA DE AVIAO"):
-    m.pistas.append((x, y0 + comp / 2, 0, 1, comp, 20, nome))
+    return  # sem pista de aviao: o Pedro pediu so heliponto (01/11)
 
 # ======================= SAFE =======================
 m = M("safe1", "Praca redonda", ["Cerca redonda de 110 m, 1 entrada", "8 cantinhos + oficina em volta da praca",
@@ -128,7 +128,7 @@ m.add("placa", -10, -33); m.add("placa", 10, -33)
 m.estacionamento([(-12 - 4.5 * (k + 1), -44) for k in range(5)], -14, -38)
 m.estacionamento([(12 + 4.5 * (k + 1), -44) for k in range(5)], 14, -38)
 pista_direita(m, 72)
-m.add("terminal", 59, -50, "AVIAO")
+# m.add("terminal", 59, -50, "AVIAO")  # sem pista (so heliponto)
 m.caminhos += [[(0, -58), (0, 30)], [(-36, 0), (36, 0)], [(-36, -38), (36, -38)], [(5, -55), (59, -55)]]
 m.areas.append(("praca", 0, 0, 13))
 modelos.append(m)
@@ -179,7 +179,7 @@ for p in [(-14, -6), (-16, 8)]: m.add("caixa", *p)
 for p in [(-37, 27), (-10, 12), (10, -24), (-37, -27), (37, -27), (12, 8)]: m.add("luz", *p)
 m.add("bandeira", -4.5, -33.5); m.add("bandeira", 4.5, -33.5)
 pista_direita(m, 60)
-m.add("terminal", 47, -50, "AVIAO")
+# m.add("terminal", 47, -50, "AVIAO")  # sem pista (so heliponto)
 m.caminhos += [[(0, -44), (0, 6), (-15, 18)], [(4, -40), (47, -54)]]
 modelos.append(m)
 
