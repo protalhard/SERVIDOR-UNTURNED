@@ -306,6 +306,9 @@
         el("button", { class: "botao fantasma pequeno", onclick: () => reiniciar(1) }, "♻️ Reiniciar em 1 min"),
         el("button", { class: "botao fantasma pequeno", onclick: () => reiniciar(5) }, "Em 5 min"),
         el("button", { class: "botao fantasma pequeno", onclick: () => abrir("wipe") }, "🔄 Marcar wipe")));
+      if (eu.mundo && resumo) filhos.push(el("div", { class: "adm-acoes-linha" },
+        el("button", { class: "botao fantasma pequeno", onclick: () => limparItens(30) }, "🧹 Limpar itens do chão (30 s)"),
+        el("button", { class: "botao fantasma pequeno", onclick: () => limparItens(0) }, "Agora")));
       alvo.replaceChildren(...filhos);
       return;
     }
@@ -324,6 +327,11 @@
   async function reiniciar(min) {
     if (!confirm(`Reiniciar o servidor em ${min} minuto(s)? Os jogadores recebem aviso no chat.`)) return;
     try { await post("/api/admin/servidor", { acao: "reiniciar", quando: Math.floor(Date.now() / 1000) + min * 60 }); aviso("Reinício marcado."); carregarPainel(); }
+    catch (e) { aviso("Erro: " + e.message, true); }
+  }
+  async function limparItens(seg) {
+    if (!confirm(seg ? `Limpar todos os itens do chão daqui ${seg} segundos? Os jogadores recebem aviso no chat.` : "Limpar todos os itens do chão agora?")) return;
+    try { await post("/api/admin/limparitens", { segundos: seg }); aviso(seg ? "Limpeza marcada. O jogo avisa no chat." : "Itens do chão limpos."); }
     catch (e) { aviso("Erro: " + e.message, true); }
   }
   async function cancelar() {

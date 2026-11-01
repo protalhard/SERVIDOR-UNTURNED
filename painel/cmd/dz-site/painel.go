@@ -300,6 +300,31 @@ func registrarPainel(mux *http.ServeMux) {
 	})
 
 	// wipe / reinício / cancelar (só o dono)
+	// limpar os itens do chão (precisa de Mundo ou ser dono); o plugin avisa no chat e limpa depois de N segundos
+	mux.HandleFunc("/api/admin/limparitens", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.Header.Get("X-DZ") != "1" {
+			http.Error(w, "metodo", http.StatusMethodNotAllowed)
+			return
+		}
+		a, ok := exigirStaff(w, r)
+		if !ok {
+			return
+		}
+		if !a.Mundo {
+			http.Error(w, "voce nao tem a permissao Mundo", http.StatusForbidden)
+			return
+		}
+		var q struct{ Segundos int }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024)).Decode(&q)
+		if q.Segundos < 0 || q.Segundos > 600 {
+			q.Segundos = 30
+		}
+		if err := comandoJogo("limpar_itens", "0", a.Steam, 0, strconv.Itoa(q.Segundos)); err != nil {
+			http.Error(w, "nao consegui falar com o jogo", http.StatusInternalServerError)
+			return
+		}
+		jsonOK(w, map[string]any{"ok": true, "segundos": q.Segundos})
+	})
 	mux.HandleFunc("/api/admin/servidor", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.Header.Get("X-DZ") != "1" {
 			http.Error(w, "metodo", http.StatusMethodNotAllowed)

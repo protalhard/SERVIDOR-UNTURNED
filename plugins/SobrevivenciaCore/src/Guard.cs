@@ -640,6 +640,16 @@ namespace SobrevivenciaCore
                     LogAdminNome(NomeDe(quem) + " (site)", quem, "FACCAO: " + DissolverPelaStaff(alvo));
                     continue;
                 }
+                // limpar itens do chão pelo painel: precisa de "Mundo" ou ser dono (texto = segundos)
+                if (c[0] == "limpar_itens")
+                {
+                    if (!EhDono(quem) && !(staff.TryGetValue(quem, out var ml) && ml.Perms.Contains("Mundo")))
+                    { LogGuard($"COMANDO NEGADO do site: limpar_itens por {quem} (sem permissao Mundo)"); continue; }
+                    int seg = c.Length > 4 && int.TryParse(c[4].Trim(), out var sv) ? Mathf.Clamp(sv, 0, 600) : 30;
+                    if (seg == 0) LimparItens(); else AgendarLimpeza(seg);
+                    LogAdminNome(NomeDe(quem) + " (site)", quem, seg == 0 ? "LIMPOU ITENS DO CHAO" : $"LIMPEZA DE ITENS em {seg}s");
+                    continue;
+                }
                 // anúncio no chat do jogo (painel do site, aba Mensagens): precisa de "Mundo" ou ser dono
                 if (c[0] == "anuncio")
                 {
