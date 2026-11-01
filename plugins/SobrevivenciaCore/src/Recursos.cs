@@ -60,7 +60,7 @@ namespace SobrevivenciaCore
         {
             var ids = S.Kits.SelectMany(k => k.Itens ?? new List<ItemKit>())
                 .Concat(S.LojaXp.SelectMany(p => p.Itens ?? new List<ItemKit>()))
-                .Concat(Configuration.Instance.Lojas.SelectMany(l => l.Itens.Select(i => new ItemKit(i.Id))))
+                .Concat(Configuration.Instance.Lojas.SelectMany(l => l.Itens.Where(i => !i.Veiculo).Select(i => new ItemKit(i.Id))))
                 .Concat(Configuration.Instance.KitInicial)
                 .Select(i => i.Id).Distinct().Where(id => !Itens.Existe(id)).ToList();
             if (ids.Count > 0)

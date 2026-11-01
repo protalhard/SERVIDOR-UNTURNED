@@ -131,7 +131,7 @@ namespace SobrevivenciaCore
         // ATM só funciona dentro da safe zone (no mercado negro e no caçador não tem)
         public bool AtmSoNaSafe = true;
         // /montar: barricada da cerca (7200 = Hatched Metal Wall do California 2), distância entre peças, largura da entrada
-        public ushort MontarCercaId = 7200;
+        public ushort MontarCercaId = 7121; // Metal Fence (barricada); 7200 e estrutura
         public float MontarCercaEspaco = 3.5f;
         public float MontarEntrada = 6f;
         public float MontarRotacaoX = -90f;
@@ -182,6 +182,13 @@ namespace SobrevivenciaCore
             if (VersaoPadroes < 5)
             {
                 VersaoPadroes = 5;
+                mudou = true;
+            }
+            // v6: cerca do /montar era 7200 (estrutura, nao barricada): passa pra Metal Fence 7121
+            if (VersaoPadroes < 6)
+            {
+                if (MontarCercaId == 7200) MontarCercaId = 7121;
+                VersaoPadroes = 6;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão
