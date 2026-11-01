@@ -243,17 +243,23 @@ namespace SobrevivenciaCore
         public override string Syntax => "<nome>";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
-            // sem nome: tira o ATM mais perto (até 10 m)
+            // sem nome: tira o ATM mais perto (até 10 m): o ponto do banco e a máquina
             var nome = string.Join(" ", a).Trim().Trim('"').Trim();
             if (nome == "")
             {
-                var perto = C.Atms.OrderBy(x => Vector3.Distance(p.Position, new Vector3(x.X, x.Y, x.Z))).FirstOrDefault();
-                if (perto == null || Vector3.Distance(p.Position, new Vector3(perto.X, perto.Y, perto.Z)) > 10f) { P.Erro(p, "Use: /delatm <nome> (ou fique do lado do ATM)"); return; }
-                nome = perto.Nome;
+                int pontos = P.TirarAtmsPerto(p.Position, 10f);
+                bool maquina = P.TirarMaquinaAtm(p.Position, 10f);
+                if (pontos == 0 && !maquina) { P.Erro(p, "Nenhum ATM a menos de 10 m. Chegue do lado dele ou use /delatm <nome>."); return; }
+                P.Msg(p, "ATM removido" + (maquina ? " (maquina tirada)" : "") + (pontos > 0 ? $" ({pontos} ponto do banco)" : "") + ".");
+                return;
             }
-            int n = C.Atms.RemoveAll(x => x.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
+            var alvo = C.Atms.FirstOrDefault(x => x.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
+            if (alvo == null) { P.Msg(p, "ATM nao encontrado. Fique do lado da maquina e use so /delatm."); return; }
+            var onde = new Vector3(alvo.X, alvo.Y, alvo.Z);
+            C.Atms.Remove(alvo);
             Salvar();
-            P.Msg(p, n > 0 ? "ATM removido." : "ATM nao encontrado.");
+            P.TirarMaquinaAtm(onde, 6f);
+            P.Msg(p, "ATM removido.");
         }
     }
 

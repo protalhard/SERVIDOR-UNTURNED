@@ -101,11 +101,74 @@ namespace SobrevivenciaCore
             return LevelGround.getHeight(pos);
         }
 
-        BarricadeDrop Colocar(ushort id, Vector3 pos, float yaw, ulong dono, bool npc = false)
+        /// <summary>Chão sob a peça: o ponto mais alto entre o centro e 4 pontos em volta (assim ela não afunda no lado mais alto).
+        /// Ignora pontos muito acima do centro (telhado, pedra), pra peça não subir em cima deles.</summary>
+        static float ChaoPeca(Vector3 pos, float raio = .5f)
+        {
+            float c = Chao(pos), h = c;
+            foreach (var d in new[] { Vector3.forward, Vector3.back, Vector3.left, Vector3.right })
+            {
+                float y = Chao(pos + d * raio);
+                if (y > h && y < c + 1.2f) h = y;
+            }
+            return h;
+        }
+
+        /// <summary>Largura de verdade de uma cerca/parede: coloca uma de teste, mede os colisores e tira. 0 = não deu pra medir.</summary>
+        float MedirLargura(ushort id, Vector3 onde, float yaw, ulong dono)
+        {
+            if (larguraPecas.TryGetValue(id, out var w)) return w;
+            w = 0f;
+            BarricadeDrop d = null;
+            try
+            {
+                d = Colocar(id, onde, yaw, dono);
+                if (d?.model != null)
+                {
+                    var eixo = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
+                    float min = float.MaxValue, max = float.MinValue;
+                    foreach (var col in d.model.GetComponentsInChildren<Collider>(true))
+                    {
+                        if (col.isTrigger || col.gameObject.layer != LayerMasks.BARRICADE) continue;
+                        float c, meia;
+                        if (col is BoxCollider bc)
+                        {
+                            var t = bc.transform;
+                            c = Vector3.Dot(t.TransformPoint(bc.center), eixo);
+                            meia = Mathf.Abs(Vector3.Dot(t.TransformVector(new Vector3(bc.size.x / 2, 0, 0)), eixo))
+                                 + Mathf.Abs(Vector3.Dot(t.TransformVector(new Vector3(0, bc.size.y / 2, 0)), eixo))
+                                 + Mathf.Abs(Vector3.Dot(t.TransformVector(new Vector3(0, 0, bc.size.z / 2)), eixo));
+                        }
+                        else
+                        {
+                            var b = col.bounds;
+                            c = Vector3.Dot(b.center, eixo);
+                            meia = Mathf.Abs(eixo.x) * b.extents.x + Mathf.Abs(eixo.z) * b.extents.z;
+                        }
+                        min = Mathf.Min(min, c - meia); max = Mathf.Max(max, c + meia);
+                    }
+                    if (max > min) w = max - min;
+                }
+            }
+            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            finally
+            {
+                if (d?.model != null && BarricadeManager.tryGetRegion(d.model, out var x, out var y, out var plant, out _))
+                    BarricadeManager.destroyBarricade(d, x, y, plant);
+            }
+            if (w < .4f || w > 12f) w = 0f;
+            if (w > 0f) larguraPecas[id] = w;
+            return w;
+        }
+        readonly Dictionary<ushort, float> larguraPecas = new Dictionary<ushort, float>();
+
+        BarricadeDrop Colocar(ushort id, Vector3 pos, float yaw, ulong dono, bool npc = false, float inclinar = 0f)
         {
             if (id == 0 || !(Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset asset)) return null;
             // padrão do Unturned: Euler(-90, yaw, 0) fica em pé virado pro yaw; a origem fica "offset" acima do chão
             var rot = Quaternion.Euler(npc ? S.MontarRotacaoXNpc : S.MontarRotacaoX, yaw, 0f);
+            // cerca/parede em ladeira: inclina ao longo da linha pra acompanhar o chão (graus, + = lado direito sobe)
+            if (Mathf.Abs(inclinar) > .5f) rot = Quaternion.AngleAxis(inclinar, Quaternion.Euler(0f, yaw, 0f) * Vector3.forward) * rot;
             pos.y += asset.offset;
             var t = BarricadeManager.dropNonPlantedBarricade(new Barricade(asset), pos, rot, dono, 0);
             return t != null ? BarricadeManager.FindBarricadeByRootTransform(t) : null;
@@ -123,7 +186,7 @@ namespace SobrevivenciaCore
                 .Select(i => i.Id).Distinct().ToList();
         }
 
-        public string Montar(UnturnedPlayer adm, string area, int modelo)
+        public string Montar(UnturnedPlayer adm, string area, int modelo, bool forcar = false, bool testar = false)
         {
             if (!ModelosMontar().TryGetValue(area + modelo, out var pecas)) return "Modelo nao existe. Use /montar safe|negro|cacador 1|2|3";
             var faltaNpc = pecas.Where(x => x.Tipo == "npc" && ushort.TryParse(x.Extra, out var n) && !(Assets.find(EAssetType.ITEM, n) is ItemBarricadeAsset))
@@ -133,7 +196,55 @@ namespace SobrevivenciaCore
             var centro = adm.Position;
             var frente = adm.Player.transform.forward; frente.y = 0; frente.Normalize();
             var direita = new Vector3(frente.z, 0, -frente.x);
-            Vector3 Mundo(float x, float y) { var v = centro - direita * x - frente * y; v.y = Chao(v); return v; }
+            Vector3 Plano(float x, float y) => centro - direita * x - frente * y;
+            Vector3 Mundo(float x, float y) { var v = Plano(x, y); v.y = Chao(v); return v; }
+            Vector3 MundoPeca(float x, float y) { var v = Plano(x, y); v.y = ChaoPeca(v); return v; }
+
+            // ---- mede o chão onde o modelo vai ficar ----
+            float hMin = float.MaxValue, hMax = float.MinValue, raioModelo = 0f;
+            Vector2 pMin = Vector2.zero, pMax = Vector2.zero;
+            int obstaculos = 0;
+            void Medir(float x, float y)
+            {
+                var v = Plano(x, y);
+                float h = Chao(v);
+                if (h > LevelGround.getHeight(v) + 1.5f) obstaculos++; // casa, pedra ou objeto grande no lugar
+                if (h < hMin) { hMin = h; pMin = new Vector2(x, y); }
+                if (h > hMax) { hMax = h; pMax = new Vector2(x, y); }
+                raioModelo = Mathf.Max(raioModelo, Mathf.Sqrt(x * x + y * y));
+            }
+            foreach (var pc in pecas)
+            {
+                if (pc.Tipo == "zona") continue;
+                Medir(pc.X, pc.Y);
+                if (pc.Tipo == "cerca" || pc.Tipo == "parede") { Medir(pc.X2, pc.Y2); Medir((pc.X + pc.X2) / 2, (pc.Y + pc.Y2) / 2); }
+            }
+            var arvores = new List<Transform>();
+            if (raioModelo > 0f)
+            {
+                var regs = new List<RegionCoordinate>();
+                Regions.getRegionsInRadius(centro, raioModelo + 3f, regs);
+                ResourceManager.getResourcesInRadius(centro, (raioModelo + 3f) * (raioModelo + 3f), regs, arvores);
+            }
+            float desnivel = hMax > hMin ? hMax - hMin : 0f;
+            string Lado(Vector2 q)
+            {
+                // modelo: y negativo = frente (pra onde você olha), x positivo = esquerda
+                if (q.sqrMagnitude < 4f) return "no centro";
+                return Mathf.Abs(q.y) >= Mathf.Abs(q.x) ? (q.y < 0 ? "na frente" : "atras") : (q.x > 0 ? "na esquerda" : "na direita");
+            }
+            string relatorio = $"Chao: desnivel {desnivel:0.0} m (max {S.MontarDesnivelMax:0}), mais alto {Lado(pMax)}, mais baixo {Lado(pMin)}" +
+                (obstaculos > 0 ? $", {obstaculos} pontos em cima de casa/pedra" : "") +
+                (arvores.Count > 0 ? $", {arvores.Count} arvores (saem na montagem)" : "") + ".";
+            if (testar)
+                return relatorio + (desnivel <= S.MontarDesnivelMax && obstaculos == 0 ? " Lugar bom, pode montar." : " Procure um lugar mais plano e livre.");
+            if (!forcar && (desnivel > S.MontarDesnivelMax || obstaculos > 3))
+                return relatorio + $" Muito torto/ocupado pra montar aqui: ia ficar peca enterrada e flutuando. Ande pro lado mais plano (teste com /montar {area} {modelo} testar) ou use /montar {area} {modelo} forcar.";
+
+            // tira as árvores do lugar (cortadas; a safe não deixa elas voltarem)
+            foreach (var arv in arvores)
+                if (ResourceManager.tryGetRegion(arv, out var ax, out var ay, out var ai))
+                    ResourceManager.ServerSetResourceDead(ax, ay, ai, Vector3.zero);
             float Yaw(float fx, float fy)
             {
                 var w = -direita * fx - frente * fy;
@@ -148,6 +259,76 @@ namespace SobrevivenciaCore
             var expostos = new Dictionary<string, int>();
             void Guardar(BarricadeDrop d) { if (d != null) { colocados.Add(d.instanceID); nPecas++; } }
 
+            // ---- cercas e paredes: junta os pedaços em linhas contínuas (quebra nas quinas) e espalha as peças
+            // pela linha toda com a largura real delas: sem buraco e sem uma peça em cima da outra ----
+            var linhas = new List<List<PecaModelo>>();
+            foreach (var pc in pecas.Where(q => q.Tipo == "cerca" || q.Tipo == "parede"))
+            {
+                var ult = linhas.Count > 0 ? linhas[linhas.Count - 1] : null;
+                var ant = ult?[ult.Count - 1];
+                bool emenda = ant != null && ant.Tipo == pc.Tipo && Mathf.Abs(ant.X2 - pc.X) < .05f && Mathf.Abs(ant.Y2 - pc.Y) < .05f;
+                if (emenda)
+                {
+                    float ang1 = Mathf.Atan2(ant.Y2 - ant.Y, ant.X2 - ant.X), ang2 = Mathf.Atan2(pc.Y2 - pc.Y, pc.X2 - pc.X);
+                    emenda = Mathf.Abs(Mathf.DeltaAngle(ang1 * Mathf.Rad2Deg, ang2 * Mathf.Rad2Deg)) < 30f;
+                }
+                if (emenda) ult.Add(pc); else linhas.Add(new List<PecaModelo> { pc });
+            }
+            foreach (var linha in linhas)
+            {
+                try
+                {
+                    ushort id = IdPeca(linha[0].Tipo, area);
+                    if (id == 0) continue;
+                    var pts = new List<Vector2> { new Vector2(linha[0].X, linha[0].Y) };
+                    foreach (var q in linha) pts.Add(new Vector2(q.X2, q.Y2));
+                    var acum = new List<float> { 0f };
+                    for (int k = 1; k < pts.Count; k++) acum.Add(acum[k - 1] + Vector2.Distance(pts[k - 1], pts[k]));
+                    float total = acum[acum.Count - 1];
+                    if (total < .1f) continue;
+                    Vector2 Em(float dist)
+                    {
+                        dist = Mathf.Clamp(dist, 0f, total);
+                        for (int k = 1; k < pts.Count; k++)
+                            if (dist <= acum[k] || k == pts.Count - 1)
+                            {
+                                float seg = acum[k] - acum[k - 1];
+                                return seg < 1e-4f ? pts[k] : Vector2.Lerp(pts[k - 1], pts[k], (dist - acum[k - 1]) / seg);
+                            }
+                        return pts[pts.Count - 1];
+                    }
+                    // largura medida na peça de verdade; sem medida usa o raio do item ou a config
+                    float yaw0 = Yaw(-(pts[1].y - pts[0].y), pts[1].x - pts[0].x) + S.MontarGiroParede;
+                    float esp = MedirLargura(id, centro + Vector3.down * 3f, yaw0, dono);
+                    if (esp <= 0f)
+                    {
+                        esp = Mathf.Max(0.5f, linha[0].Tipo == "cerca" ? S.MontarEspacoCerca : S.MontarEspacoParede);
+                        if (Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset ca && ca.radius > 0.3f) esp = ca.radius * 2f;
+                    }
+                    int n = Mathf.Max(1, Mathf.RoundToInt(total / esp));
+                    float passo = total / n;
+                    for (int i = 0; i < n; i++)
+                    {
+                        Vector2 p0 = Em(i * passo), p1 = Em((i + 1) * passo), pm = Em((i + .5f) * passo);
+                        // virada perpendicular à linha (a largura da peça fica ao longo da linha)
+                        float yaw = Yaw(-(p1.y - p0.y), p1.x - p0.x) + S.MontarGiroParede;
+                        var eixo = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
+                        var a0 = Mundo(p0.x, p0.y); var a1 = Mundo(p1.x, p1.y); var meio = Mundo(pm.x, pm.y);
+                        // altura: média das pontas, sem ficar acima do chão do meio (não flutua em buraco)
+                        meio.y = Mathf.Min((a0.y + a1.y) / 2f, meio.y + .1f);
+                        // inclinação ao longo da linha (ladeira), no máximo 25 graus
+                        var d = a1 - a0; float hor = new Vector2(d.x, d.z).magnitude;
+                        float ang = hor > .1f ? Mathf.Clamp(Mathf.Atan2(d.y, hor) * Mathf.Rad2Deg, -25f, 25f) : 0f;
+                        // sinal certo: o lado da peça que aponta pra a1 tem que subir junto com o chão
+                        if (Vector3.Dot(eixo, new Vector3(d.x, 0, d.z)) < 0) ang = -ang;
+                        var teste = Quaternion.AngleAxis(ang, Quaternion.Euler(0f, yaw, 0f) * Vector3.forward) * eixo;
+                        if (Mathf.Abs(ang) > .5f && Mathf.Sign(teste.y) != Mathf.Sign(ang)) ang = -ang;
+                        Guardar(Colocar(id, meio, yaw, dono, false, ang));
+                    }
+                }
+                catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            }
+
             foreach (var pc in pecas)
             {
                 try
@@ -160,27 +341,11 @@ namespace SobrevivenciaCore
                             break;
                         case "cerca":
                         case "parede":
-                        {
-                            ushort id = IdPeca(pc.Tipo, area);
-                            if (id == 0) break;
-                            float comp = Mathf.Sqrt((pc.X2 - pc.X) * (pc.X2 - pc.X) + (pc.Y2 - pc.Y) * (pc.Y2 - pc.Y));
-                            float esp = Mathf.Max(0.5f, pc.Tipo == "cerca" ? S.MontarEspacoCerca : S.MontarEspacoParede);
-                            // cerca: a largura da peça é ~2x o raio dela (7122/7121 = 3 m, 7120 = 1,6 m)
-                            if (pc.Tipo == "cerca" && Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset ca && ca.radius > 0.3f) esp = ca.radius * 2f;
-                            int n = Mathf.Max(1, Mathf.RoundToInt(comp / esp));
-                            // virada perpendicular à linha (a largura da peça fica ao longo da linha)
-                            float yaw = Yaw(-(pc.Y2 - pc.Y), pc.X2 - pc.X) + S.MontarGiroParede;
-                            for (int i = 0; i < n; i++)
-                            {
-                                float t = (i + .5f) / n;
-                                Guardar(Colocar(id, Mundo(pc.X + (pc.X2 - pc.X) * t, pc.Y + (pc.Y2 - pc.Y) * t), yaw, dono));
-                            }
-                            break;
-                        }
+                            break; // colocadas antes, linha por linha (ColocarLinhas)
                         case "npc":
                         {
                             if (!ushort.TryParse(pc.Extra, out var id)) break;
-                            var pos = Mundo(pc.X, pc.Y);
+                            var pos = MundoPeca(pc.X, pc.Y);
                             var d = Colocar(id, pos, Yaw(pc.X2, pc.Y2), dono, true);
                             if (d == null) break;
                             Guardar(d); nNpcs++;
@@ -223,7 +388,7 @@ namespace SobrevivenciaCore
                         }
                         case "bandeira":
                         {
-                            var pos = Mundo(pc.X, pc.Y); float yaw = Yaw(pc.X2, pc.Y2);
+                            var pos = MundoPeca(pc.X, pc.Y); float yaw = Yaw(pc.X2, pc.Y2);
                             var d = Colocar(IdPeca("bandeira", area), pos, yaw, dono);
                             if (d == null)
                             {
@@ -235,7 +400,7 @@ namespace SobrevivenciaCore
                         }
                         default:
                         {
-                            var d = Colocar(IdPeca(pc.Tipo, area), Mundo(pc.X, pc.Y), Yaw(pc.X2, pc.Y2), dono);
+                            var d = Colocar(IdPeca(pc.Tipo, area), MundoPeca(pc.X, pc.Y), Yaw(pc.X2, pc.Y2), dono);
                             if (d == null) break;
                             Guardar(d);
                             if (d.interactable is InteractableFire fogo) BarricadeManager.ServerSetFireLit(fogo, true);
@@ -335,21 +500,24 @@ namespace SobrevivenciaCore
     {
         public override string Name => "montar";
         public override string Help => "Monta safe, mercado negro ou cacador em volta de voce (dono).";
-        public override string Syntax => "<safe|negro|cacador> <1|2|3>";
+        public override string Syntax => "<safe|negro|cacador> <1|2|3> [testar|forcar]";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
             if (a.Length < 1)
             {
-                Chat.Info(p, "Fique no centro, olhe pra onde quer a ENTRADA e use: /montar safe 1 | /montar negro 2 | /montar cacador 3");
+                Chat.Info(p, "Fique no centro, olhe pra onde quer a ENTRADA e use: /montar safe 1 | /montar negro 2 | /montar cacador 3. Antes, /montar safe 1 testar mede o chao.");
                 return;
             }
             var area = a[0].ToLowerInvariant();
             if (area == "caca" || area == "caçador") area = "cacador";
             if (area == "mercadonegro") area = "negro";
-            int modelo = a.Length > 1 && int.TryParse(a[1], out var m) ? m : 1;
+            int modelo = a.Skip(1).Select(x => int.TryParse(x, out var m) ? m : 0).FirstOrDefault(m => m > 0);
+            if (modelo == 0) modelo = 1;
+            bool forcar = a.Any(x => x.Equals("forcar", StringComparison.OrdinalIgnoreCase) || x.Equals("forçar", StringComparison.OrdinalIgnoreCase));
+            bool testar = a.Any(x => x.Equals("testar", StringComparison.OrdinalIgnoreCase) || x.Equals("teste", StringComparison.OrdinalIgnoreCase));
             P.ModelosRecarregar();
-            Chat.Ok(p, P.Montar(p, area, modelo));
+            Chat.Ok(p, P.Montar(p, area, modelo, forcar, testar));
         }
     }
 

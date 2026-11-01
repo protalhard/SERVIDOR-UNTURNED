@@ -162,6 +162,8 @@ namespace SobrevivenciaCore
         public float MontarGiroParede = 0f;
         public float MontarEspacoCerca = 3f;
         public float MontarEspacoParede = 2f;
+        // /montar: diferença máxima (m) entre o ponto mais alto e o mais baixo do chão do modelo. Acima disso pede "forcar".
+        public float MontarDesnivelMax = 6f;
         // peça=id ou peça@area=id (area: safe, negro, cacador). id 0 = não coloca.
         public List<string> MontarPecas;
 

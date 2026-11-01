@@ -133,6 +133,7 @@ namespace SobrevivenciaCore
             StartCoroutine(Depois(8f, p, () => AvisarRaidAoEntrar(p)));
             BuscarAvatar(id);
             StartCoroutine(Depois(3f, p, () => MostrarHud(p)));
+            StartCoroutine(Depois(6f, p, () => MarcarSafeNoMapa(p)));
             if (Banco.PrimeiroKit(id))
                 StartCoroutine(DarKitDepois(p, "Bem-vindo! Voce recebeu o kit inicial."));
         }
@@ -157,6 +158,7 @@ namespace SobrevivenciaCore
             renasceuEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
             GuardLiberar(p.CSteamID.m_SteamID, 8f);
             StartCoroutine(Depois(1f, p, () => MostrarHud(p)));
+            StartCoroutine(Depois(2f, p, () => MarcarSafeNoMapa(p)));
             if (Configuration.Instance.KitAoRenascer)
                 StartCoroutine(DarKitDepois(p, "Voce renasceu com o kit inicial."));
         }

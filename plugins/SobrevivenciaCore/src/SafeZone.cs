@@ -27,6 +27,7 @@ namespace SobrevivenciaCore
             VehicleManager.onVehicleCarjacked += AoRoubarVeiculo;
             VehicleManager.onSiphonVehicleRequested += AoSifonar;
             VehicleManager.onEnterVehicleRequested += AoEntrarVeiculo;
+            BarricadeManager.onSalvageBarricadeRequested += AoDesmontarPeca;
         }
 
         void DesligarSafeZone()
@@ -41,9 +42,52 @@ namespace SobrevivenciaCore
             VehicleManager.onVehicleCarjacked -= AoRoubarVeiculo;
             VehicleManager.onSiphonVehicleRequested -= AoSifonar;
             VehicleManager.onEnterVehicleRequested -= AoEntrarVeiculo;
+            BarricadeManager.onSalvageBarricadeRequested -= AoDesmontarPeca;
         }
 
         bool NaSafe(Vector3 pos) => ZonaSeguraEm(pos) != null;
+
+        /// <summary>Peça do /montar e NPC: só o dono do servidor (ou admin) tira com F. Se for o ATM, some do banco junto.
+        /// (O jogo já não deixa quem não é dono da peça desmontar; isto é uma trava a mais.)</summary>
+        void AoDesmontarPeca(CSteamID quem, byte x, byte y, ushort plant, ushort index, ref bool permitir)
+        {
+            if (!permitir || plant != ushort.MaxValue) return;
+            if (!BarricadeManager.tryGetRegion(x, y, plant, out var reg) || index >= reg.drops.Count) return;
+            var drop = reg.drops[index];
+            var t = drop.model;
+            if (!BarricadaEhNpc(t) && !PecaMontada(t)) return;
+            var sp = PlayerTool.getSteamPlayer(quem);
+            if (sp != null && (sp.isAdmin || EhDono(quem.m_SteamID)))
+            {
+                if (drop.asset?.id == 51249) TirarAtmsPerto(t.position, 4f);
+                pecasMontadas = null;
+                return;
+            }
+            permitir = false;
+            if (sp?.player != null) Chat.Erro(UnturnedPlayer.FromSteamPlayer(sp), "Essa peca faz parte da base. So o dono do servidor tira.");
+        }
+
+        /// <summary>Tira do config os ATMs a menos de "raio" metros. Devolve quantos.</summary>
+        public int TirarAtmsPerto(Vector3 pos, float raio)
+        {
+            var cfg = Configuration.Instance;
+            int n = cfg.Atms.RemoveAll(a => (new Vector3(a.X, a.Y, a.Z) - pos).sqrMagnitude < raio * raio);
+            if (n > 0) Configuration.Save();
+            return n;
+        }
+
+        /// <summary>Tira a máquina de ATM (peça física) mais perto, até "raio" metros. Devolve true se tirou.</summary>
+        public bool TirarMaquinaAtm(Vector3 pos, float raio)
+        {
+            BarricadeDrop melhor = null; float dMin = raio * raio;
+            foreach (var r in BarricadeManager.regions)
+                foreach (var d in r.drops)
+                    if (d.asset?.id == 51249 && d.model != null && (d.model.position - pos).sqrMagnitude < dMin) { melhor = d; dMin = (d.model.position - pos).sqrMagnitude; }
+            if (melhor == null || !BarricadeManager.tryGetRegion(melhor.model, out var x, out var y, out var plant, out _)) return false;
+            BarricadeManager.destroyBarricade(melhor, x, y, plant);
+            pecasMontadas = null;
+            return true;
+        }
 
         // ---------- entrar / sair da safe (contagem de saída + escudo na tela) ----------
 
@@ -54,6 +98,17 @@ namespace SobrevivenciaCore
         readonly HashSet<ulong> escudoNaTela = new HashSet<ulong>();
 
         /// <summary>Dentro da safe ou ainda na contagem de saída.</summary>
+        /// <summary>Marca a safe mais perto no mapa (tecla M) do jogador. Só se ele não tiver um marcador dele.</summary>
+        public void MarcarSafeNoMapa(UnturnedPlayer p)
+        {
+            if (p?.Player?.quests == null || p.Dead || p.Player.quests.isMarkerPlaced) return;
+            var zonas = Configuration.Instance.ZonasSeguras?.Where(z => z.Definido).ToList();
+            if (zonas == null || zonas.Count == 0) return;
+            var pos = p.Position;
+            var z = zonas.OrderBy(q => (q.X - pos.x) * (q.X - pos.x) + (q.Z - pos.z) * (q.Z - pos.z)).First();
+            p.Player.quests.replicateSetMarker(true, new Vector3(z.X, z.Y, z.Z), "SAFE ZONE");
+        }
+
         public bool ProtegidoSafe(Player pl)
         {
             if (pl == null) return false;
@@ -75,8 +130,33 @@ namespace SobrevivenciaCore
             EffectManager.sendUIEffectText(SafeHudKey, sp.transportConnection, true, "Safe_Texto", texto);
         }
 
+        float proximaLimpezaArvores;
+
+        /// <summary>Árvores que nascem de novo dentro das safes são cortadas (senão crescem no meio das cercas e NPCs).</summary>
+        void LimparArvoresSafes()
+        {
+            var regs = new List<RegionCoordinate>();
+            var arvores = new List<Transform>();
+            foreach (var z in Configuration.Instance.ZonasSeguras ?? new List<Ponto>())
+            {
+                if (!z.Definido || z.Raio <= 0) continue;
+                var c = new Vector3(z.X, z.Y, z.Z);
+                regs.Clear(); arvores.Clear();
+                Regions.getRegionsInRadius(c, z.Raio, regs);
+                ResourceManager.getResourcesInRadius(c, z.Raio * z.Raio, regs, arvores);
+                foreach (var a in arvores)
+                    if (ResourceManager.tryGetRegion(a, out var x, out var y, out var i))
+                        ResourceManager.ServerSetResourceDead(x, y, i, Vector3.zero);
+            }
+        }
+
         void TickSafe()
         {
+            if (Time.realtimeSinceStartup >= proximaLimpezaArvores)
+            {
+                proximaLimpezaArvores = Time.realtimeSinceStartup + 60f;
+                try { LimparArvoresSafes(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            }
             bool avisar = Configuration.Instance.AvisarEntradaSafe;
             foreach (var sp in Provider.clients)
             {
