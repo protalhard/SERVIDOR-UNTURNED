@@ -480,7 +480,54 @@ namespace SobrevivenciaCore
                                 if (d != null) { estruturas.Add(d.instanceID); nPilar++; }
                             }
                         }
-                LogAdmin(adm, $"NIVELOU {area}{modelo}: {nPiso} pisos, {nPilar} pilares, altura {nivel:0.0} (vao {vao:0.0} m)");
+                // rampa na entrada (frente do modelo), 2 placas de largura, inclinada até encostar no chão
+                int nRampa = 0;
+                {
+                    const float inclin = 16f;
+                    float tg = Mathf.Tan(inclin * Mathf.Deg2Rad);
+                    float comp = 0f;
+                    for (float t = 0f; t <= 80f; t += .5f)
+                    {
+                        float g = float.MinValue;
+                        foreach (var lx in new[] { -lado, 0f, lado })
+                        {
+                            var v = Plano(lx, oy - t);
+                            float h = Terreno(v.x, v.z);
+                            if (!float.IsNaN(h)) g = Mathf.Max(g, h);
+                        }
+                        comp = t;
+                        if (nivel - t * tg <= g + .05f) break;
+                    }
+                    if (comp > .5f)
+                    {
+                        float compRampa = comp / Mathf.Cos(inclin * Mathf.Deg2Rad);
+                        int nr = Mathf.CeilToInt(compRampa / lado);
+                        var rotBase = Quaternion.Euler(rotPiso, yawPiso, 0f);
+                        var fora = (Plano(0, oy - 1f) - Plano(0, oy)).normalized; // direção pra fora da entrada
+                        var eixoLado = Vector3.Cross(Vector3.up, fora).normalized;
+                        float ang = inclin;
+                        if ((Quaternion.AngleAxis(ang, eixoLado) * fora).y > 0) ang = -ang;
+                        var rot = Quaternion.AngleAxis(ang, eixoLado) * rotBase;
+                        var normal = Quaternion.AngleAxis(ang, eixoLado) * Vector3.up;
+                        for (int k = 0; k < nr; k++)
+                        {
+                            float sMeio = (k + .5f) * lado;
+                            float th = sMeio * Mathf.Cos(inclin * Mathf.Deg2Rad), dy = sMeio * Mathf.Sin(inclin * Mathf.Deg2Rad);
+                            foreach (var lx in new[] { -lado / 2f, lado / 2f })
+                            {
+                                var v = Plano(lx, oy - th);
+                                v.y = nivel - dy;
+                                v -= normal * topoPiso;
+                                if (!Regions.tryGetCoordinate(v, out var rx, out var ry) || !StructureManager.tryGetRegion(rx, ry, out var rreg)) continue;
+                                int antesR = rreg.drops.Count;
+                                if (Assets.find(EAssetType.ITEM, idPiso) is ItemStructureAsset pa &&
+                                    StructureManager.dropReplicatedStructure(new Structure(pa, pa.health), v, rot, donoP, 0) && rreg.drops.Count > antesR)
+                                { estruturas.Add(rreg.drops[rreg.drops.Count - 1].instanceID); nRampa++; }
+                            }
+                        }
+                    }
+                }
+                LogAdmin(adm, $"NIVELOU {area}{modelo}: {nPiso} pisos, {nPilar} pilares, {nRampa} rampa, altura {nivel:0.0} (vao {vao:0.0} m)");
             }
 
             // tira as árvores do lugar (cortadas; a safe não deixa elas voltarem)
