@@ -62,6 +62,12 @@ func main() {
 		}
 		arq := filepath.Join(*pastaIcones, nome)
 		if _, err := os.Stat(arq); err != nil {
+			// o site pede com ?f=0: sem foto dá 404 e a página esconde o item; o jogo recebe a padrão
+			if r.URL.Query().Get("f") == "0" {
+				w.Header().Set("Cache-Control", "public, max-age=600")
+				http.NotFound(w, r)
+				return
+			}
 			arq = filepath.Join(*pastaIcones, "sem_foto.png")
 		}
 		w.Header().Set("Cache-Control", "public, max-age=86400")

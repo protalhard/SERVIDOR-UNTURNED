@@ -165,10 +165,10 @@
       const fotosKit = ['deserto', 'lago', 'vila', 'mercado', 'colinas', 'bunker', 'torre-noite', 'farol', 'ponte', 'floresta', 'palmeiras', 'lanchonete'];
       let nFoto = 0;
       const cartao = k => `<div class="painel kit ${meus !== null && meus >= k.abates ? 'destaque' : ''}">
-          <div class="kit-foto" style="background-image:url(/img/mapa/${fotosKit[nFoto++ % fotosKit.length]}.webp)">${(k.itens || []).length ? `<img class="kit-arma" src="/icones/${k.itens[0].id}.png" alt="" loading="lazy">` : ''}<span class="kit-nome">${esc((k.titulo || k.nome).toUpperCase())}</span></div>
+          <div class="kit-foto" style="background-image:url(/img/mapa/${fotosKit[nFoto++ % fotosKit.length]}.webp)">${(k.itens || []).length ? `<img class="kit-arma" src="/icones/${k.itens[0].id}.png?f=0" alt="" loading="lazy" onerror="this.remove()">` : ''}<span class="kit-nome">${esc((k.titulo || k.nome).toUpperCase())}</span></div>
           <div class="topo-kit"><span class="req">${k.abates ? `☠ ${k.abates} kills` : 'Livre'}</span><span class="cmd">/kit ${esc(k.nome)}</span></div>
           <h3>${esc(k.titulo || k.nome)}</h3><p class="fraco">${esc(k.descricao)}</p>
-          ${(k.itens || []).length ? `<div class="vip-itens kit-itens">${k.itens.map(i => `<span class="vip-item" title="ID ${i.id}"><img src="/icones/${i.id}.png" alt="" loading="lazy">${i.quantidade > 1 ? `<small>x${i.quantidade}</small>` : ''}</span>`).join('')}</div>` : ''}
+          ${(k.itens || []).length ? `<div class="vip-itens kit-itens">${k.itens.map(i => `<span class="vip-item" title="ID ${i.id}"><img src="/icones/${i.id}.png?f=0" alt="" loading="lazy" onerror="this.parentNode.remove()">${i.quantidade > 1 ? `<small>x${i.quantidade}</small>` : ''}</span>`).join('')}</div>` : ''}
           ${meus !== null && k.abates ? `<div class="progresso">${Math.min(meus, k.abates)}/${k.abates} abates</div><div class="barra"><i style="width:${Math.min(100, 100 * meus / k.abates)}%"></i></div>` : ''}
           <div class="dados"><div><span class="rotulo">Espera</span><b>${espera(k.espera)}</b></div><div><span class="rotulo">Bônus</span><b style="color:var(--c2)">${k.bonusXp ? '+' + num(k.bonusXp) + ' XP' : '–'}</b></div></div>
         </div>`;
@@ -189,7 +189,7 @@
       const conteudo = nomes => nomes.map(n => kits.find(k => k.nome === n)).filter(Boolean).map(k => `
         <div class="vip-kit"><div class="vip-kit-topo"><b>${esc(k.titulo || k.nome)}</b><span class="mono fraco">/kit ${esc(k.nome)} · ${espera(k.espera)}</span></div>
           <p class="fraco">${esc(k.descricao)}</p>
-          <div class="vip-itens">${(k.itens || []).map(i => `<span class="vip-item" title="ID ${i.id}"><img src="/icones/${i.id}.png" alt="" loading="lazy">${i.quantidade > 1 ? `<small>x${i.quantidade}</small>` : ''}</span>`).join('')}</div></div>`).join('');
+          <div class="vip-itens">${(k.itens || []).map(i => `<span class="vip-item" title="ID ${i.id}"><img src="/icones/${i.id}.png?f=0" alt="" loading="lazy" onerror="this.parentNode.remove()">${i.quantidade > 1 ? `<small>x${i.quantidade}</small>` : ''}</span>`).join('')}</div></div>`).join('');
       // pacotes VIP do DAY Z BRASIL (nomes, kits e preços nossos)
       const P = [
         { id: 'iniciante', aba: 'kits', nome: 'Kit Iniciante', selo: 'ENTRADA', cor: '#c9cdd3', foto: 'vila', preco: 6.40, dias: 30,
@@ -228,7 +228,7 @@
         const ids = idsDe(p.kits || (p.id.startsWith('supremo') ? todosKits : [])).slice(0, 8);
         let fundo;
         if (p.slots) fundo = `<div class="vip-slots" style="grid-template-columns:repeat(${p.slots[0]},1fr);grid-template-rows:repeat(${p.slots[1]},1fr)">${'<i></i>'.repeat(p.slots[0] * p.slots[1])}</div>`;
-        else fundo = `<div class="vip-grade">${ids.map(id => `<span><img src="/icones/${id}.png" alt="" loading="lazy"></span>`).join('')}</div>`;
+        else fundo = `<div class="vip-grade">${ids.map(id => `<span><img src="/icones/${id}.png?f=0" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>`).join('')}</div>`;
         return `<div class="vip-foto itens${grande ? ' grande' : ''}">${fundo}<img class="vip-render" src="/img/vip/vip-${p.id}.webp" alt="" onerror="this.remove()"></div>`;
       };
       const botao = `<button class="botao vip-comprar" disabled title="O pagamento abre em breve">🔒 EM BREVE</button>`;
