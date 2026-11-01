@@ -163,6 +163,7 @@ namespace SobrevivenciaCore
                     case "cerca":
                     case "parede":
                     {
+                        if (area == "safe") continue; // na safe vem só 6 por NPC, pra separar as lojas (abaixo)
                         id = IdPeca(pc.Tipo, area);
                         float esp = Mathf.Max(.5f, pc.Tipo == "cerca" ? S.MontarEspacoCerca : S.MontarEspacoParede);
                         if (Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset ba && ba.radius > .3f) esp = ba.radius * 2f;
@@ -173,6 +174,13 @@ namespace SobrevivenciaCore
                 }
                 if (id == 0 || !Itens.Existe(id)) continue;
                 for (int i = 0; i < qtd; i++) lista.Add(id);
+            }
+            if (area == "safe")
+            {
+                int npcs = pecas.Count(pc => pc.Tipo == "npc");
+                ushort cerca = IdPeca("cerca", area);
+                if (cerca == 0 || !Itens.Existe(cerca)) cerca = IdPeca("parede", area);
+                if (cerca != 0 && Itens.Existe(cerca)) for (int i = 0; i < 6 * npcs; i++) lista.Add(cerca);
             }
             if (lista.Count == 0) return "Esse modelo nao tem pecas.";
             // mochila grande primeiro (se ele estiver sem mochila, já veste)
