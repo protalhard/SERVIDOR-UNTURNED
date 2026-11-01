@@ -231,11 +231,20 @@ namespace SobrevivenciaCore
                     candidatos.Add(new KeyValuePair<float, Vector2>(mx - mn, new Vector2(cx, cz)));
                 }
             if (candidatos.Count == 0) return "Nao achei espaco dentro do mapa aqui. Va mais pro meio do mapa e tente de novo.";
-            // confere os 40 melhores com o chão de verdade (casa, pedra, água, árvores)
+            // peças já colocadas (bases de jogador e áreas já montadas): o lugar tem que estar livre delas
+            var ocupados = new List<Vector2>();
+            foreach (var reg in BarricadeManager.regions)
+                foreach (var d in reg.drops)
+                    if (d?.model != null) ocupados.Add(new Vector2(d.model.position.x, d.model.position.z));
+            foreach (var z in Configuration.Instance.ZonasSeguras ?? new List<Ponto>())
+                if (z.Definido) ocupados.Add(new Vector2(z.X, z.Z));
+            // confere os 80 melhores com o chão de verdade (casa, pedra, água, árvores, bases)
             var melhores = new List<(float nota, float desnivel, int obst, int arv, Vector3 pos)>();
-            foreach (var c in candidatos.OrderBy(x => x.Key).Take(40))
+            float livre = (r + 15f) * (r + 15f);
+            foreach (var c in candidatos.OrderBy(x => x.Key).Take(80))
             {
                 float cx = c.Value.x, cz = c.Value.y;
+                if (ocupados.Any(o => (o - c.Value).sqrMagnitude < livre)) continue;
                 float mn = float.MaxValue, mx = float.MinValue; int obst = 0; bool agua = false;
                 foreach (var q in fino)
                 {
@@ -254,7 +263,7 @@ namespace SobrevivenciaCore
                 // nota: desnível pesa mais; casa/pedra no meio pesa muito; árvore pesa pouco (ela é cortada)
                 melhores.Add((d + obst * 3f + arv.Count * .05f, d, obst, arv.Count, centro));
             }
-            if (melhores.Count == 0) return "Por perto so achei lugar com agua. Ande pra outra regiao e tente de novo.";
+            if (melhores.Count == 0) return "Por perto so achei lugar com agua ou com base/area ja montada. Ande pra outra regiao e tente de novo.";
             melhores = melhores.OrderBy(x => x.nota).ToList();
             // não repete lugares colados: pega os 3 melhores com 150 m de distância entre eles
             var top = new List<(float nota, float desnivel, int obst, int arv, Vector3 pos)>();
