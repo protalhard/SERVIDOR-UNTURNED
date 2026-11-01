@@ -245,6 +245,16 @@ namespace SobrevivenciaCore
             {
                 float cx = c.Value.x, cz = c.Value.y;
                 if (ocupados.Any(o => (o - c.Value).sqrMagnitude < livre)) continue;
+                // safe zone do próprio mapa (o California 2 tem várias): fora dela e com folga de 30 m
+                bool safeMapa = false;
+                foreach (var q in Pontos(1, 12))
+                {
+                    var dir = q.sqrMagnitude > 0 ? q.normalized * (r + 30f) : Vector2.zero;
+                    var pt = new Vector3(cx + dir.x, 0f, cz + dir.y);
+                    pt.y = LevelGround.getHeight(pt) + 1f;
+                    if (LevelNodes.isPointInsideSafezone(pt, out _)) { safeMapa = true; break; }
+                }
+                if (safeMapa) continue;
                 float mn = float.MaxValue, mx = float.MinValue; int obst = 0; bool agua = false;
                 foreach (var q in fino)
                 {
@@ -263,7 +273,7 @@ namespace SobrevivenciaCore
                 // nota: desnível pesa mais; casa/pedra no meio pesa muito; árvore pesa pouco (ela é cortada)
                 melhores.Add((d + obst * 3f + arv.Count * .05f, d, obst, arv.Count, centro));
             }
-            if (melhores.Count == 0) return "Por perto so achei lugar com agua ou com base/area ja montada. Ande pra outra regiao e tente de novo.";
+            if (melhores.Count == 0) return "Por perto so achei lugar com agua, safe do mapa ou base/area ja montada. Ande pra outra regiao e tente de novo.";
             melhores = melhores.OrderBy(x => x.nota).ToList();
             // não repete lugares colados: pega os 3 melhores com 150 m de distância entre eles
             var top = new List<(float nota, float desnivel, int obst, int arv, Vector3 pos)>();
