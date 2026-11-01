@@ -30,6 +30,7 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd, nome="X"):
         p("luz", L(-w / 2 - .8, -.5), fx, fy); p("luz", L(w / 2 + .8, -.5), fx, fy)
         p("caixa_ferramentas", L(w / 2 + 1.5, 2), -sx, -sy); p("galao", L(w / 2 + 1.5, 4), -sx, -sy)
         p("macaco", L(w / 2 + 1.5, 6), -sx, -sy); p("pneus", L(-w / 2 - 1.5, 3), sx, sy)
+        p("pecas_aviao", L(-w / 2 - 1.5, 7), sx, sy)
         return out
     for a, b in [((-w / 2, 0), (-w / 2, dd)), ((-w / 2, dd), (w / 2, dd)), ((w / 2, dd), (w / 2, 0))]:
         out.append(("parede",) + L(*a) + L(*b))
@@ -84,11 +85,15 @@ def pecas_banca(tema, cx, cy, fx, fy, w, dd, nome="X"):
         for q in fundo(3): p("mesa", q, fx, fy)
         for q, d in lados(1): p("mesa", q, *d)
     if tema not in ("hangar", "oficina"):
-        for u in (-1.2, 0, 1.2): p("balcao", L(u, dd * .38), fx, fy)
+        p("balcao_dz", L(0, dd * .38), fx, fy)  # balcão DZ com a logo (51285)
         p("npc", L(0, dd * .58), fx, fy, NPC[tema])
     else:
         p("npc", L(-w / 2 + 1.6, 1.4), fx, fy, NPC[tema])
     p("luz", L(w / 2 - .8, .5), fx, fy)
+    # enfeites do tema (DECOR no gerar2): por dentro viram pra entrada, por fora viram pra frente
+    for peca, k in ns["DECOR"].get(tema, []):
+        u, v = ns["pos_decor"](k, w, dd)
+        p(peca, L(u, v), fx, fy)
     return out
 
 MAPA = {"luz": "luz", "caixa": "caixa_grande", "torre": "torre", "fogueira": "fogueira", "barraca": "barraca",

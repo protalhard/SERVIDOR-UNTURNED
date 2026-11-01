@@ -36,6 +36,9 @@
     </div>`;
   }
 
+  // foto própria de cada recurso (img/recursos/rec-*.webp); sem ela, fica a do mapa por baixo
+  const fotoRecurso = {"Safe Zone": "safe", "ATM e dinheiro físico": "atm", "Mercado Negro": "negro", "Caça e pesca": "caca", "Airdrops": "airdrop", "Rank Kits": "rankkits", "Patentes e XP": "patentes", "Home e TPA": "home", "Vault": "vault"};
+
   // ---------- páginas ----------
   const paginas = {
     async '' () {
@@ -82,7 +85,7 @@
       </section>
 
       <section class="secao"><h2>O que tem no <span>servidor</span></h2>
-        <div class="grade g3">${recursos.map(([f, i, t, d]) => `<div class="painel recurso-foto" style="--foto:url(/img/mapa/${f}.webp)">
+        <div class="grade g3">${recursos.map(([f, i, t, d]) => `<div class="painel recurso-foto" style="--foto:url(/img/recursos/rec-${fotoRecurso[t]}.webp), url(/img/mapa/${f}.webp)">
           <div class="ic">${i}</div><h3>${t}</h3><p>${d}</p></div>`).join('')}</div>
       </section>
 
@@ -203,11 +206,11 @@
         { id: 'especial', aba: 'especiais', nome: 'Kit Especial', selo: 'ESPECIAL', cor: '#ffb020', foto: 'deserto', preco: 21.60, dias: 30,
           desc: 'Escolha 1 dos 3 kits especiais.', itens: ['Escolha 1: Zona Quente, Base ou Raid', 'Esperas diferentes (1 h, 12 h, 24 h)', 'Tag do kit no chat', 'Cargo VIP no Discord'],
           kits: ['zonaquente', 'base', 'raid'] },
-        { id: 'cofre-mochila', aba: 'cofres', nome: 'Cofre Mochila', selo: '8×7', cor: '#ffd08a', foto: 'neblina', preco: 13.60, dias: 30,
+        { id: 'cofre-mochila', slots: [8, 7], aba: 'cofres', nome: 'Cofre Mochila', selo: '8×7', cor: '#ffd08a', foto: 'neblina', preco: 13.60, dias: 30,
           desc: 'Seu /vault vira 8×7.', itens: ['Cofre 8×7 (56 espaços)', 'Tag [COFRE] no chat', 'Cargo VIP no Discord'] },
-        { id: 'cofre-bunker', aba: 'cofres', nome: 'Cofre Bunker', selo: '12×9', cor: '#ff8a3d', foto: 'colinas', preco: 22.90, dias: 30,
+        { id: 'cofre-bunker', slots: [12, 9], aba: 'cofres', nome: 'Cofre Bunker', selo: '12×9', cor: '#ff8a3d', foto: 'colinas', preco: 22.90, dias: 30,
           desc: 'Libera o Cofre Mochila e o Bunker.', itens: ['Cofre 8×7 e 12×9 (108 espaços)', 'Tag [BUNKER] no chat', 'Cargo VIP no Discord'] },
-        { id: 'cofre-fortaleza', aba: 'cofres', nome: 'Cofre Fortaleza', selo: '15×14', cor: '#ffb020', foto: 'farol', preco: 42.90, dias: 30,
+        { id: 'cofre-fortaleza', slots: [15, 14], aba: 'cofres', nome: 'Cofre Fortaleza', selo: '15×14', cor: '#ffb020', foto: 'farol', preco: 42.90, dias: 30,
           desc: 'Os 3 cofres, o maior do servidor.', itens: ['Cofres 8×7, 12×9 e 15×14 (210 espaços)', 'Tag [FORTALEZA] no chat', 'Cargo VIP no Discord'] },
       ];
       const separado = P.reduce((t, p) => t + p.preco, 0);
@@ -217,9 +220,19 @@
         { id: 'supremo-vitalicio', nome: 'DZ Supremo Vitalício', selo: 'PRA SEMPRE', preco: 255.90, per: 'vitalício', foto: 'palmeiras',
           desc: 'Paga uma vez, é seu pra sempre.', itens: ['Libera +12 kits', 'Libera os 3 cofres', 'Vitalício', 'Tag [SUPREMO] dourada no chat'] },
       ];
+      const todosKits = P.flatMap(p => p.kits || []);
+      const idsDe = nomes => [...new Set(nomes.map(n => kits.find(k => k.nome === n)).filter(Boolean).flatMap(k => (k.itens || []).map(i => i.id)))];
+      // foto: render do pacote (img/vip/<id>.webp) quando existir; enquanto isso, as fotos dos itens dos kits
+      const fotoVip = (p, grande) => {
+        const ids = idsDe(p.kits || (p.id.startsWith('supremo') ? todosKits : [])).slice(0, 8);
+        let fundo;
+        if (p.slots) fundo = `<div class="vip-slots" style="grid-template-columns:repeat(${p.slots[0]},1fr);grid-template-rows:repeat(${p.slots[1]},1fr)">${'<i></i>'.repeat(p.slots[0] * p.slots[1])}</div>`;
+        else fundo = `<div class="vip-grade">${ids.map(id => `<span><img src="/icones/${id}.png" alt="" loading="lazy"></span>`).join('')}</div>`;
+        return `<div class="vip-foto itens${grande ? ' grande' : ''}">${fundo}<img class="vip-render" src="/img/vip/vip-${p.id}.webp" alt="" onerror="this.remove()"></div>`;
+      };
       const botao = `<button class="botao vip-comprar" disabled title="O pagamento abre em breve">🔒 EM BREVE</button>`;
       const cartao = p => `<div class="painel vip-card" data-aba="${p.aba}" style="--vc:${p.cor}">
-          <div class="vip-foto" style="background-image:url(/img/mapa/${p.foto}.webp)"><span class="vip-emblema">${esc(p.nome.toUpperCase())}</span></div>
+          ${fotoVip(p)}
           <span class="vip-selo">[${esc(p.selo)}]</span>
           <h3>${esc(p.nome)}</h3><p class="fraco">${esc(p.desc)}</p>
           <div class="vip-preco">${real(p.preco)}<small> / ${p.dias} dias</small></div>
@@ -228,7 +241,7 @@
           ${botao}
         </div>`;
       const supremo = p => `<div class="painel vip-supremo" data-aba="supremo">
-          <div class="vip-foto grande" style="background-image:url(/img/mapa/${p.foto}.webp)"><span class="vip-emblema">DZ</span></div>
+          ${fotoVip(p, true)}
           <div class="vip-meio"><span class="vip-selo">[${esc(p.selo)}]</span><h3>${esc(p.nome)}</h3><p class="fraco">${esc(p.desc)}</p>
             <ul class="vip-lista duas">${p.itens.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
           <div class="vip-dir">${p.id === 'supremo' ? `<div class="fraco mono" style="font-size:11px">COMPRANDO TUDO SEPARADO</div><s class="fraco">${real(separado)}</s>` : ''}

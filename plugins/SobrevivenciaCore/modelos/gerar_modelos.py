@@ -217,6 +217,35 @@ m.add("bandeira", -4, -26.5); m.add("bandeira", 4, -26.5)
 m.caminhos += [[(0, -32), (-3, 12)]]
 modelos.append(m)
 
+
+# enfeites de cada cantinho (pecas DZ 51271-51294): posicao fe/fd = cantos da frente por dentro, xe/xd = do lado de fora
+DECOR = {
+    "armas": [("alvo", "fe"), ("caixas_militares", "fd"), ("sacos_areia", "xe"), ("rack_armas", "xd")],
+    "armas_n": [("caixas_militares", "fe"), ("caixas_militares", "fd"), ("sacos_areia", "xe"), ("rack_armas", "xd")],
+    "tatico": [("manequim_dz", "fe"), ("caixas_militares", "fd"), ("sacos_areia", "xe"), ("manequim_dz", "xd")],
+    "raid": [("caixa_tnt", "fe"), ("barril_toxico", "fd"), ("caixa_tnt", "xe"), ("sacos_areia", "xd")],
+    "explosivos": [("caixa_tnt", "fe"), ("barril_toxico", "fd"), ("caixa_tnt", "xe"), ("sacos_areia", "xd")],
+    "roupas": [("arara_roupas", "fe"), ("espelho", "fd"), ("manequim_dz", "xe"), ("arara_roupas", "xd")],
+    "equip": [("prateleira_equip", "fe"), ("prateleira_equip", "fd"), ("caixas_militares", "xe"), ("prateleira_equip", "xd")],
+    "comida": [("caixa_frutas", "fe"), ("geladeira", "fd"), ("prateleira_comida", "xe"), ("fogao", "xd")],
+    "mercado": [("caixa_frutas", "fe"), ("geladeira", "fd"), ("prateleira_comida", "xe")],
+    "remedios": [("maca", "fe"), ("soro", "fd"), ("armario_remedios", "xe"), ("maca", "xd")],
+    "construtor": [("materiais", "fe"), ("materiais", "fd"), ("materiais", "xe"), ("materiais", "xd")],
+    "banco": [("mesa_dinheiro", "fe"), ("mesa_dinheiro", "fd"), ("cofre_dz", "xd")],
+    "vault": [("cofre_dz", "fd"), ("mesa_dinheiro", "xe")],
+    "cacador": [("trofeu", "fe"), ("varal_caca", "fd"), ("varal_caca", "xe"), ("trofeu", "xd")],
+}
+COR_DECOR = {"alvo": (230, 230, 230), "caixas_militares": (80, 95, 60), "sacos_areia": (190, 170, 120), "rack_armas": (90, 60, 40),
+             "manequim_dz": (60, 70, 60), "caixa_tnt": (200, 60, 30), "barril_toxico": (120, 200, 40), "arara_roupas": (150, 150, 160),
+             "espelho": (170, 210, 230), "prateleira_equip": (100, 90, 60), "caixa_frutas": (220, 140, 40), "geladeira": (235, 235, 240),
+             "prateleira_comida": (200, 160, 80), "fogao": (70, 70, 75), "maca": (240, 240, 240), "soro": (180, 220, 240),
+             "armario_remedios": (230, 60, 60), "materiais": (170, 120, 70), "mesa_dinheiro": (60, 160, 90), "cofre_dz": (130, 135, 145),
+             "trofeu": (140, 100, 60), "varal_caca": (160, 110, 70), "pecas_aviao": (150, 155, 160)}
+
+def pos_decor(k, w, dd):
+    """(u, v) da posicao do enfeite: u ao longo da frente, v profundidade (0 = frente)"""
+    return {"fe": (-w / 2 + 1.3, 1.1), "fd": (w / 2 - 1.3, 1.1), "xe": (-w / 2 - 1.4, dd / 2), "xd": (w / 2 + 1.4, dd / 2)}[k]
+
 # ======================= DESENHO =======================
 TEMA = {  # piso, cor do NPC, letra, o que o NPC segura
     "armas": ((95, 70, 60), (220, 60, 50), "A"), "equip": ((90, 85, 65), (160, 120, 80), "E"),
@@ -346,6 +375,10 @@ def desenhar(m, tipo, num, PX=1000):
             lateral(-w / 2 + .6, 3, lambda p: rq(*p, .4, .25, fill=(180, 60, 50, 255)))
             for p in ao_longo(dd - 1.6, 2, -w / 4, w / 4):
                 px, py = P(*p); d.line([px - .8 * esc, py - .6 * esc, px, py, px + .8 * esc, py - .6 * esc], fill=(230, 220, 190, 255), width=3)
+        for peca, k in DECOR.get(tema, []):
+            px, py = P(*L(*pos_decor(k, w, dd)))
+            r = .55 * esc
+            d.rounded_rectangle([px - r, py - r, px + r, py + r], 3, fill=COR_DECOR[peca] + (255,), outline=(20, 20, 20, 255), width=2)
         # balcao e NPC atras dele
         if not nome:
             return

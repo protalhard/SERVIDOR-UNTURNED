@@ -317,7 +317,7 @@ td.ord { color: var(--c); font-weight: 800; }
 .recurso-foto h3 { font: 800 19px var(--sans); text-transform: uppercase; margin: 14px 0 6px; }
 .recurso-foto p { font-size: 14.5px; color: #D9D6D1; }
 .recurso-foto .ic, .recurso-foto h3, .recurso-foto p { z-index: 1; }
-.recurso-foto { background: linear-gradient(0deg, rgba(8,8,10,.96) 25%, rgba(8,8,10,.55) 70%, rgba(8,8,10,.25)), var(--foto) center / cover; }
+.recurso-foto { background-image: linear-gradient(0deg, rgba(8,8,10,.96) 25%, rgba(8,8,10,.55) 70%, rgba(8,8,10,.25)), var(--foto); background-size: cover; background-position: center; }
 .recurso-foto:hover { transform: translateY(-3px); }
 
 /* galeria do mapa */
@@ -373,7 +373,7 @@ td.ord { color: var(--c); font-weight: 800; }
 .vip-foto.grande { height: 190px; min-width: 240px; }
 .vip-emblema { position: relative; z-index: 1; font: 900 22px var(--sans); letter-spacing: .06em; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.8); border: 2px solid var(--vc, #ff5a00); padding: 6px 12px; background: rgba(0,0,0,.35); }
 .vip-selo { display: inline-block; margin-top: 10px; font: 700 11px var(--mono); letter-spacing: .1em; color: var(--vc, var(--c2)); }
-.vip-preco { font: 900 30px var(--sans); color: var(--vc, var(--c2)); margin: 10px 0 4px; }
+.vip-preco { font: 900 30px var(--sans); color: var(--vc, var(--c2)); margin: 10px 0 4px; white-space: nowrap; }
 .vip-preco.grande { font-size: 40px; color: #ff5a00; }
 .vip-preco small { font: 600 12px var(--mono); color: var(--fraco, #8a8f98); white-space: nowrap; }
 .vip-lista { list-style: none; padding: 0; margin: 8px 0 14px; flex: 1; }
@@ -392,3 +392,13 @@ td.ord { color: var(--c); font-weight: 800; }
 .vip-supremo { display: grid; grid-template-columns: 240px 1fr 220px; gap: 22px; align-items: center; margin-bottom: 16px; border: 1px solid rgba(255,90,0,.6); }
 .vip-dir { text-align: right; }
 @media (max-width: 860px) { .vip-supremo { grid-template-columns: 1fr; } .vip-dir { text-align: left; } .vip-lista.duas { columns: 1; } }
+
+.vip-foto.itens { background: radial-gradient(circle at 50% 40%, rgba(255,90,0,.22), rgba(10,10,12,.95) 70%); display: block; padding: 0; }
+.vip-foto.itens .vip-grade { padding: 10px; box-sizing: border-box; }
+.vip-foto.itens::after { display: none; }
+.vip-grade { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; height: 100%; align-content: center; }
+.vip-grade span { aspect-ratio: 1; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 4px; display: grid; place-items: center; }
+.vip-grade img { max-width: 85%; max-height: 85%; }
+.vip-foto .vip-render { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.vip-slots { display: grid; gap: 2px; width: 100%; height: 100%; padding: 8px; box-sizing: border-box; background: radial-gradient(circle at 50% 40%, rgba(255,176,32,.18), rgba(10,10,12,.95) 70%); }
+.vip-slots i { background: rgba(255,255,255,.07); border: 1px solid rgba(255,176,32,.25); border-radius: 2px; }
