@@ -259,7 +259,8 @@
     D.replaceChildren(...ds);
 
     const E = $("#b-enquetes");
-    E.replaceChildren(...((d.enquetes || []).length ? d.enquetes.slice(0, 3).map(cardEnquete) : [vazio("Nenhuma enquete ainda. Crie em Mensagens ou Wipe.")]));
+    const enqs = [cardVotacaoJogo(p.votacaoJogo), ...(d.enquetes || []).slice(0, 3).map(cardEnquete)].filter(Boolean);
+    E.replaceChildren(...(enqs.length ? enqs : [vazio("Nenhuma enquete ainda. Crie em Mensagens ou Wipe.")]));
 
     const B = $("#b-backups");
     B.replaceChildren((p.backups || []).length ? el("div", { class: "adm-itens-lista" }, p.backups.map((b) =>
@@ -276,15 +277,22 @@
       el("span", { class: "adm-tag " + (x.ok ? "verde" : "vermelho") }, x.ok ? "ok" : "erro"),
       el("span", { class: "mono" }, data(x.inicio)))));
   }
+  function cardVotacaoJogo(v) {
+    if (!v) return null;
+    return cardEnquete({ pergunta: v.pergunta, respostas: v.respostas, total: v.total, encerrada: v.encerrada, termina: v.termina, jogo: true });
+  }
   function cardEnquete(e) {
     const max = Math.max(1, ...e.respostas.map((r) => r.votos));
     return el("div", { class: "adm-enquete" },
       el("h3", {}, e.pergunta, el("span", { class: "adm-tag " + (e.encerrada ? "cinza" : "verde") }, e.encerrada ? "encerrada" : "aberta")),
       e.respostas.map((r) => el("div", { class: "adm-barra-voto" },
         el("i", { style: `width:${Math.round(r.votos / max * 100)}%` }), el("span", {}, r.texto), el("b", {}, String(r.votos)))),
-      el("div", { class: "adm-acoes-linha pequeno fraco" }, `${e.total} voto(s) · #${e.canalNome} · `,
-        e.encerrada ? "terminou " + data(e.termina) : "termina " + data(e.termina), " · ",
-        el("a", { href: e.link, target: "_blank", rel: "noopener" }, "ver no Discord ↗")));
+      e.jogo
+        ? el("div", { class: "adm-acoes-linha pequeno fraco" }, el("span", { class: "adm-tag" }, "🎮 no jogo"), `${e.total} voto(s) com /votar · `,
+          e.encerrada ? "terminou " + data(e.termina) : "termina " + data(e.termina))
+        : el("div", { class: "adm-acoes-linha pequeno fraco" }, el("span", { class: "adm-tag" }, "💬 Discord"), `${e.total} voto(s) · #${e.canalNome} · `,
+          e.encerrada ? "terminou " + data(e.termina) : "termina " + data(e.termina), " · ",
+          el("a", { href: e.link, target: "_blank", rel: "noopener" }, "ver no Discord ↗")));
   }
 
   let contador = 0;
@@ -395,7 +403,12 @@
     $("#previa").replaceChildren(el("img", { class: "av", src: "/img/icon64.png", alt: "" }), corpo);
     $("#previa").hidden = !f.discord.checked;
     let jogo = "";
-    if (f.jogo.checked) jogo = tipoMsg === "enquete" ? `ENQUETE no Discord: ${titulo || "…"} (vote la!)` : titulo && texto ? `${titulo} - ${texto}` : (titulo || texto || "…");
+    if (f.jogo.checked && tipoMsg === "enquete") {
+      $("#previa-jogo").replaceChildren(el("div", {}, el("b", {}, "[DZ] "), el("em", {}, "VOTACAO: "), titulo || "…"),
+        ...opcoesDe($("#msg-opcoes")).map((o, i) => el("div", {}, el("b", {}, "[DZ] "), el("em", {}, `/votar ${i + 1}`), "  " + o)));
+      return;
+    }
+    if (f.jogo.checked) jogo = titulo && texto ? `${titulo} - ${texto}` : (titulo || texto || "…");
     $("#previa-jogo").replaceChildren(...(jogo ? [el("b", {}, "[DZ] "), el("em", {}, "ANUNCIO: "), jogo.replace(/\n/g, " ").slice(0, 240)] : []));
   }
   async function enviarMensagem(ev) {
@@ -418,7 +431,7 @@
   }
   function resultadoEnvio(r) {
     const out = [];
-    if (r.jogo) out.push(el("div", { class: "adm-li" }, "🎮", el("span", { class: "cresce" }, r.jogo.ok ? (r.jogo.online ? "Enviado pro chat do jogo." : "Na fila do jogo: aparece quando o servidor ligar.") : r.jogo.erro),
+    if (r.jogo) out.push(el("div", { class: "adm-li" }, "🎮", el("span", { class: "cresce" }, r.jogo.ok ? (r.jogo.votacao ? "Votação aberta no jogo (/votar). Aparece no chat em até 10 s." : r.jogo.online ? "Enviado pro chat do jogo." : "Na fila do jogo: aparece quando o servidor ligar.") : r.jogo.erro),
       el("span", { class: "adm-tag " + (r.jogo.ok ? "verde" : "vermelho") }, r.jogo.ok ? "ok" : "erro")));
     if (r.discord) out.push(el("div", { class: "adm-li" }, "💬", el("span", { class: "cresce" }, r.discord.ok ? (r.discord.pendente ? "Na fila do bot." : "Postado no Discord.") : r.discord.erro),
       r.discord.link ? el("a", { href: r.discord.link, target: "_blank", rel: "noopener", class: "mono" }, "ver ↗") : null,
@@ -427,10 +440,10 @@
   }
 
   // ---------------- WIPE ----------------
-  const NOMES_WIPE = { bases: "Bases e construções", veiculos: "Veículos", inventario: "Inventário e roupas", skills: "Skills",
+  const NOMES_WIPE = { safes: "Safes também", bases: "Bases dos jogadores", veiculos: "Veículos", inventario: "Inventário e roupas", skills: "Skills",
     personagem: "Personagem inteiro", banco: "Banco", ranking: "Ranking", cofres: "Cofres", kits: "Espera dos kits" };
   const ITENS_WIPE = [
-    ["bases", "Bases e construções", "Tudo que foi construído no mapa, inclusive as construções das safes feitas com /montar."],
+    ["bases", "Bases dos jogadores", "Tudo que os jogadores construíram. As safes ficam: o que você e a staff construíram e o que foi feito com /montar."],
     ["veiculos", "Veículos", "Carros, helis e barcos que estão no mapa."],
     ["inventario", "Inventário e roupas", "O que cada jogador carrega e veste."],
     ["skills", "Skills", "Os níveis de habilidade de todo mundo."],
@@ -439,6 +452,7 @@
     ["ranking", "Ranking e estatísticas", "Abates, mortes, XP e tempo jogado (site e Discord)."],
     ["cofres", "Cofres (vaults)", "Os cofres virtuais dos jogadores e VIPs."],
     ["kits", "Espera dos kits", "Libera os kits de novo pra todo mundo."],
+    ["safes", "⚠️ Apagar também as safes", "Apaga TUDO que foi construído no mapa, inclusive as suas safes. Só pra zerar o mapa inteiro."],
   ];
   const PRESETS = { bases: ["bases", "veiculos"], completo: ["bases", "veiculos", "personagem", "banco", "cofres", "kits"], limpar: [] };
   function prepararWipe() {
@@ -461,6 +475,9 @@
     $("#form-wipe").anunciar.addEventListener("change", (e) => { $("#w-canal-anuncio").closest("label").hidden = !e.target.checked; });
   }
   function marcarPersonagem() {
+    const sf = $("#w-itens input[value=safes]"), bs = $("#w-itens input[value=bases]");
+    if (sf.checked) bs.checked = true;
+    bs.disabled = sf.checked;
     const p = $("#w-itens input[value=personagem]");
     ["inventario", "skills"].forEach((k) => { const i = $(`#w-itens input[value=${k}]`); if (p.checked) i.checked = true; i.disabled = p.checked; });
   }
@@ -472,7 +489,8 @@
     preencherCanais($("#w-canal-enquete"), cb.wipe || cb.anuncios);
     preencherCanais($("#w-canal-anuncio"), cb.wipe || cb.anuncios);
     const enq = ((painel.discord || {}).enquetes || []).filter((e) => e.rotulo === "wipe");
-    $("#w-votos").replaceChildren(...(enq.length ? [el("h3", { class: "pequeno fraco mono" }, "VOTOS"), ...enq.slice(0, 2).map(cardEnquete)] : []));
+    const cards = [cardVotacaoJogo(painel.votacaoJogo), ...enq.slice(0, 2).map(cardEnquete)].filter(Boolean);
+    $("#w-votos").replaceChildren(...(cards.length ? [el("h3", { class: "pequeno fraco mono" }, "VOTOS"), ...cards] : []));
     $("#w-historico").replaceChildren(historico((painel.historico || []).filter((x) => x.tipo === "wipe")));
     $("#w-botao").disabled = !eu.dono || !!painel.acao;
     $("#w-so-dono").hidden = eu.dono;

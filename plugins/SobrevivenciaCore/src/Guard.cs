@@ -100,6 +100,7 @@ namespace SobrevivenciaCore
                 if (S.GuardLigado) foreach (var sp in Provider.clients) ChecarMovimento(sp);
                 if (Time.realtimeSinceStartup >= proxExportar) { proxExportar = Time.realtimeSinceStartup + 30f; ExportarBanidos(); }
                 LerComandosAdmin();
+                TickVotacao();
             }
             catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
@@ -619,6 +620,17 @@ namespace SobrevivenciaCore
                                            : RemoverStaffSite(quem, donoNome, alvo);
                     if (!EhDono(quem)) LogGuard($"COMANDO NEGADO do site: {c[0]} por {quem} (nao e dono)");
                     else Rocket.Core.Logging.Logger.Log("[ADMIN] site: " + r);
+                    continue;
+                }
+                // wipe pelo painel (só o dono): salvar o mundo e apagar as bases dos jogadores, mantendo as safes
+                if (c[0] == "salvar" || c[0] == "wipe_bases")
+                {
+                    if (!EhDono(quem)) { LogGuard($"COMANDO NEGADO do site: {c[0]} por {quem} (nao e dono)"); continue; }
+                    string r;
+                    try { r = c[0] == "salvar" ? SalvarTudo() : WipeBases(); }
+                    catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); r = "erro: " + e.Message; }
+                    LogAdminNome(NomeDe(quem) + " (site)", quem, c[0].ToUpperInvariant() + ": " + r);
+                    try { File.WriteAllText(Path.Combine(Directory, c[0] + "_feito.txt"), r); } catch { }
                     continue;
                 }
                 // anúncio no chat do jogo (painel do site, aba Mensagens): precisa de "Mundo" ou ser dono

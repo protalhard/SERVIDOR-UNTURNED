@@ -148,6 +148,8 @@ namespace SobrevivenciaCore
         public bool RaidProtecaoOffline = true;
         public int RaidMinutosOffline = 10;
         public int RaidDiasRenovarClaim = 3;
+        // votação no jogo (painel do site): repete o aviso no chat a cada X minutos
+        public int VotacaoAvisoMinutos = 10;
         public float RaidRaioClaim = 32f;
         public bool RaidAdminIgnora = true;
         // /montar (antigo, sem uso desde os modelos)

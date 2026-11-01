@@ -134,6 +134,7 @@ namespace SobrevivenciaCore
             BuscarAvatar(id);
             StartCoroutine(Depois(3f, p, () => MostrarHud(p)));
             StartCoroutine(Depois(6f, p, () => MarcarSafeNoMapa(p)));
+            StartCoroutine(Depois(12f, p, () => VotacaoAoEntrar(p)));
             if (Banco.PrimeiroKit(id))
                 StartCoroutine(DarKitDepois(p, "Bem-vindo! Voce recebeu o kit inicial."));
         }

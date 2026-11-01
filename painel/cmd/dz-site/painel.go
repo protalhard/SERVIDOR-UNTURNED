@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -164,12 +165,13 @@ func registrarPainel(mux *http.ServeMux) {
 				"banidos": contarLinhas("banidos.tsv"), "suspeitos": contarLinhas("suspeitos.tsv"),
 				"reports": contarLinhas("reports.tsv"), "jogadores": len(fichas), "staff": contarLinhas("staff.tsv"),
 			},
-			"discord":   disc,
-			"botOnline": botOn,
-			"canaisBot": map[string]string{"wipe": canais["wipe"], "anuncios": canais["anuncios"], "updates": canais["updates"], "geral": canais["geral"]},
-			"backups":   bks,
-			"acao":      lerAcao(),
-			"historico": lerHistorico(10),
+			"discord":     disc,
+			"botOnline":   botOn,
+			"canaisBot":   map[string]string{"wipe": canais["wipe"], "anuncios": canais["anuncios"], "updates": canais["updates"], "geral": canais["geral"]},
+			"backups":     bks,
+			"acao":        lerAcao(),
+			"historico":   lerHistorico(10),
+			"votacaoJogo": lerVotacaoJogo(),
 		})
 	})
 
@@ -260,11 +262,16 @@ func registrarPainel(mux *http.ServeMux) {
 			return
 		}
 		res := map[string]any{}
-		if q.Jogo {
+		if q.Jogo && q.Tipo == "enquete" {
+			// votação dentro do jogo: o plugin lê enquete_jogo.txt, anuncia e o pessoal vota com /votar N
+			if err := criarVotacaoJogo(q.Titulo, opcoes, q.Horas); err != nil {
+				res["jogo"] = map[string]any{"ok": false, "erro": "nao consegui criar a votacao no jogo"}
+			} else {
+				res["jogo"] = map[string]any{"ok": true, "online": fonte.LerStatus().Online, "votacao": true}
+			}
+		} else if q.Jogo {
 			txt := q.Texto
 			switch {
-			case q.Tipo == "enquete":
-				txt = "ENQUETE no Discord: " + q.Titulo + " (vote la!)"
 			case q.Titulo != "" && q.Texto != "":
 				txt = q.Titulo + " - " + q.Texto
 			case q.Titulo != "":
@@ -401,11 +408,12 @@ func registrarPainel(mux *http.ServeMux) {
 	})
 }
 
-var itensWipe = []string{"bases", "veiculos", "inventario", "skills", "personagem", "banco", "ranking", "cofres", "kits"}
+var itensWipe = []string{"bases", "safes", "veiculos", "inventario", "skills", "personagem", "banco", "ranking", "cofres", "kits"}
 var nomesWipe = map[string]string{
-	"bases": "Bases e construções", "veiculos": "Veículos no mapa", "inventario": "Inventário e roupas",
+	"bases": "Bases dos jogadores (as safes ficam)", "veiculos": "Veículos no mapa", "inventario": "Inventário e roupas",
 	"skills": "Skills", "personagem": "Personagem inteiro (vida, posição, inventário, skills)",
 	"banco": "Dinheiro do banco", "ranking": "Ranking e estatísticas", "cofres": "Cofres (vaults)", "kits": "Espera dos kits",
+	"safes": "Construções das safes (zera o mapa inteiro)",
 }
 
 // enviarAoBot põe o pedido na fila e espera a resposta do bot (até 10 s).
@@ -426,4 +434,53 @@ func enviarAoBot(p dados.PedidoBot) map[string]any {
 		}
 	}
 	return map[string]any{"ok": true, "pendente": true}
+}
+
+// ---------------- votação no jogo ----------------
+
+func criarVotacaoJogo(pergunta string, opcoes []string, horas int) error {
+	if horas < 1 {
+		horas = 24
+	}
+	limpa := strings.NewReplacer("\t", " ", "\n", " ", "\r", " ", "|", "/")
+	var ops []string
+	for _, o := range opcoes {
+		ops = append(ops, limpa.Replace(o))
+	}
+	id := dados.NovoID()
+	linha := fmt.Sprintf("%s\t%d\t%s\t%s\n", id, time.Now().Add(time.Duration(horas)*time.Hour).Unix(), limpa.Replace(pergunta), strings.Join(ops, "|"))
+	arq := filepath.Join(fonte.Pasta, "enquete_jogo.txt")
+	if err := os.WriteFile(arq+".tmp", []byte(linha), 0o640); err != nil {
+		return err
+	}
+	return os.Rename(arq+".tmp", arq)
+}
+
+func lerVotacaoJogo() map[string]any {
+	b, err := os.ReadFile(filepath.Join(fonte.Pasta, "enquete_jogo.txt"))
+	if err != nil {
+		return nil
+	}
+	c := strings.Split(strings.TrimSpace(string(b)), "\t")
+	if len(c) < 4 {
+		return nil
+	}
+	termina, _ := strconv.ParseInt(c[1], 10, 64)
+	ops := strings.Split(c[3], "|")
+	votos := make([]int, len(ops))
+	total := 0
+	for _, l := range lerTSV("enquete_votos.tsv", 0) {
+		if len(l) >= 3 && l[0] == c[0] {
+			if n, err := strconv.Atoi(l[2]); err == nil && n >= 1 && n <= len(ops) {
+				votos[n-1]++
+				total++
+			}
+		}
+	}
+	resp := []map[string]any{}
+	for i, o := range ops {
+		resp = append(resp, map[string]any{"texto": o, "votos": votos[i]})
+	}
+	return map[string]any{"id": c[0], "pergunta": c[2], "termina": termina, "encerrada": time.Now().Unix() >= termina,
+		"respostas": resp, "total": total}
 }

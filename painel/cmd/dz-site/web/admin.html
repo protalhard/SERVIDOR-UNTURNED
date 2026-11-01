@@ -8,7 +8,7 @@
 <title>Painel Admin · DAY Z BRASIL</title>
 <link rel="icon" href="/img/icon64.png" type="image/png">
 <link rel="stylesheet" href="/site.css?v=10">
-<link rel="stylesheet" href="/admin.css?v=4">
+<link rel="stylesheet" href="/admin.css?v=5">
 </head>
 <body class="adm">
 <section id="fora" class="adm-login" hidden>
@@ -132,7 +132,7 @@
       <div class="adm-duas">
         <form id="form-enquete-wipe" class="adm-bloco adm-form">
           <h2>1. Enquete: já pode ter wipe?</h2>
-          <p class="fraco">Manda uma enquete no Discord e avisa no chat do jogo. Os votos aparecem aqui.</p>
+          <p class="fraco">Abre a votação no Discord e dentro do jogo. Os votos dos dois aparecem aqui.</p>
           <label class="adm-campo">Pergunta<input name="titulo" value="Bora de WIPE? 🔄" maxlength="250"></label>
           <div class="adm-campo"><span>Opções</span><div id="w-opcoes" class="adm-opcoes"></div></div>
           <div class="adm-linha">
@@ -140,7 +140,7 @@
             <label class="adm-campo">Duração<select name="horas">
               <option value="24">1 dia</option><option value="48" selected>2 dias</option><option value="72">3 dias</option><option value="168">7 dias</option></select></label>
           </div>
-          <label class="adm-check"><input type="checkbox" name="jogo" checked> Avisar no chat do jogo também</label>
+          <label class="adm-check"><input type="checkbox" name="jogo" checked> Votação no jogo também (o pessoal vota com /votar 1, 2, 3)</label>
           <button class="botao" type="submit">Enviar enquete</button>
           <div class="adm-resultado" id="w-res-enquete"></div>
           <div id="w-votos"></div>
@@ -200,6 +200,6 @@
   </main>
 </div>
 <div id="zoom" class="adm-zoom" hidden><img alt=""></div>
-<script src="/admin.js?v=4"></script>
+<script src="/admin.js?v=5"></script>
 </body>
 </html>

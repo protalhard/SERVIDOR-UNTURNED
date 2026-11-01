@@ -30,7 +30,7 @@ AVISOS = {"wipe": [60, 30, 15, 10, 5, 2, 1], "reiniciar": [10, 5, 1]}
 NOMES = {
     "bases": "Bases e construcoes", "veiculos": "Veiculos", "inventario": "Inventario e roupas",
     "skills": "Skills", "personagem": "Personagem inteiro", "banco": "Banco",
-    "ranking": "Ranking", "cofres": "Cofres", "kits": "Espera dos kits",
+    "ranking": "Ranking", "cofres": "Cofres", "kits": "Espera dos kits", "safes": "Construcoes das safes",
 }
 
 try:
@@ -124,7 +124,7 @@ def fazer_wipe(itens):
     jogadores = glob.glob(os.path.join(SERVIDOR, "Players", "*"))
     apagados = []
     for nivel in niveis:
-        if itens.get("bases"):
+        if itens.get("safes"):  # apaga TUDO que foi construído, inclusive as safes
             for a in com_til([os.path.join(nivel, "Barricades.dat"), os.path.join(nivel, "Structures.dat")]):
                 apagar(a, apagados)
         if itens.get("veiculos"):
@@ -143,7 +143,7 @@ def fazer_wipe(itens):
             if itens.get("skills"):
                 for a in com_til([os.path.join(p, "Skills.dat")]):
                     apagar(a, apagados)
-    if itens.get("bases"):
+    if itens.get("safes"):
         apagar(os.path.join(PLUGIN, "montagens.tsv"), apagados)
     if itens.get("banco"):
         apagar(os.path.join(PLUGIN, "banco.txt"), apagados)
@@ -158,12 +158,47 @@ def fazer_wipe(itens):
     return apagados
 
 
+def jogo_ligado():
+    return systemctl("is-active", "unturned").stdout.strip() == "active"
+
+
+def pedir_plugin(acao, por, espera):
+    """Manda um comando pro plugin (admin_comandos.txt) e espera a resposta <acao>_feito.txt."""
+    feito = os.path.join(PLUGIN, acao + "_feito.txt")
+    try:
+        os.remove(feito)
+    except OSError:
+        pass
+    arq = os.path.join(PLUGIN, "admin_comandos.txt")
+    with open(arq, "a", encoding="utf-8") as f:
+        f.write(f"{acao}\t0\t{por}\t0\t\n")
+    dono_unturned(arq)
+    for _ in range(espera):
+        time.sleep(1)
+        if os.path.exists(feito):
+            try:
+                with open(feito, encoding="utf-8") as f:
+                    return f.read().strip() or "ok"
+            finally:
+                try:
+                    os.remove(feito)
+                except OSError:
+                    pass
+    return None
+
+
 def backup(nome):
     os.makedirs(BACKUPS, exist_ok=True)
     arq = os.path.join(BACKUPS, nome)
     with tarfile.open(arq, "w:gz") as t:
         t.add(SERVIDOR, arcname="dayz", filter=lambda ti: None if "/Workshop" in ti.name or ti.name.endswith("/Workshop") else ti)
     dono_unturned(arq)
+    # guarda só os 2 backups de wipe mais novos (não enche o disco)
+    for velho in sorted(glob.glob(os.path.join(BACKUPS, "wipe-*.tar.gz")), key=os.path.getmtime, reverse=True)[2:]:
+        try:
+            os.remove(velho)
+        except OSError:
+            pass
     return arq
 
 
@@ -217,19 +252,29 @@ def main():
     reg["itens"] = sorted(itens)
     anunciar("WIPE AGORA! O servidor vai desligar.", por)
     time.sleep(8)
-    if not parar_jogo():
-        reg.update(ok=False, erro="o jogo nao desligou; wipe cancelado")
-        systemctl("start", "unturned")
-        historico(reg)
-        return
+    ligado = jogo_ligado()
+    # 1) salva o mundo e faz o backup antes de mexer em qualquer coisa
+    if ligado:
+        reg["salvo"] = pedir_plugin("salvar", por, 60) or "sem resposta do plugin"
     try:
         nome = "wipe-" + datetime.now(BR).strftime("%Y-%m-%d-%H%M") + ".tar.gz"
         reg["backup"] = backup(nome)
     except Exception as e:  # sem backup não apaga nada
         reg.update(ok=False, erro=f"backup falhou: {e}; nada foi apagado")
-        systemctl("start", "unturned")
         historico(reg)
         avisar_discord("logs", "Wipe NAO feito", reg["erro"], "#FF4D4D")
+        return
+    # 2) bases dos jogadores: o plugin apaga peça por peça e deixa as safes (dono, staff e /montar)
+    if itens.get("bases") and not itens.get("safes"):
+        if ligado:
+            reg["bases"] = pedir_plugin("wipe_bases", por, 180) or "sem resposta: o plugin faz quando o servidor ligar"
+        else:
+            pedir_plugin("wipe_bases", por, 0)
+            reg["bases"] = "servidor desligado: o plugin faz quando ligar"
+    if not parar_jogo():
+        reg.update(ok=False, erro="o jogo nao desligou; o resto do wipe foi cancelado")
+        systemctl("start", "unturned")
+        historico(reg)
         return
     try:
         apagados = fazer_wipe(itens)

@@ -789,6 +789,61 @@ namespace SobrevivenciaCore
             return $"Limpo (raio {raio:0} m): {pecas} pecas/NPCs, {est} piso/pilares, {zonas} safe zone, {atms} ATM, {vagas} vagas. Bases de jogador nao foram tocadas.";
         }
 
+        /// <summary>Salva o mundo, as estatísticas e os cofres agora (o wipe do painel chama antes do backup).</summary>
+        public string SalvarTudo()
+        {
+            Stats.Salvar(true); Cofres.SalvarTodos(); SaveManager.save();
+            return "mundo salvo";
+        }
+
+        /// <summary>Wipe de bases pelo painel: apaga as construções dos jogadores e mantém as safes:
+        /// peças do dono/staff, peças do /montar (montagens.tsv) e o que está dentro de safe zone,
+        /// mercado negro ou acampamento do caçador.</summary>
+        public string WipeBases()
+        {
+            var manter = new HashSet<ulong>((S.Donos ?? "").Split(new[] { ',', ' ', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => ulong.TryParse(x, out var v) ? v : 0).Where(v => v != 0));
+            foreach (var k in staff.Keys) manter.Add(k);
+            var idsB = new HashSet<uint>(); var idsE = new HashSet<uint>();
+            if (File.Exists(ArqMontagens))
+                foreach (var l in File.ReadAllLines(ArqMontagens))
+                {
+                    var c = l.Split('\t');
+                    if (c.Length > 2) foreach (var x in c[2].Split(',')) if (uint.TryParse(x, out var v)) idsB.Add(v);
+                    if (c.Length > 5) foreach (var x in c[5].Split(',')) if (uint.TryParse(x, out var v)) idsE.Add(v);
+                }
+            var areas = AreasDoMapa().Where(a => a.Tipo != "atm").Select(a => a.Pos).ToList();
+            bool Protegido(Vector3 p)
+            {
+                if (ZonaSeguraEm(p) != null) return true;
+                foreach (var a in areas) { float dx = a.x - p.x, dz = a.z - p.z; if (dx * dx + dz * dz < 70f * 70f) return true; }
+                return false;
+            }
+            int tirB = 0, tirE = 0, ficou = 0;
+            for (byte x = 0; x < Regions.WORLD_SIZE; x++)
+                for (byte y = 0; y < Regions.WORLD_SIZE; y++)
+                {
+                    var reg = BarricadeManager.regions[x, y];
+                    foreach (var d in reg.drops.Where(d => d?.model != null).ToList())
+                    {
+                        var dono = d.GetServersideData()?.owner ?? 0;
+                        if (manter.Contains(dono) || idsB.Contains(d.instanceID) || Protegido(d.model.position)) { ficou++; continue; }
+                        if (d.interactable is InteractableStorage bau) bau.items.clear();
+                        BarricadeManager.destroyBarricade(d, x, y, ushort.MaxValue); tirB++;
+                    }
+                    if (StructureManager.tryGetRegion(x, y, out var sreg))
+                        foreach (var d in sreg.drops.Where(d => d?.model != null).ToList())
+                        {
+                            var dono = d.GetServersideData()?.owner ?? 0;
+                            if (manter.Contains(dono) || idsE.Contains(d.instanceID) || Protegido(d.model.position)) { ficou++; continue; }
+                            StructureManager.destroyStructure(d, x, y, Vector3.zero); tirE++;
+                        }
+                }
+            pecasMontadas = null;
+            SaveManager.save();
+            return $"apagadas {tirB} pecas e {tirE} estruturas de jogadores; ficaram {ficou} (safes, dono e staff)";
+        }
+
         public string Desmontar()
         {
             if (!File.Exists(ArqMontagens)) return "Nada pra desfazer.";
