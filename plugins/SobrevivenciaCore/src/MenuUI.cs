@@ -50,8 +50,16 @@ namespace SobrevivenciaCore
         {
             EffectManager.onEffectButtonClicked += AoClicarBotao;
             EffectManager.onEffectTextCommitted += AoDigitar;
-            if (!MenuDisponivel)
-                Rocket.Core.Logging.Logger.LogWarning("SobrevivenciaCore: efeito do menu (51231) nao carregou. Falta o mod 3831267100 no WorkshopDownloadConfig? /menu fica so no chat.");
+        }
+
+        // Os mods do Workshop carregam depois do plugin: confere o efeito só quando o mapa já abriu.
+        bool menuConferido;
+        void ConferirMenu()
+        {
+            if (menuConferido || !Level.isLoaded) return;
+            menuConferido = true;
+            if (MenuDisponivel) Rocket.Core.Logging.Logger.Log("SobrevivenciaCore: menu com janela (efeito 51231) pronto.");
+            else Rocket.Core.Logging.Logger.LogWarning("SobrevivenciaCore: efeito do menu (51231) nao carregou. Falta o mod 3831267100 no WorkshopDownloadConfig? /menu fica so no chat.");
         }
 
         void DesligarMenu()
@@ -420,6 +428,7 @@ namespace SobrevivenciaCore
 
         void TickMenus()
         {
+            ConferirMenu();
             while (naThreadPrincipal.TryDequeue(out var a)) a();
             foreach (var kv in menus.ToList())
             {
