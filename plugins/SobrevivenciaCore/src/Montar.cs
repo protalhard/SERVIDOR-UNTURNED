@@ -186,6 +186,91 @@ namespace SobrevivenciaCore
                 .Select(i => i.Id).Distinct().ToList();
         }
 
+        /// <summary>Procura em volta do admin o lugar mais plano e livre pro modelo, leva ele até lá e marca no mapa.</summary>
+        public string ProcurarLugar(UnturnedPlayer adm, string area, int modelo, float raioBusca = 1500f)
+        {
+            if (!ModelosMontar().TryGetValue(area + modelo, out var pecas)) return "Modelo nao existe. Use /montar safe|negro|cacador 1|2|3";
+            float r = 0f;
+            foreach (var pc in pecas)
+            {
+                if (pc.Tipo == "zona") continue;
+                r = Mathf.Max(r, Mathf.Sqrt(pc.X * pc.X + pc.Y * pc.Y));
+                if (pc.Tipo == "cerca" || pc.Tipo == "parede") r = Mathf.Max(r, Mathf.Sqrt(pc.X2 * pc.X2 + pc.Y2 * pc.Y2));
+            }
+            r += 2f;
+            // pontos do chão do modelo (círculo de raio r): grosso pra varrer, fino pra conferir
+            List<Vector2> Pontos(int aneis, int porAnel)
+            {
+                var l = new List<Vector2> { Vector2.zero };
+                for (int a = 1; a <= aneis; a++)
+                    for (int k = 0; k < porAnel * a; k++)
+                    {
+                        float ang = k * Mathf.PI * 2f / (porAnel * a);
+                        l.Add(new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * (r * a / aneis));
+                    }
+                return l;
+            }
+            var grosso = Pontos(2, 6);  // 19 pontos
+            var fino = Pontos(4, 8);    // 81 pontos
+            float metade = Level.size / 2f - Level.border - r - 5f;
+            var origem = adm.Position;
+            float passo = 25f;
+            var candidatos = new List<KeyValuePair<float, Vector2>>();
+            for (float dx = -raioBusca; dx <= raioBusca; dx += passo)
+                for (float dz = -raioBusca; dz <= raioBusca; dz += passo)
+                {
+                    if (dx * dx + dz * dz > raioBusca * raioBusca) continue;
+                    float cx = origem.x + dx, cz = origem.z + dz;
+                    if (Mathf.Abs(cx) > metade || Mathf.Abs(cz) > metade) continue;
+                    float mn = float.MaxValue, mx = float.MinValue;
+                    foreach (var q in grosso)
+                    {
+                        float h = LevelGround.getHeight(new Vector3(cx + q.x, 0f, cz + q.y));
+                        if (h < mn) mn = h; if (h > mx) mx = h;
+                    }
+                    candidatos.Add(new KeyValuePair<float, Vector2>(mx - mn, new Vector2(cx, cz)));
+                }
+            if (candidatos.Count == 0) return "Nao achei espaco dentro do mapa aqui. Va mais pro meio do mapa e tente de novo.";
+            // confere os 40 melhores com o chão de verdade (casa, pedra, água, árvores)
+            var melhores = new List<(float nota, float desnivel, int obst, int arv, Vector3 pos)>();
+            foreach (var c in candidatos.OrderBy(x => x.Key).Take(40))
+            {
+                float cx = c.Value.x, cz = c.Value.y;
+                float mn = float.MaxValue, mx = float.MinValue; int obst = 0; bool agua = false;
+                foreach (var q in fino)
+                {
+                    var v = new Vector3(cx + q.x, LevelGround.getHeight(new Vector3(cx + q.x, 0f, cz + q.y)), cz + q.y);
+                    float h = Chao(new Vector3(v.x, v.y + 5f, v.z));
+                    if (h > v.y + 1.5f) obst++;
+                    if (SDG.Framework.Water.WaterUtility.isPointUnderwater(new Vector3(v.x, h + .3f, v.z))) agua = true;
+                    if (h < mn) mn = h; if (h > mx) mx = h;
+                }
+                if (agua) continue;
+                var centro = new Vector3(cx, LevelGround.getHeight(new Vector3(cx, 0f, cz)), cz);
+                var regs = new List<RegionCoordinate>(); var arv = new List<Transform>();
+                Regions.getRegionsInRadius(centro, r, regs);
+                ResourceManager.getResourcesInRadius(centro, r * r, regs, arv);
+                float d = mx - mn;
+                // nota: desnível pesa mais; casa/pedra no meio pesa muito; árvore pesa pouco (ela é cortada)
+                melhores.Add((d + obst * 3f + arv.Count * .05f, d, obst, arv.Count, centro));
+            }
+            if (melhores.Count == 0) return "Por perto so achei lugar com agua. Ande pra outra regiao e tente de novo.";
+            melhores = melhores.OrderBy(x => x.nota).ToList();
+            // não repete lugares colados: pega os 3 melhores com 150 m de distância entre eles
+            var top = new List<(float nota, float desnivel, int obst, int arv, Vector3 pos)>();
+            foreach (var m in melhores)
+                if (top.All(t => (t.pos - m.pos).sqrMagnitude > 150f * 150f)) { top.Add(m); if (top.Count == 3) break; }
+            var best = top[0];
+            adm.Player.teleportToLocationUnsafe(best.pos + Vector3.up * 1.5f, adm.Player.look.yaw);
+            adm.Player.quests.replicateSetMarker(true, best.pos, "LUGAR PLANO");
+            string Desc((float nota, float desnivel, int obst, int arv, Vector3 pos) m) =>
+                $"desnivel {m.desnivel:0.0} m" + (m.obst > 0 ? $", {m.obst} pontos em casa/pedra" : "") + $" ({Vector3.Distance(origem, m.pos):0} m de onde voce estava)";
+            var outros = top.Skip(1).Select(Desc).ToList();
+            return $"Te trouxe pro lugar mais plano num raio de {raioBusca:0} m: {Desc(best)}. Marquei no mapa (M). " +
+                   $"Olhe pra onde quer a entrada e use /montar {area} {modelo}." +
+                   (outros.Count > 0 ? " Outras opcoes: " + string.Join(" | ", outros) + ". Use /montar " + area + " " + modelo + " procurar de novo em outro lugar pra ver mais." : "");
+        }
+
         public string Montar(UnturnedPlayer adm, string area, int modelo, bool forcar = false, bool testar = false)
         {
             if (!ModelosMontar().TryGetValue(area + modelo, out var pecas)) return "Modelo nao existe. Use /montar safe|negro|cacador 1|2|3";
@@ -239,7 +324,7 @@ namespace SobrevivenciaCore
             if (testar)
                 return relatorio + (desnivel <= S.MontarDesnivelMax && obstaculos == 0 ? " Lugar bom, pode montar." : " Procure um lugar mais plano e livre.");
             if (!forcar && (desnivel > S.MontarDesnivelMax || obstaculos > 3))
-                return relatorio + $" Muito torto/ocupado pra montar aqui: ia ficar peca enterrada e flutuando. Ande pro lado mais plano (teste com /montar {area} {modelo} testar) ou use /montar {area} {modelo} forcar.";
+                return relatorio + $" Muito torto/ocupado pra montar aqui: ia ficar peca enterrada e flutuando. Use /montar {area} {modelo} procurar (te leva pro lugar mais plano por perto) ou /montar {area} {modelo} forcar.";
 
             // tira as árvores do lugar (cortadas; a safe não deixa elas voltarem)
             foreach (var arv in arvores)
@@ -500,13 +585,13 @@ namespace SobrevivenciaCore
     {
         public override string Name => "montar";
         public override string Help => "Monta safe, mercado negro ou cacador em volta de voce (dono).";
-        public override string Syntax => "<safe|negro|cacador> <1|2|3> [testar|forcar]";
+        public override string Syntax => "<safe|negro|cacador> <1|2|3> [testar|forcar|procurar]";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
             if (a.Length < 1)
             {
-                Chat.Info(p, "Fique no centro, olhe pra onde quer a ENTRADA e use: /montar safe 1 | /montar negro 2 | /montar cacador 3. Antes, /montar safe 1 testar mede o chao.");
+                Chat.Info(p, "Fique no centro, olhe pra onde quer a ENTRADA e use: /montar safe 1 | /montar negro 2 | /montar cacador 3. Antes, /montar safe 1 procurar acha o lugar mais plano e /montar safe 1 testar mede o chao.");
                 return;
             }
             var area = a[0].ToLowerInvariant();
@@ -517,6 +602,12 @@ namespace SobrevivenciaCore
             bool forcar = a.Any(x => x.Equals("forcar", StringComparison.OrdinalIgnoreCase) || x.Equals("forçar", StringComparison.OrdinalIgnoreCase));
             bool testar = a.Any(x => x.Equals("testar", StringComparison.OrdinalIgnoreCase) || x.Equals("teste", StringComparison.OrdinalIgnoreCase));
             P.ModelosRecarregar();
+            if (a.Any(x => x.Equals("procurar", StringComparison.OrdinalIgnoreCase) || x.Equals("achar", StringComparison.OrdinalIgnoreCase)))
+            {
+                Chat.Info(p, "Procurando o lugar mais plano em volta (ate 1,5 km)...");
+                Chat.Ok(p, P.ProcurarLugar(p, area, modelo));
+                return;
+            }
             Chat.Ok(p, P.Montar(p, area, modelo, forcar, testar));
         }
     }

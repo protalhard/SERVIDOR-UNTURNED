@@ -163,7 +163,7 @@ namespace SobrevivenciaCore
         public float MontarEspacoCerca = 3f;
         public float MontarEspacoParede = 2f;
         // /montar: diferença máxima (m) entre o ponto mais alto e o mais baixo do chão do modelo. Acima disso pede "forcar".
-        public float MontarDesnivelMax = 6f;
+        public float MontarDesnivelMax = 10f;
         // peça=id ou peça@area=id (area: safe, negro, cacador). id 0 = não coloca.
         public List<string> MontarPecas;
 
@@ -333,6 +333,13 @@ namespace SobrevivenciaCore
             {
                 if (string.IsNullOrWhiteSpace(ReinicioDiario)) ReinicioDiario = "07:00";
                 VersaoPadroes = 15;
+                mudou = true;
+            }
+            // v16: California 2 é montanhoso; com as cercas inclinando, 10 m de desnível fica bom
+            if (VersaoPadroes < 16)
+            {
+                if (MontarDesnivelMax < 10f) MontarDesnivelMax = 10f;
+                VersaoPadroes = 16;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão
