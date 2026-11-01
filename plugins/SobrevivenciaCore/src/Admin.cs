@@ -18,7 +18,7 @@ namespace SobrevivenciaCore
 
         /// <summary>Permissões que o dono marca pra cada staff.</summary>
         public static readonly string[] PermissoesAdmin =
-            { "Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos" };
+            { "Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos", "Kits" };
 
         // botão -> permissão
         static readonly Dictionary<string, string> BotaoPermissao = new Dictionary<string, string>
@@ -74,22 +74,27 @@ namespace SobrevivenciaCore
             arqLogAdmin = Path.Combine(Directory, "admin_log.txt");
             staff.Clear();
             if (!File.Exists(arqStaff)) return;
+            bool migrar = false;
             foreach (var l in File.ReadAllLines(arqStaff))
             {
                 var c = l.Split('\t');
                 if (c.Length < 3 || !ulong.TryParse(c[0], out var id)) continue;
-                staff[id] = new MembroStaff
+                var m = new MembroStaff
                 {
                     Nome = c[1],
                     Perms = new HashSet<string>(c[2].Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Where(x => PermissoesAdmin.Contains(x))),
                 };
+                // arquivo antigo (sem a 4a coluna): todo admin ganha a permissao nova de kits uma vez
+                if (c.Length < 4) { m.Perms.Add("Kits"); migrar = true; }
+                staff[id] = m;
             }
+            if (migrar) SalvarStaff();
         }
 
         void SalvarStaff()
         {
             var tmp = arqStaff + ".tmp";
-            File.WriteAllLines(tmp, staff.Select(kv => kv.Key + "\t" + kv.Value.Nome.Replace('\t', ' ') + "\t" + string.Join(",", kv.Value.Perms)));
+            File.WriteAllLines(tmp, staff.Select(kv => kv.Key + "\t" + kv.Value.Nome.Replace('\t', ' ') + "\t" + string.Join(",", kv.Value.Perms) + "\t2"));
             if (File.Exists(arqStaff)) File.Delete(arqStaff);
             File.Move(tmp, arqStaff);
         }
@@ -100,7 +105,7 @@ namespace SobrevivenciaCore
         public bool Pode(UnturnedPlayer p, string perm)
             => EhDono(p) || (p != null && staff.TryGetValue(Id(p), out var m) && m.Perms.Contains(perm));
 
-        void LogAdmin(UnturnedPlayer adm, string acao)
+        internal void LogAdmin(UnturnedPlayer adm, string acao)
         {
             var linha = $"{DateTime.Now:dd/MM HH:mm:ss} {Chat.Limpar(adm?.CharacterName ?? "console")} ({(adm != null ? Id(adm) : 0)}): {acao}";
             Rocket.Core.Logging.Logger.Log("[ADMIN] " + linha);
@@ -774,22 +779,40 @@ namespace SobrevivenciaCore
         }
     }
 
-    /// <summary>/staff: o dono lista ou tira alguém da staff mesmo offline.</summary>
+    /// <summary>/staff: o dono lista a staff, liga/desliga permissões ou tira alguém (mesmo offline).</summary>
     public class CmdStaff : ComandoSistema
     {
         public override string Name => "staff";
-        public override string Help => "Lista a staff ou tira alguem (dono).";
-        public override string Syntax => "[remover <steamid>]";
+        public override string Help => "Gerencia a staff (dono).";
+        public override string Syntax => "[remover <jogador|steamid>] | [<jogador|steamid> <permissao> on|off]";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (!P.EhDono(p)) { Chat.Erro(p, "So o dono usa isso."); return; }
-            if (a.Length >= 2 && a[0].Equals("remover", StringComparison.OrdinalIgnoreCase) && ulong.TryParse(a[1], out var id))
+            if (a.Length >= 2 && a[0].Equals("remover", StringComparison.OrdinalIgnoreCase))
             {
-                Chat.Info(p, P.RemoverStaff(p, id) ? "Removido da staff." : "Esse Steam ID nao esta na staff.");
+                var r = AcharId(a[1]);
+                if (r == 0) { Chat.Erro(p, "Jogador nao encontrado (nome se estiver online, ou Steam ID)."); return; }
+                Chat.Info(p, P.RemoverStaffSite(Plugin.Id(p), p.CharacterName, r));
                 return;
             }
-            Chat.Para(p, Cor(S.CorPrincipal, Chat.Forte("STAFF")) + Cor(S.CorApagada, "  (/staff remover steamid)"));
+            if (a.Length >= 3)
+            {
+                var alvo = AcharId(a[0]);
+                if (alvo == 0) { Chat.Erro(p, "Jogador nao encontrado (nome se estiver online, ou Steam ID)."); return; }
+                bool ligar = a[2].Equals("on", StringComparison.OrdinalIgnoreCase) || a[2].Equals("sim", StringComparison.OrdinalIgnoreCase);
+                Chat.Info(p, P.MudarPermissao(Plugin.Id(p), p.CharacterName, alvo, a[1], ligar));
+                return;
+            }
+            Chat.Para(p, Cor(S.CorPrincipal, Chat.Forte("STAFF")) + Cor(S.CorApagada, "  (/staff nome Kits off  |  /staff remover nome)"));
             foreach (var l in P.ListaStaff()) Chat.Para(p, Cor(S.CorTexto, l));
+            Chat.Para(p, Cor(S.CorApagada, "Permissoes: " + string.Join(", ", Plugin.PermissoesAdmin)));
+        }
+
+        static ulong AcharId(string s)
+        {
+            if (s.StartsWith("7656") && ulong.TryParse(s, out var id)) return id;
+            var j = UnturnedPlayer.FromName(s);
+            return j != null ? Plugin.Id(j) : 0;
         }
     }
 

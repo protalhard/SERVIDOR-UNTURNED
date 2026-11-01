@@ -611,6 +611,16 @@ namespace SobrevivenciaCore
             {
                 var c = l.Split('\t');
                 if (c.Length < 3 || !ulong.TryParse(c[1], out var alvo) || !ulong.TryParse(c[2], out var quem)) continue;
+                // staff: só o dono (perm = campo 4, ligar = campo 3 "1")
+                if (c[0] == "perm" || c[0] == "staff_remover")
+                {
+                    var donoNome = NomeDe(quem) + " (site)";
+                    var r = c[0] == "perm" ? MudarPermissao(quem, donoNome, alvo, c.Length > 4 ? c[4] : "", c.Length > 3 && c[3] == "1")
+                                           : RemoverStaffSite(quem, donoNome, alvo);
+                    if (!EhDono(quem)) LogGuard($"COMANDO NEGADO do site: {c[0]} por {quem} (nao e dono)");
+                    else Rocket.Core.Logging.Logger.Log("[ADMIN] site: " + r);
+                    continue;
+                }
                 // confere de novo a permissão aqui (o site já conferiu)
                 bool podeBan = EhDono(quem) || (staff.TryGetValue(quem, out var m) && m.Perms.Contains("Ban"));
                 if (!podeBan) { LogGuard($"COMANDO NEGADO do site: {c[0]} por {quem} (sem permissao Ban)"); continue; }

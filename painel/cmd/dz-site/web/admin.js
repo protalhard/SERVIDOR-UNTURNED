@@ -5,6 +5,10 @@
   const $ = (s) => document.querySelector(s);
   let eu = null, aba = "banidos", log = "admin";
   const dados = { banidos: [], suspeitos: [], reports: [] };
+  let staff = { staff: [], permissoes: [] };
+  const nomesPerm = { Kick: "Kick", Ban: "Banir/desbanir", Tp: "Ir até", Trazer: "Trazer", Curar: "Curar", Matar: "Matar",
+    Congelar: "Congelar", Spy: "Foto da tela", Itens: "Spawnar itens", Visao: "Visão/espião", Deus: "Imortal", Mundo: "Dia/noite e anúncio",
+    Airdrop: "Airdrop", Reiniciar: "Reiniciar servidor", Precos: "Preços das lojas", Kits: "Qualquer kit sem espera" };
 
   function el(tag, props, ...filhos) {
     const e = document.createElement(tag);
@@ -44,14 +48,14 @@
     return r.json();
   }
   async function acao(acao, steam, horas, motivo) {
-    if (!eu.ban) { aviso("Voce nao tem a permissao Ban.", true); return false; }
+    if ((acao === "perm" || acao === "staff_remover") ? !eu.dono : !eu.ban) { aviso("Voce nao tem a permissao Ban.", true); return false; }
     const r = await fetch("/api/admin/acao", {
       method: "POST", credentials: "same-origin",
       headers: { "Content-Type": "application/json", "X-DZ": "1" },
       body: JSON.stringify({ acao, steam, horas: Number(horas) || 0, motivo: motivo || "" }),
     });
     if (!r.ok) { aviso("Erro: " + (await r.text()), true); return false; }
-    aviso("Enviado pro servidor. Atualiza em alguns segundos (o servidor precisa estar ligado).");
+    aviso(acao === "perm" ? "Enviado. Muda em alguns segundos (o servidor precisa estar ligado)." : "Enviado pro servidor. Atualiza em alguns segundos (o servidor precisa estar ligado).");
     setTimeout(carregar, 3000); setTimeout(carregar, 8000);
     return true;
   }
@@ -104,6 +108,28 @@
       lista("O que ele estava fazendo", r.Historico));
   }
 
+  function cardStaff(m) {
+    const tem = new Set(m.Perms || []);
+    return el("article", { class: "adm-card" },
+      el("h3", {}, m.Nome || m.Steam, steamLink(m.Steam), el("span", { class: "adm-tag" }, tem.size + " permissões")),
+      el("div", { class: "adm-perms" }, staff.permissoes.map((p) => el("label", { class: "adm-perm" + (tem.has(p) ? " on" : "") },
+        el("input", { type: "checkbox", checked: tem.has(p) || null, onchange: (ev) => acao("perm", m.Steam, ev.target.checked ? 1 : 0, p) }),
+        nomesPerm[p] || p))),
+      el("div", { class: "adm-acoes" },
+        el("button", { class: "adm-btn perigo", onclick: () => { if (confirm(`Tirar ${m.Nome} da staff?`)) acao("staff_remover", m.Steam); } }, "TIRAR DA STAFF")));
+  }
+  function desenharStaff() {
+    const S = $("#staff");
+    const novo = el("form", { class: "adm-caixa" },
+      el("h2", {}, "Colocar alguém na staff"),
+      el("label", {}, "Steam ID ", el("input", { name: "steam", placeholder: "7656119...", required: true, pattern: "7656[0-9]{13}" })),
+      el("p", { class: "adm-tag" }, "Entra com a permissão de pegar kits. Depois marque o resto abaixo."),
+      el("button", { class: "adm-btn ok", type: "submit" }, "ADICIONAR"));
+    novo.addEventListener("submit", (ev) => { ev.preventDefault(); acao("perm", new FormData(novo).get("steam"), 1, "Kits"); novo.reset(); });
+    const itens = staff.staff.filter(filtro);
+    S.replaceChildren(novo, ...(itens.length ? itens.map(cardStaff) : [el("div", { class: "adm-vazio" }, "Ninguém na staff ainda.")]));
+  }
+
   function desenhar() {
     $("#n-banidos").textContent = dados.banidos.length;
     $("#n-suspeitos").textContent = dados.suspeitos.length;
@@ -113,6 +139,8 @@
     $("#form-banir").hidden = aba !== "banir";
     $("#logs").hidden = aba !== "logs";
     $("#busca").hidden = aba === "banir" || aba === "logs";
+    $("#staff").hidden = aba !== "staff";
+    if (aba === "staff") desenharStaff();
     if (L.hidden) return;
     const f = { banidos: cardBanido, suspeitos: cardSuspeito, reports: cardReport }[aba];
     const itens = dados[aba].filter(filtro);
@@ -123,6 +151,7 @@
     try {
       const [b, s, r] = await Promise.all([api("/api/admin/banidos"), api("/api/admin/suspeitos"), api("/api/admin/reports")]);
       Object.assign(dados, { banidos: b, suspeitos: s, reports: r });
+      if (eu.dono) staff = await api("/api/admin/staff");
       desenhar();
       if (aba === "logs") carregarLog();
     } catch (e) { aviso("Erro ao carregar: " + e.message, true); }
@@ -158,6 +187,7 @@
     }
     $("#quem").replaceChildren(el("span", {}, (eu.nome || eu.steam) + (eu.dono ? " (dono)" : eu.ban ? " (staff)" : " (staff, sem permissao de ban)")), el("a", { href: "/sair" }, "sair"));
     $("#dentro").hidden = false;
+    $("#aba-staff").hidden = !eu.dono;
     carregar();
     setInterval(carregar, 30000);
   })();

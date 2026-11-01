@@ -48,3 +48,8 @@
 .adm-zoom img { max-width: 94vw; max-height: 92vh; border-radius: 8px; }
 @media (max-width: 640px) { .adm-card { grid-template-columns: 1fr; } .adm-acoes { grid-column: 1; grid-row: auto; flex-direction: row; flex-wrap: wrap; } }
 .adm-info .adm-tag { justify-self: start; }
+.adm-perms { grid-column: 1; display: flex; flex-wrap: wrap; gap: 6px; }
+.adm-perm { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--borda); cursor: pointer; color: var(--fraco); }
+.adm-perm.on { color: var(--c2); border-color: var(--c2); background: var(--c-20); }
+.adm-perm input { accent-color: var(--c2); }
+#staff .adm-caixa label { display: block; margin: 8px 0; }

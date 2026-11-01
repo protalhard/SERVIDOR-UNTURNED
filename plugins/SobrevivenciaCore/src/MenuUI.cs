@@ -163,6 +163,7 @@ namespace SobrevivenciaCore
 
         string StatusKit(UnturnedPlayer p, Ficha f, Kit k)
         {
+            if (Pode(p, "Kits")) return C(Verde, "PEGAR (ADM)");
             if (!TemPermissao(p, k.Permissao)) return C(Vermelho, "VIP");
             if (f.Abates < k.Abates) return C(Vermelho, $"{f.Abates}/{k.Abates} ABATES");
             var resta = Stats.UltimoUsoKit(f.Id, k.Nome) + k.Espera - Estatisticas.Agora;
@@ -202,7 +203,7 @@ namespace SobrevivenciaCore
                 if (idx >= S.Kits.Count) break;
                 var k = S.Kits[idx];
                 var resta = Stats.UltimoUsoKit(f.Id, k.Nome) + k.Espera - Estatisticas.Agora;
-                if (resta >= 0 && resta <= k.Espera && TemPermissao(p, k.Permissao) && f.Abates >= k.Abates)
+                if (resta >= 0 && resta <= k.Espera && !Pode(p, "Kits") && TemPermissao(p, k.Permissao) && f.Abates >= k.Abates)
                     T(p, "Kit_" + (i + 1) + "_Status", StatusKit(p, f, k));
             }
         }

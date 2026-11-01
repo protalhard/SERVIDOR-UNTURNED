@@ -7,7 +7,7 @@
 <title>Painel Admin · DAY Z BRASIL</title>
 <link rel="icon" href="/img/icon64.png" type="image/png">
 <link rel="stylesheet" href="/site.css?v=10">
-<link rel="stylesheet" href="/admin.css?v=1">
+<link rel="stylesheet" href="/admin.css?v=2">
 </head>
 <body class="adm">
 <header class="adm-topo">
@@ -29,6 +29,7 @@
       <button data-aba="reports">Reports <span id="n-reports"></span></button>
       <button data-aba="banir">Banir por Steam ID</button>
       <button data-aba="logs">Logs</button>
+      <button data-aba="staff" id="aba-staff" hidden>Staff</button>
     </nav>
     <div class="adm-barra">
       <input id="busca" placeholder="Buscar nome ou Steam ID" autocomplete="off">
@@ -42,6 +43,7 @@
       <label>Motivo <input name="motivo" maxlength="200" required></label>
       <button class="adm-btn perigo" type="submit">BANIR</button>
     </form>
+    <div id="staff" class="adm-lista" hidden></div>
     <div id="logs" hidden>
       <div class="adm-sub"><button data-log="admin" class="ativa">Ações da staff</button><button data-log="guard">DZ GUARD</button></div>
       <pre id="log-texto" class="adm-log"></pre>
@@ -49,6 +51,6 @@
   </section>
 </main>
 <div id="zoom" class="adm-zoom" hidden><img alt=""></div>
-<script src="/admin.js?v=1"></script>
+<script src="/admin.js?v=2"></script>
 </body>
 </html>

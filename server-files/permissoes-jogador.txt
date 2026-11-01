@@ -44,3 +44,5 @@ report
 banidos
 desbanir
 espiao
+item
+staff

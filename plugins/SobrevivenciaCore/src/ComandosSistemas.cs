@@ -329,6 +329,7 @@ namespace SobrevivenciaCore
         internal static string Status(Plugin P, UnturnedPlayer p, Ficha f, Kit k)
         {
             var S = P.S;
+            if (P.Pode(p, "Kits")) return Chat.Cor(S.CorOk, "[PEGAR - ADMIN]");
             if (!P.TemPermissao(p, k.Permissao)) return Chat.Cor(S.CorPerigo, k.Permissao == "discord" ? "[VINCULE NO DISCORD]" : "[VIP]");
             if (f.Abates < k.Abates) return Chat.Cor(S.CorPerigo, $"[{f.Abates}/{k.Abates} abates]");
             var resta = P.Stats.UltimoUsoKit(f.Id, k.Nome) + k.Espera - Estatisticas.Agora;
@@ -354,6 +355,15 @@ namespace SobrevivenciaCore
         internal static bool Pegar(Plugin P, UnturnedPlayer p, Kit k, out string msg)
         {
             var f = P.FichaDe(p);
+            // admin com a permissao Kits pega qualquer kit, sem espera, sem abates e sem VIP (fica no log)
+            if (P.Pode(p, "Kits"))
+            {
+                foreach (var i in k.Itens ?? new List<ItemKit>())
+                    if (Itens.Existe(i.Id)) Itens.Dar(p, i.Id, i.Quantidade);
+                P.LogAdmin(p, $"PEGOU KIT {k.Nome} (admin, sem espera)");
+                msg = $"Voce recebeu o kit {k.Nome} (admin).";
+                return true;
+            }
             if (!P.TemPermissao(p, k.Permissao)) { msg = k.Permissao == "discord" ? "Vincule sua Steam no nosso Discord (canal #vincular) pra liberar esse kit." : "Esse kit e VIP. Veja a Loja VIP no site."; return false; }
             if (f.Abates < k.Abates) { msg = $"Precisa de {k.Abates} abates. Voce tem {f.Abates}."; return false; }
             var resta = P.Stats.UltimoUsoKit(f.Id, k.Nome) + k.Espera - Estatisticas.Agora;

@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,6 +27,9 @@ type acessoAdmin struct {
 	Dono  bool   `json:"dono"`
 	Ban   bool   `json:"ban"`
 }
+
+// permissoesAdmin: as mesmas do plugin (Plugin.PermissoesAdmin).
+var permissoesAdmin = []string{"Kick", "Ban", "Tp", "Trazer", "Curar", "Matar", "Congelar", "Spy", "Itens", "Visao", "Deus", "Mundo", "Airdrop", "Reiniciar", "Precos", "Kits"}
 
 func acessoDe(id string) acessoAdmin {
 	a := acessoAdmin{Steam: id}
@@ -208,6 +212,35 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 		w.Header().Set("Cache-Control", "private, max-age=3600")
 		http.ServeFile(w, r, filepath.Join(fonte.Pasta, "spy", nome))
 	})
+	// staff: só o dono vê e mexe (o plugin confere de novo)
+	mux.HandleFunc("/api/admin/staff", func(w http.ResponseWriter, r *http.Request) {
+		a, ok := exigirStaff(w, r)
+		if !ok {
+			return
+		}
+		if !a.Dono {
+			http.Error(w, "so o dono", http.StatusForbidden)
+			return
+		}
+		type membro struct {
+			Steam, Nome string
+			Perms       []string
+		}
+		l := []membro{}
+		for _, c := range lerTSV("staff.tsv", 0) {
+			if len(c) < 3 {
+				continue
+			}
+			var ps []string
+			for _, p := range strings.Split(c[2], ",") {
+				if p != "" {
+					ps = append(ps, p)
+				}
+			}
+			l = append(l, membro{Steam: c[0], Nome: c[1], Perms: nn(ps)})
+		}
+		jsonOK(w, map[string]any{"staff": l, "permissoes": permissoesAdmin})
+	})
 	var muCmd sync.Mutex
 	reSteam := regexp.MustCompile(`^7656[0-9]{13}$`)
 	mux.HandleFunc("/api/admin/acao", func(w http.ResponseWriter, r *http.Request) {
@@ -219,10 +252,6 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 		if !ok {
 			return
 		}
-		if !a.Ban {
-			http.Error(w, "voce nao tem a permissao Ban", http.StatusForbidden)
-			return
-		}
 		var q struct {
 			Acao, Steam, Motivo string
 			Horas               float64
@@ -231,7 +260,22 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 			http.Error(w, "pedido invalido", http.StatusBadRequest)
 			return
 		}
-		if q.Acao != "desbanir" && q.Acao != "banir" && q.Acao != "ignorar" {
+		switch q.Acao {
+		case "desbanir", "banir", "ignorar":
+			if !a.Ban {
+				http.Error(w, "voce nao tem a permissao Ban", http.StatusForbidden)
+				return
+			}
+		case "perm", "staff_remover":
+			if !a.Dono {
+				http.Error(w, "so o dono mexe na staff", http.StatusForbidden)
+				return
+			}
+			if q.Acao == "perm" && !slices.Contains(permissoesAdmin, q.Motivo) {
+				http.Error(w, "permissao invalida", http.StatusBadRequest)
+				return
+			}
+		default:
 			http.Error(w, "acao invalida", http.StatusBadRequest)
 			return
 		}
