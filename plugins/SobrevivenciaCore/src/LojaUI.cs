@@ -415,6 +415,7 @@ namespace SobrevivenciaCore
             switch (botao)
             {
                 case "Loja_Fechar": FecharLoja(p); return true;
+                case "Loja_Buscar": e.Pagina = 0; e.Sel = -1; Recarregar(p, e); return true;
                 case "Loja_ModoComprar": e.Vender = false; e.Cat = 0; e.Sel = -1; e.Pagina = 0; Recarregar(p, e); return true;
                 case "Loja_ModoVender": e.Vender = true; e.Cat = 0; e.Sel = -1; e.Pagina = 0; Recarregar(p, e); return true;
                 case "Itens_Anterior": e.Pagina--; PreencherItensLoja(p, e); return true;

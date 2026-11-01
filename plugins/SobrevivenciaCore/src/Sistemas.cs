@@ -92,6 +92,8 @@ namespace SobrevivenciaCore
         // Teleportes
         public int WarpEspera = 15;
         public int WarpIntervalo = 30;
+        /// <summary>Warp pra safe só vale até X segundos depois de renascer (morreu). 0 = livre sempre.</summary>
+        public int WarpSafeAposMorrer = 60;
         public int HomeEspera = 10;
         public int HomeIntervalo = 120;
         public int TpaEspera = 10;

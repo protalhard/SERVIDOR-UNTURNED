@@ -286,6 +286,7 @@ namespace SobrevivenciaCore
             var a = AlvoDe(e);
             switch (botao)
             {
+                case "Adm_Buscar": e.Pagina = 0; PreencherListaAdmin(p, e); break;
                 case "Adm_Jog_Anterior": e.Pagina--; PreencherListaAdmin(p, e); break;
                 case "Adm_Jog_Proximo": e.Pagina++; PreencherListaAdmin(p, e); break;
 
@@ -535,6 +536,7 @@ namespace SobrevivenciaCore
             }
             switch (botao)
             {
+                case "Preco_Buscar": e.PrecoPagina = 0; PreencherPrecos(p, e); break;
                 case "Preco_Loja": e.PrecoLoja++; e.PrecoPagina = 0; e.PrecoSel = null; PreencherPrecos(p, e); break;
                 case "Preco_Anterior": e.PrecoPagina--; PreencherPrecos(p, e); break;
                 case "Preco_Proximo": e.PrecoPagina++; PreencherPrecos(p, e); break;

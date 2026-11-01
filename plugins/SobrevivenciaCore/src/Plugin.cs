@@ -167,8 +167,15 @@ namespace SobrevivenciaCore
             AoSair(p);
         }
 
+        readonly Dictionary<ulong, float> renasceuEm = new Dictionary<ulong, float>();
+
+        /// <summary>Segundos desde que o jogador renasceu (depois de morrer). -1 = não morreu desde que entrou.</summary>
+        public float SegundosDesdeRenascer(UnturnedPlayer p)
+            => renasceuEm.TryGetValue(p.CSteamID.m_SteamID, out var t) ? Time.realtimeSinceStartup - t : -1f;
+
         void AoRenascer(UnturnedPlayer p, Vector3 pos, byte angulo)
         {
+            renasceuEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
             GuardLiberar(p.CSteamID.m_SteamID, 8f);
             StartCoroutine(Depois(1f, p, () => MostrarHud(p)));
             if (Configuration.Instance.KitAoRenascer)

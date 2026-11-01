@@ -43,6 +43,12 @@ namespace SobrevivenciaCore
             var zonas = P.Configuration.Instance.ZonasSeguras.Where(z => z.Definido).ToList();
             if (zonas.Count == 0) { Chat.Erro(p, "Ainda nao tem safe zone marcada."); return; }
             if (P.ZonaSeguraEm(p.Position) != null) { Chat.Info(p, "Voce ja esta na safe zone."); return; }
+            if (S.WarpSafeAposMorrer > 0)
+            {
+                float desde = P.SegundosDesdeRenascer(p);
+                if (desde < 0 || desde > S.WarpSafeAposMorrer)
+                { Chat.Erro(p, $"O warp pra safe so funciona ate {S.WarpSafeAposMorrer}s depois de morrer."); return; }
+            }
             if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
             if (P.EmIntervalo(p, "safe", out var ri)) { Chat.Erro(p, $"Espere {Chat.Tempo(ri)} pra usar de novo."); return; }
             var alvo = zonas.OrderBy(z => Vector3.Distance(p.Position, new Vector3(z.X, z.Y, z.Z))).First();

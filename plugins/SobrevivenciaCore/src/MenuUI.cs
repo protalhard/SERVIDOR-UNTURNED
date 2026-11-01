@@ -263,6 +263,13 @@ namespace SobrevivenciaCore
             }
             V(p, "Homes_Vazio", minhas.Count <= 2);
             T(p, "Homes_Contador", $"{minhas.Count} / {max} homes");
+            if (S.WarpSafeAposMorrer > 0)
+            {
+                float desde = SegundosDesdeRenascer(p);
+                int resta = desde < 0 ? 0 : Mathf.Max(0, S.WarpSafeAposMorrer - Mathf.FloorToInt(desde));
+                T(p, "Homes_Safe_Texto", $"So funciona ate {S.WarpSafeAposMorrer}s depois de morrer. Fique parado na contagem: se mexer ou levar dano, cancela."
+                    + (resta > 0 ? $" Liberado agora: {resta}s." : " Agora: bloqueado."));
+            }
         }
 
         void PreencherPerfil(UnturnedPlayer p)
@@ -325,7 +332,7 @@ namespace SobrevivenciaCore
                 if (CliqueGaragem(p, botao) || CliqueAtm(p, botao) || CliqueMarcar(p, botao)) return;
                 if (CliqueLoja(p, botao)) return;
                 if (!menus.TryGetValue(Id(p), out var e)) return;
-                if (botao.StartsWith("Adm_")) { CliqueAdmin(p, e, botao); return; }
+                if (botao.StartsWith("Adm_") || botao.StartsWith("Preco_")) { CliqueAdmin(p, e, botao); return; }
                 if (botao.StartsWith("Aba_")) { MostrarAba(p, e, botao.Substring(4)); return; }
                 if (botao.StartsWith("Kit_") && int.TryParse(botao.Substring(4), out var nk)) { CliqueKit(p, e, nk); return; }
                 if (botao.StartsWith("Vip_")) { CliqueVip(p, botao); return; }
@@ -434,7 +441,7 @@ namespace SobrevivenciaCore
             {
                 var p = UnturnedPlayer.FromPlayer(pl);
                 if (p == null || DigitouAtm(p, campo, texto) || DigitouLoja(p, campo, texto) || !menus.ContainsKey(Id(p))) return;
-                if (campo.StartsWith("Adm_")) DigitouAdmin(p, campo, texto);
+                if (campo.StartsWith("Adm_") || campo.StartsWith("Preco_")) DigitouAdmin(p, campo, texto);
             }
             catch (Exception ex) { Rocket.Core.Logging.Logger.LogException(ex); }
         }

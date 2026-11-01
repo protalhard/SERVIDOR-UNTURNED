@@ -185,6 +185,7 @@ namespace SobrevivenciaCore
             var quem = Id(p);
             switch (botao)
             {
+                case "Adm_Lista_Buscar": l.Pagina = 0; break;
                 case "Adm_Lista_Anterior": l.Pagina--; break;
                 case "Adm_Lista_Proximo": l.Pagina++; break;
                 case "Adm_Lista_Desbanir":
