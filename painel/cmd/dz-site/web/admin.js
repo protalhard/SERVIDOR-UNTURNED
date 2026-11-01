@@ -18,7 +18,8 @@
     jogadores: ["Jogadores", "Todo mundo que já entrou no servidor."], banidos: ["Banidos", "Bans com motivo, prova e foto."],
     suspeitos: ["Suspeitos", "O que o DZ GUARD (anti-cheat) achou estranho."], reports: ["Reports", "Denúncias feitas com /report no jogo."],
     banir: ["Banir por Steam ID", "Funciona com o jogador online ou offline."], logs: ["Logs", "Ações da staff, anti-cheat e raids."],
-    staff: ["Staff", "Quem é da staff e o que cada um pode fazer."] };
+    staff: ["Staff", "Quem é da staff e o que cada um pode fazer."],
+    faccoes: ["Facções", "Todas as facções: membros, cofre e quando alguém entrou pela última vez."] };
 
   const ICONES = {
     painel: '<path d="M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z"/>',
@@ -93,7 +94,7 @@
     try { return JSON.parse(t); } catch { return {}; }
   }
   async function acao(acao, steam, horas, motivo) {
-    if ((acao === "perm" || acao === "staff_remover") ? !eu.dono : !eu.ban) { aviso("Você não tem a permissão Ban.", true); return false; }
+    if ((acao === "perm" || acao === "staff_remover" || acao === "faccao_dissolver") ? !eu.dono : !eu.ban) { aviso("Você não tem a permissão Ban.", true); return false; }
     try { await post("/api/admin/acao", { acao, steam, horas: Number(horas) || 0, motivo: motivo || "" }); }
     catch (e) { aviso("Erro: " + e.message, true); return false; }
     aviso(acao === "perm" ? "Enviado. Muda em alguns segundos (o servidor precisa estar ligado)." : "Enviado pro servidor. Atualiza em alguns segundos (o servidor precisa estar ligado).");
@@ -605,6 +606,35 @@
     S.replaceChildren(novo, ...(itens.length ? itens.map(cardStaff) : [vazio("Ninguém na staff ainda.")]));
   }
 
+  // ---------------- facções ----------------
+  let faccoes = [];
+  const modosFac = ["aberta", "por pedido", "fechada"];
+  function cardFaccao(f) {
+    const lider = (f.membros || []).find((m) => m.cargo === 0) || {};
+    return el("article", { class: "adm-card" },
+      el("h3", {}, el("b", { style: "color:" + f.cor }, "[" + f.tag + "] "), f.nome,
+        el("span", { class: "adm-tag" }, "nível " + f.nivel), el("span", { class: "adm-tag" }, (f.membros || []).length + " membros"),
+        el("span", { class: "adm-tag" }, modosFac[f.modo] || "")),
+      f.descricao ? el("p", { class: "fraco" }, f.descricao) : null,
+      el("p", {}, "Cofre: $ " + Number(f.cofre || 0).toLocaleString("pt-BR") + " · " + Number(f.abates || 0).toLocaleString("pt-BR") + " abates · "
+        + Number(f.zumbis || 0).toLocaleString("pt-BR") + " zumbis · criada " + data(f.criada) + " · alguém online " + data(f.ultimoOnline)
+        + (f.pedidos ? " · " + f.pedidos + " pedido(s) pra entrar" : "")),
+      el("div", { class: "adm-perms" }, (f.membros || []).map((m) => el("span", { class: "adm-perm" + (m.cargo === 0 ? " on" : "") },
+        m.nome + " (" + m.nomeCargo + ") · visto " + data(m.visto)))),
+      eu.dono && lider.id ? el("div", { class: "adm-acoes" },
+        el("button", { class: "botao perigo pequeno", onclick: () => {
+          if (confirm(`Dissolver a facção [${f.tag}]? O líder (${lider.nome}) fica com a base e o cofre, os outros perdem o acesso.`)) acao("faccao_dissolver", lider.id, 0, "painel");
+        } }, "DISSOLVER")) : null);
+  }
+  function desenharFaccoes() {
+    const itens = faccoes.filter((f) => filtro({ Nome: f.nome + " " + f.tag, Steam: (f.membros || []).map((m) => m.id + " " + m.nome).join(" ") }));
+    $("#faccoes").replaceChildren(...(itens.length ? itens.map(cardFaccao) : [vazio("Nenhuma facção ainda.")]));
+  }
+  async function carregarFaccoes() {
+    try { faccoes = await api("/api/admin/faccoes"); $("#n-faccoes").textContent = faccoes.length || ""; if (aba === "faccoes") desenharFaccoes(); }
+    catch (e) { aviso("Erro: " + e.message, true); }
+  }
+
   // ---------------- navegação e carga ----------------
   function abrir(nova) {
     aba = nova;
@@ -617,6 +647,7 @@
     desenhar();
     if (aba === "logs") carregarLog();
     if (aba === "jogadores") carregarJogadores();
+    if (aba === "faccoes") carregarFaccoes();
     if (aba === "mensagens" || aba === "wipe" || aba === "dashboard") carregarPainel();
   }
   function desenhar() {
@@ -629,6 +660,7 @@
     if (aba === "mensagens" && painel) { preencherCanais($("#msg-canal"), (painel.canaisBot || {}).anuncios); previa(); }
     if (aba === "staff") desenharStaff();
     if (aba === "jogadores") desenharJogadores();
+    if (aba === "faccoes") desenharFaccoes();
     const f = { banidos: cardBanido, suspeitos: cardSuspeito, reports: cardReport }[aba];
     if (f) {
       const itens = dados[aba].filter(filtro);

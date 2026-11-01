@@ -642,22 +642,48 @@ namespace SobrevivenciaCore
             if (lider == null || lider.Cargo != 0) { msg = "So o lider pode dissolver a faccao."; return false; }
             if (BauFac.EmUso(f.Id)) { msg = "Alguem esta com o bau da faccao aberto. Espere fechar."; return false; }
             if (BauFac.Contar(f.Id) > 0) { msg = "Esvazie o bau da faccao antes de dissolver (as coisas sao suas, e so pegar)."; return false; }
-            if (f.Cofre > 0) Banco.Somar(lider.Id, f.Cofre);
             long cofre = f.Cofre;
+            FecharFaccao(f, lider, "pelo lider");
+            msg = "Faccao dissolvida. A base continua sua" + (cofre > 0 ? $" e os $ {cofre:N0} do cofre foram pro seu banco." : ".");
+            return true;
+        }
+
+        /// <summary>Dissolver pelo painel do site (só o dono do servidor). O que estiver no baú fica guardado em faccoes_bau/.</summary>
+        public string DissolverPelaStaff(ulong liderId)
+        {
+            var f = FaccaoDe(liderId);
+            var lider = f?.Membro(liderId);
+            if (lider == null || lider.Cargo != 0) return "esse jogador nao e lider de nenhuma faccao";
+            foreach (var m in f.Membros)
+            {
+                var sp = PlayerTool.getSteamPlayer(m.Id);
+                if (sp != null && BauFac.Aberto(m.Id)) BauFac.Fechar(UnturnedPlayer.FromSteamPlayer(sp));
+            }
+            try
+            {
+                var arq = Path.Combine(Directory, "faccoes_bau", f.Id + ".txt");
+                if (File.Exists(arq)) File.Move(arq, Path.Combine(Directory, "faccoes_bau", $"{f.Id}_dissolvida_{Agora}.txt"));
+            }
+            catch { }
+            FecharFaccao(f, lider, "pela staff");
+            return $"faccao [{f.Tag}] {f.Nome} dissolvida";
+        }
+
+        void FecharFaccao(Faccao f, MembroFaccao lider, string por)
+        {
+            if (f.Cofre > 0) Banco.Somar(lider.Id, f.Cofre);
             foreach (var m in f.Membros.ToList())
             {
                 facDoJogador.Remove(m.Id);
                 if (m.Id != lider.Id) { ComecarEspera(m.Id); conferirGrupo.Add(m.Id); }
                 var sp = PlayerTool.getSteamPlayer(m.Id);
-                if (sp != null && m.Id != lider.Id) Chat.Erro(UnturnedPlayer.FromSteamPlayer(sp), $"A faccao [{f.Tag}] foi dissolvida pelo lider.");
+                if (sp != null && m.Id != lider.Id) Chat.Erro(UnturnedPlayer.FromSteamPlayer(sp), $"A faccao [{f.Tag}] foi dissolvida {por}.");
             }
             fac.Lista.Remove(f);
             fac.Dissolvidas.RemoveAll(d => d.Grupo == f.Id);
             fac.Dissolvidas.Add(new GrupoAntigo { Grupo = f.Id, Dono = lider.Id });
             SalvarFaccoes();
             Chat.Todos($"A faccao {f.TagCor} {Chat.Limpar(f.Nome)} foi dissolvida.");
-            msg = "Faccao dissolvida. A base continua sua" + (cofre > 0 ? $" e os $ {cofre:N0} do cofre foram pro seu banco." : ".");
-            return true;
         }
 
         public bool MexerCofre(UnturnedPlayer p, long valor, bool depositar, out string msg)

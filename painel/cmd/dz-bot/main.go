@@ -32,6 +32,7 @@ type Estado struct {
 	Cargos      map[string]string `json:"cargos"`
 	MsgStatus   string            `json:"msgStatus"`
 	MsgTop      string            `json:"msgTop"`
+	MsgTopFac   string            `json:"msgTopFac,omitempty"`
 	AvatarFeito bool              `json:"avatarFeito"`
 	Convite     string            `json:"convite"`
 	LogAdminPos *int64            `json:"logAdminPos,omitempty"`
@@ -521,7 +522,29 @@ func atualizarStatus(s *discordgo.Session) {
 		discordgo.Button{Label: "Loja VIP", Style: discordgo.LinkButton, URL: siteURL + "/loja", Emoji: &discordgo.ComponentEmoji{Name: "💎"}}}
 	manterMensagem(s, "status", &estado.MsgStatus, e, linha(b...))
 }
-func atualizarTop(s *discordgo.Session) { manterMensagem(s, "top", &estado.MsgTop, embedTop("abates")) }
+func atualizarTop(s *discordgo.Session) {
+	manterMensagem(s, "top", &estado.MsgTop, embedTop("abates"))
+	if len(fonte.LerFaccoes()) > 0 {
+		manterMensagem(s, "top", &estado.MsgTopFac, embedTopFaccoes())
+	}
+}
+
+func embedTopFaccoes() *discordgo.MessageEmbed {
+	var b strings.Builder
+	medalha := []string{"🥇", "🥈", "🥉"}
+	for i, f := range fonte.LerFaccoes() {
+		if i == 10 {
+			break
+		}
+		pos := fmt.Sprintf("`%2d.`", i+1)
+		if i < 3 {
+			pos = medalha[i]
+		}
+		fmt.Fprintf(&b, "%s **[%s] %s** — %d abates • %d zumbis • nível %d • %d membros\n", pos, f.Tag, f.Nome, f.Abates, f.Zumbis, f.Nivel, len(f.Membros))
+	}
+	return &discordgo.MessageEmbed{Title: "⚔️ Top 10 — facções", Description: b.String(), Color: corLaranja,
+		Footer: &discordgo.MessageEmbedFooter{Text: rodape + " • crie a sua no /menu > Facções"}, Timestamp: time.Now().Format(time.RFC3339)}
+}
 
 func atualizarContador(s *discordgo.Session) {
 	mu.Lock()
