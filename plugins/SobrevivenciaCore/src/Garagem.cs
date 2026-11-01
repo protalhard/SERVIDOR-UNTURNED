@@ -78,11 +78,14 @@ namespace SobrevivenciaCore
         }
 
         List<Guardado> DoJogador(ulong id, List<string> tipos = null)
-            => Garagem.Where(g => g.Dono == id && (tipos == null || tipos.Contains(TipoVeiculo(Assets.find(EAssetType.VEHICLE, g.Id) as VehicleAsset)))).ToList();
+            => Garagem.Where(g => g.Dono == id && (tipos == null || tipos.Contains(TipoVaga(TipoVeiculo(Assets.find(EAssetType.VEHICLE, g.Id) as VehicleAsset))))).ToList();
 
         /// <summary>Vagas perto do terminal (mesma área).</summary>
         List<Vaga> VagasPerto(Vector3 terminal, float raio = 90f)
             => (Configuration.Instance.Vagas ?? new List<Vaga>()).Where(v => (new Vector3(v.X, v.Y, v.Z) - terminal).sqrMagnitude < raio * raio).ToList();
+
+        /// <summary>Avião usa o heliponto (as bases não têm mais pista).</summary>
+        static string TipoVaga(string tipo) => tipo == "aviao" ? "heli" : tipo;
 
         static float RaioVaga(string tipo) => tipo == "aviao" ? 12f : tipo == "heli" ? 7f : 3f;
 
@@ -103,9 +106,9 @@ namespace SobrevivenciaCore
         {
             var asset = Assets.find(EAssetType.VEHICLE, g.Id) as VehicleAsset;
             if (asset == null) return "Esse veiculo nao existe mais no servidor.";
-            var tipo = TipoVeiculo(asset);
+            var tipo = TipoVaga(TipoVeiculo(asset));
             if (!VagasPerto(terminal).Any(v => v.Tipo == tipo))
-                return tipo == "heli" ? "Helicoptero sai no terminal do heliponto." : tipo == "aviao" ? "Aviao sai no terminal da pista." : "Carro sai no terminal do estacionamento.";
+                return tipo == "heli" ? "Helicoptero e aviao saem no terminal do heliponto." : "Carro sai no terminal do estacionamento.";
             var vaga = VagaLivre(terminal, tipo);
             if (vaga == null) return "Todas as vagas estao ocupadas. Espere liberar.";
             var v = VehicleManager.spawnLockedVehicleForPlayerV2(asset, new Vector3(vaga.X, vaga.Y + 1.5f, vaga.Z), Quaternion.Euler(0, vaga.R, 0), p.Player);
@@ -163,7 +166,7 @@ namespace SobrevivenciaCore
         /// <summary>Número da vaga (1..) onde o veículo está parado, ou 0 se não está dentro de nenhuma vaga do tipo dele.</summary>
         int VagaDoVeiculo(InteractableVehicle v, Vector3 terminal)
         {
-            var tipo = TipoVeiculo(v.asset);
+            var tipo = TipoVaga(TipoVeiculo(v.asset));
             var vagas = VagasPerto(terminal).Where(x => x.Tipo == tipo).ToList();
             float tol = ToleranciaVaga(tipo);
             var pos = v.transform.position;
@@ -190,7 +193,7 @@ namespace SobrevivenciaCore
             var tipo = TipoVeiculo(v.asset);
             if (VagaDoVeiculo(v, terminal) == 0)
                 return tipo == "heli" ? "Pouse o helicoptero DENTRO do heliponto pra guardar."
-                     : tipo == "aviao" ? "Pare o aviao no comeco da pista pra guardar."
+                     : tipo == "aviao" ? "Pare o aviao em cima do heliponto pra guardar."
                      : "Estacione o carro DENTRO de uma vaga (P) pra guardar.";
             if (!PodeGuardar(v, p)) return "Esse veiculo nao e seu.";
             var meu = p.Player.movement.getVehicle();

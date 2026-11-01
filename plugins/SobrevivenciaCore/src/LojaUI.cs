@@ -202,16 +202,6 @@ namespace SobrevivenciaCore
                 mudou = true;
                 Rocket.Core.Logging.Logger.Log("SobrevivenciaCore: lojas v6 (garagem, hangar e veiculos raros no mercado negro).");
             }
-            // v7: sem pista de avião nas bases (só heliponto): avião sai das lojas
-            if (cfg.VersaoLojas < 7)
-            {
-                int tirados = 0;
-                foreach (var l in cfg.Lojas)
-                    tirados += l.Itens.RemoveAll(i => i.Veiculo && Assets.find(EAssetType.VEHICLE, i.Id) is VehicleAsset va && va.engine == EEngine.PLANE);
-                cfg.VersaoLojas = 7;
-                mudou = true;
-                Rocket.Core.Logging.Logger.Log($"SobrevivenciaCore: lojas v7 ({tirados} avioes tirados, so heliponto).");
-            }
             if (mudou) Configuration.Save();
         }
 
@@ -317,7 +307,7 @@ namespace SobrevivenciaCore
                 case "negro": return C(Vermelho, "Zona PvP. Itens raros e caros. Cuidado na saida!");
                 case "cacador": return C(Ambar, "Zona PvP. Venda carne, couro e tudo que cacar.");
                 case "garagem":
-                case "hangar": return C(Verde, "Comprou? Vai pra sua GARAGEM. Tire no terminal da vaga, do heliponto ou da pista.");
+                case "hangar": return C(Verde, "Comprou? Vai pra sua GARAGEM. Tire no terminal da vaga ou do heliponto (aviao tambem sai no heliponto).");
                 default: return C(Verde, "Safe zone. Saque no ATM e pague em dinheiro.");
             }
         }
@@ -479,7 +469,7 @@ namespace SobrevivenciaCore
                 {
                     // vai pra garagem: o jogador tira no TERMINAL (vaga, heliponto ou pista)
                     GuardarComprado(p, asset);
-                    var onde2 = TipoVeiculo(asset) == "heli" ? "no terminal do heliponto" : TipoVeiculo(asset) == "aviao" ? "no terminal da pista" : "no terminal do estacionamento";
+                    var onde2 = TipoVeiculo(asset) == "heli" ? "no terminal do heliponto" : TipoVeiculo(asset) == "aviao" ? "no terminal do heliponto" : "no terminal do estacionamento";
                     AvisoLoja(p, $"{asset.vehicleName} foi pra sua GARAGEM. Tire {onde2}.", true);
                     Rocket.Core.Logging.Logger.Log($"[LOJA] {p.CharacterName} comprou veiculo {asset.vehicleName} por {preco} (garagem)");
                     LT(p, "Loja_Dinheiro", C(Verde, "$ " + Dinheiro.NoBolso(p).ToString("N0")) + C(Cinza, " no bolso"));
