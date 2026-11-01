@@ -155,8 +155,8 @@ namespace SobrevivenciaCore
                 : C(Verde, "ativa") + C(Cinza, $"  (Claim Flag, todos offline ha {S.RaidMinutosOffline}+ min)")));
             T(p, "Fac_Minha_Membros", string.Join("\n", f.Membros.OrderBy(m => m.Cargo).ThenBy(m => m.Nome).Select(m =>
                 (PlayerTool.getSteamPlayer(m.Id) != null ? C(Verde, "● ") : C(Cinza, "● ")) + Chat.Limpar(m.Nome) + "  " + C(Cinza, Chat.Limpar(f.NomeCargo(m.Cargo))))));
-            V(p, "Fac_Bau", S.FaccaoBauVirtual);
-            T(p, "Fac_Bau_Texto", $"BAU DA FACCAO ({nivel.BauLargura}x{nivel.BauAltura})");
+            V(p, "Fac_Bau", S.FaccaoBauLigado);
+            T(p, "Fac_Bau_Texto", $"BAU DA FACCAO ({S.FaccaoBauLargura}x{S.FaccaoBauAltura})");
             bool lider = eu.Cargo == 0;
             V(p, "Fac_Sair", !lider);
             V(p, "Fac_Subir", lider && prox != null);

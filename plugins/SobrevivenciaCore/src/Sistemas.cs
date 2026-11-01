@@ -181,9 +181,10 @@ namespace SobrevivenciaCore
         public int FaccaoPreco = 5000;
         public int FaccaoEsperaHoras = 24;
         public int FaccaoDiasProtecao = 15;
-        public bool FaccaoBauSoNaSafe = true;
-        // baú virtual compartilhado no menu (desligado: só valem os baús de verdade da base)
-        public bool FaccaoBauVirtual = false;
+        // baú da facção: abre pelo menu só na área da base (perto da Claim Flag), ninguém de fora raida
+        public bool FaccaoBauLigado = true;
+        public byte FaccaoBauLargura = 6;
+        public byte FaccaoBauAltura = 4;
         public List<NivelFaccao> FaccaoNiveis;
         public List<KitAirdrop> AirdropKits;
         public List<string> Anuncios;

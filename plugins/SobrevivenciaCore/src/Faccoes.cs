@@ -262,6 +262,20 @@ namespace SobrevivenciaCore
                 }
                 conferirGrupo.Clear();
             }
+            // saiu da área da base com o baú aberto: fecha
+            foreach (var sp in Provider.clients)
+            {
+                if (sp?.player == null) continue;
+                var id = sp.playerID.steamID.m_SteamID;
+                if (!BauFac.Aberto(id)) continue;
+                var f = FaccaoDe(id);
+                if (f == null || !NaAreaDaFaccao(f, sp.player.transform.position))
+                {
+                    var up = UnturnedPlayer.FromSteamPlayer(sp);
+                    BauFac.Fechar(up);
+                    Chat.Aviso(up, "Bau da faccao fechado: voce saiu da area da base.");
+                }
+            }
             if (Time.realtimeSinceStartup < proximoTickFac) { if (facSujo) SalvarFaccoes(); return; }
             proximoTickFac = Time.realtimeSinceStartup + 60f;
             var agora = Agora;
@@ -641,7 +655,7 @@ namespace SobrevivenciaCore
             var lider = f?.Membro(Id(p));
             if (lider == null || lider.Cargo != 0) { msg = "So o lider pode dissolver a faccao."; return false; }
             if (BauFac.EmUso(f.Id)) { msg = "Alguem esta com o bau da faccao aberto. Espere fechar."; return false; }
-            if (S.FaccaoBauVirtual && BauFac.Contar(f.Id) > 0) { msg = "Esvazie o bau da faccao antes de dissolver (as coisas sao suas, e so pegar)."; return false; }
+            if (BauFac.Contar(f.Id) > 0) { msg = "Esvazie o bau da faccao antes de dissolver (as coisas sao suas, e so pegar)."; return false; }
             long cofre = f.Cofre;
             FecharFaccao(f, lider, "pelo lider");
             msg = "Faccao dissolvida. A base continua sua" + (cofre > 0 ? $" e os $ {cofre:N0} do cofre foram pro seu banco." : ".");
@@ -722,7 +736,7 @@ namespace SobrevivenciaCore
             f.Cofre -= prox.Preco; f.Nivel = prox.Nivel;
             Registrar(f, $"{Chat.Limpar(p.CharacterName)} subiu a faccao pro nivel {prox.Nivel} ($ {prox.Preco:N0})");
             SalvarFaccoes();
-            AvisarFaccao(f, Chat.Cor("#3DDC84", $"A faccao subiu pro nivel {prox.Nivel}! Agora sao {prox.Vagas} vagas" + (S.FaccaoBauVirtual ? $" e bau {prox.BauLargura}x{prox.BauAltura}." : ".")));
+            AvisarFaccao(f, Chat.Cor("#3DDC84", $"A faccao subiu pro nivel {prox.Nivel}! Agora sao {prox.Vagas} vagas."));
             msg = $"Nivel {prox.Nivel}!";
             return true;
         }
@@ -794,18 +808,24 @@ namespace SobrevivenciaCore
             return true;
         }
 
+        /// <summary>Área da facção = raio da Claim Flag (o mesmo da proteção de raid) de qualquer flag da facção.</summary>
+        public bool NaAreaDaFaccao(Faccao f, Vector3 pos)
+        {
+            float r2 = S.RaidRaioClaim * S.RaidRaioClaim;
+            return claims.Any(c => c.grupo == f.Id && (c.pos - pos).sqrMagnitude <= r2);
+        }
+
         public bool AbrirBauFaccao(UnturnedPlayer p, out string msg)
         {
             var f = FaccaoDe(p);
             if (f == null) { msg = "Voce nao esta em nenhuma faccao."; return false; }
-            if (!S.FaccaoBauVirtual) { msg = "Os baus da faccao sao os da sua base: o lider libera por cargo na aba Permissoes."; return false; }
+            if (!S.FaccaoBauLigado) { msg = "O bau da faccao esta desligado no servidor."; return false; }
             if (!TemPerm(f, Id(p), PermFac.Baus)) { msg = "Seu cargo nao abre o bau da faccao."; return false; }
-            if (S.FaccaoBauSoNaSafe && ZonaSeguraEm(p.Position) == null) { msg = "O bau da faccao so abre dentro da safe zone."; return false; }
+            if (!NaAreaDaFaccao(f, p.Position)) { msg = claims.Any(c => c.grupo == f.Id) ? "O bau da faccao so abre dentro da area da base (perto da Claim Flag da faccao)." : "Coloque uma Claim Flag na base da faccao: o bau so abre perto dela."; return false; }
             if (EmCombate(p, out var resta)) { msg = $"Voce esta em combate. Espere {resta}s."; return false; }
             if (BauFac.EmUso(f.Id) && !BauFac.Aberto(Id(p))) { msg = "Outro membro esta usando o bau agora. Tente daqui a pouco."; return false; }
-            var n = NivelDe(f);
             if (MenuAberto(p)) FecharMenu(p);
-            BauFac.Abrir(p, new TamanhoVault { Nome = "Faccao", Largura = n.BauLargura, Altura = n.BauAltura }, f.Id);
+            BauFac.Abrir(p, new TamanhoVault { Nome = "Faccao", Largura = S.FaccaoBauLargura, Altura = S.FaccaoBauAltura }, f.Id);
             msg = "Bau da faccao aberto.";
             return true;
         }
