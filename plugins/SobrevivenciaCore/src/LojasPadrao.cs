@@ -24,6 +24,7 @@ namespace SobrevivenciaCore
         static ItemLoja Car(ushort id, int compra) => new ItemLoja(id, compra, 0) { Categoria = cat, Veiculo = true };
 
         static Loja Limpa(Loja l) { l.Itens.RemoveAll(i => i == null); return l; }
+        static Loja Mais(Loja l, List<ItemLoja> extra) { l.Itens.AddRange(extra); return l; }
 
         /// <summary>NPC construtor (safe): tudo pra montar base.</summary>
         public static Loja Construcao() => Limpa(L("construcao", "Construtor", "safe",
@@ -56,6 +57,92 @@ namespace SobrevivenciaCore
             Cat("Escadas e rampas"),
             I(4440, 70), I(4439, 70), I(4441, 80), I(4166, 140), I(4162, 140), I(4167, 160),
             I(4866, 170), I(4861, 170), I(4868, 190), I(4563, 350), I(4558, 350), I(4565, 380)));
+
+        // ===================== VEÍCULOS =====================
+        // Garagem (safe): carros comuns, barcos e peças. Hangar (safe): helis, aviões e peças.
+        // Mercado negro: só os apelões (blindados, armados, os mais rápidos, jato, tanque).
+
+        public static Loja Garagem() => Limpa(L("garagem", "Garagem", "garagem",
+            Cat("Carros"),
+            Car(4012, 300),    // Bicicleta
+            Car(4013, 2500),   // Quadriciclo
+            Car(4028, 6000),   // Moto
+            Car(4002, 5000),   // Hatchback
+            Car(4015, 5500),   // Station Wagon
+            Car(4017, 7000),   // Van
+            Car(4003, 9000),   // Picape
+            Car(4004, 10000),  // Offroader
+            Car(4006, 12000),  // Baja
+            Car(4019, 12000),  // Wagon
+            Car(4016, 16000),  // Arcadia
+            Car(4005, 18000),  // Esportivo
+            Car(4007, 18000),  // Roadster
+            Car(4008, 19000),  // Flux
+            Car(4014, 20000),  // Royal
+            Car(4030, 20000),  // Offroader turbinado
+            Car(4001, 21000),  // Interceptor
+            Car(4000, 22000),  // Viatura de policia
+            Car(4034, 15000),  // Ambulancia
+            Car(4033, 25000),  // Caminhao de bombeiro
+            Car(4125, 30000),  // Onibus
+            Cat("Barcos"),
+            Car(4024, 4000),   // Jetski
+            Car(4026, 8000),   // Bote
+            Car(4025, 10000),  // Lancha
+            Cat("Pecas e manutencao"),
+            I(4179, 150),  // galao de gasolina
+            I(4187, 600),  // galao grande
+            I(7014, 300),  // botijao de combustivel
+            I(4707, 200),  // pneu
+            I(4706, 150),  // chave de roda
+            I(4703, 250),  // bateria
+            I(4702, 400),  // macarico (conserta)
+            I(4704, 300),  // macaco (desvira o carro)
+            I(1840, 100), I(1841, 100), I(1842, 100), I(1843, 100), I(1844, 100),  // tintas
+            I(1845, 100), I(1846, 100), I(1847, 100), I(1848, 100), I(1849, 100)));
+
+        public static Loja Hangar() => Limpa(L("hangar", "Hangar", "hangar",
+            Cat("Helicopteros"),
+            Car(4128, 60000),  // Hummingbird
+            Car(4031, 80000),  // Chopper
+            Car(4032, 90000),  // Chopper PMC
+            Cat("Avioes"),
+            Car(92, 40000),    // Sandpiper
+            Car(4127, 45000),  // Sandpiper (California)
+            Car(96, 55000),    // Otter
+            Car(4129, 60000),  // Watchsun
+            Car(133, 75000),   // Annushka
+            Cat("Pecas e combustivel"),
+            I(4179, 150), I(4187, 600), I(7014, 300), I(6173, 1500),  // galoes, botijao e tambor de combustivel
+            I(4703, 250),  // bateria
+            I(4702, 400),  // macarico (conserta)
+            I(4707, 200),  // pneu (aviao)
+            I(4706, 150))); // chave de roda
+
+        /// <summary>Só no mercado negro: os veículos mais fortes e as ferramentas de roubo.</summary>
+        public static List<ItemLoja> VeiculosRaros()
+        {
+            cat = "Veiculos raros";
+            var l = new List<ItemLoja>
+            {
+                Car(4009, 30000),  // Merc (o carro mais rapido)
+                Car(4018, 25000),  // Yukon
+                Car(4029, 35000),  // Yukon turbinado
+                Car(4022, 40000),  // Yukon policial descaracterizado
+                Car(4011, 45000),  // Knight (blindado)
+                Car(4027, 60000),  // Knight com metralhadora
+                Car(4071, 60000),  // Kodiak
+                Car(4075, 70000),  // Matvee
+                Car(4010, 120000), // Navajo (heli armado)
+                Car(4037, 150000), // Hatchback voador
+                Car(4123, 250000), // Caca a jato
+                Car(4121, 300000), // Tanque Abraham
+            };
+            cat = "Pecas raras";
+            l.Add(S(4705, 2000));  // lockpick (abre carro trancado)
+            l.Add(S(4704, 300));   // macaco
+            return l;
+        }
 
         public static List<Loja> Criar() => new List<Loja>
         {
@@ -160,33 +247,8 @@ namespace SobrevivenciaCore
                 Cat("Fazenda"),
                 I(4316, 20), I(4318, 20), I(4322, 20), I(4324, 20), I(4405, 20), I(4570, 40))),
 
-            Limpa(L("garagem", "Garagem", "garagem",
-                Cat("Carros"),
-                Car(4012, 300),    // Bicycle
-                Car(4013, 2500),   // Quad
-                Car(4002, 5000),   // Hatchback
-                Car(4015, 5500),   // Station Wagon
-                Car(4017, 7000),   // Van
-                Car(4028, 8000),   // Indian (moto)
-                Car(4003, 9000),   // Truck
-                Car(4004, 10000),  // Offroader
-                Car(4006, 12000),  // Baja
-                Car(4019, 12000),  // Wagon
-                Car(4018, 15000),  // Yukon
-                Car(4016, 16000),  // Arcadia
-                Car(4005, 18000),  // Sportscar
-                Car(4007, 18000),  // Roadster
-                Car(4014, 20000),  // Royal
-                Car(4030, 20000),  // Upgraded Offroader
-                Car(4009, 22000),  // Merc
-                Car(4029, 25000),  // Upgraded Yukon
-                Car(4011, 35000),  // Knight
-                Cat("Barcos"),
-                Car(4024, 4000),   // Jetski
-                Car(4026, 8000),   // Dinghy
-                Car(4025, 10000),  // Runabout
-                Cat("Oficina"),
-                I(4179, 150), I(4706, 150), I(4707, 200), I(4702, 400), I(4187, 600))),
+            Garagem(),
+            Hangar(),
 
             // ===================== ZONA PVP =====================
             Limpa(L("cacador", "Cacador", "cacador",
@@ -201,7 +263,7 @@ namespace SobrevivenciaCore
                 Cat("Equipamento"),
                 S(4692, 60), S(4991, 120), S(6063, 200))),
 
-            Limpa(L("negro", "Mercado Negro", "negro",
+            Mais(Limpa(L("negro", "Mercado Negro", "negro",
                 Cat("Snipers"),
                 S(4009, 9000), S(4101, 10000), S(4536, 11000), S(4097, 12000), S(6405, 12000), S(6351, 13000),
                 S(4062, 14000), S(6087, 15000), S(4738, 22000), S(4173, 25000), S(6393, 28000),
@@ -226,18 +288,7 @@ namespace SobrevivenciaCore
                 Cat("Elite e torres"),
                 S(7137, 2000), S(4099, 2000), S(6396, 2500), S(4722, 3000), S(7090, 2500), S(4683, 4000),
                 S(7084, 6000), S(7085, 6000), S(7089, 6000), S(6079, 8000),
-                S(7033, 15000), S(6527, 40000), S(7150, 50000),
-                Cat("Veiculos"),
-                Car(4027, 50000),  // Upgraded Knight
-                Car(4071, 60000),  // Kodiak
-                Car(4075, 70000),  // Matvee
-                Car(4127, 60000),  // Sandpiper (heli)
-                Car(4129, 65000),  // Watchsun (heli)
-                Car(4128, 90000),  // Hummingbird (heli)
-                Car(4010, 120000), // Navajo (heli)
-                Car(4031, 120000), // Chopper (heli)
-                Car(4123, 250000), // Fighter Jet
-                Car(4121, 300000))), // Abraham (tanque)
+                S(7033, 15000), S(6527, 40000), S(7150, 50000))), VeiculosRaros()),
         };
     }
 }

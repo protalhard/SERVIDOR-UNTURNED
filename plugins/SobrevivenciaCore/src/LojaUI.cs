@@ -23,7 +23,7 @@ namespace SobrevivenciaCore
         {
             { 51240, "armas" }, { 51241, "comida" }, { 51242, "roupas" }, { 51243, "remedios" }, { 51244, "equipamentos" },
             { 51245, "garagem" }, { 51247, "negro" }, { 51248, "cacador" },
-            { 51250, "negro" }, { 51251, "negro" }, { 51252, "negro" }, { 51254, "construcao" },
+            { 51250, "negro" }, { 51251, "negro" }, { 51252, "hangar" }, { 51254, "construcao" },
         };
 
         /// <summary>NPCs que mostram só parte da loja (categorias). Mercado negro dividido em cantinhos.
@@ -32,7 +32,6 @@ namespace SobrevivenciaCore
         {
             { 51250, new[] { "Elite e torres" } },
             { 51251, new[] { "Explosivos", "Granadas e lancadores" } },
-            { 51252, new[] { "Veiculos" } },
         };
         static readonly string[] NegroArmas = { "Snipers", "Rifles fortes", "Metralhadoras", "Pistolas e escopetas", "Municao rara" };
 
@@ -180,6 +179,29 @@ namespace SobrevivenciaCore
                 cfg.Notas.Add(new Nota(7015, 1000) { SoAceita = true });
                 mudou = true;
             }
+            // v6: garagem (carros comuns + peças), hangar novo (helis, aviões, peças) e mercado negro só com os apelões
+            if (cfg.VersaoLojas < 6)
+            {
+                var g = cfg.Lojas.FirstOrDefault(l => l.Id == "garagem");
+                var ng = LojasPadrao.Garagem();
+                if (g != null) { g.Itens = ng.Itens; g.Tipo = "garagem"; } else cfg.Lojas.Add(ng);
+                if (!cfg.Lojas.Any(l => l.Id == "hangar"))
+                {
+                    var h = LojasPadrao.Hangar();
+                    var neg = cfg.Lojas.FirstOrDefault(l => l.Id == "negro");
+                    if (neg != null) { h.VX = neg.VX; h.VY = neg.VY; h.VZ = neg.VZ; h.AX = neg.AX; h.AY = neg.AY; h.AZ = neg.AZ; h.AR = neg.AR; }
+                    cfg.Lojas.Add(h);
+                }
+                var n = cfg.Lojas.FirstOrDefault(l => l.Id == "negro");
+                if (n != null)
+                {
+                    n.Itens.RemoveAll(i => i.Veiculo || i.Categoria == "Veiculos" || i.Categoria == "Veiculos raros" || i.Categoria == "Pecas raras");
+                    n.Itens.AddRange(LojasPadrao.VeiculosRaros());
+                }
+                cfg.VersaoLojas = 6;
+                mudou = true;
+                Rocket.Core.Logging.Logger.Log("SobrevivenciaCore: lojas v6 (garagem, hangar e veiculos raros no mercado negro).");
+            }
             if (mudou) Configuration.Save();
         }
 
@@ -214,6 +236,12 @@ namespace SobrevivenciaCore
                     .OrderBy(l => l.Definido ? Vector3.Distance(pos, new Vector3(l.X, l.Y, l.Z)) : 99999f).FirstOrDefault();
                 if (loja == null) { Chat.Erro(p, "Esse vendedor ainda nao tem loja configurada."); return; }
                 NpcCategorias.TryGetValue(id, out var cats);
+                // piloto (51252): na safe vende helis e aviões (hangar); fora dela, no mercado negro, os veículos apelões
+                if (id == 51252 && ZonaSeguraEm(pos) == null)
+                {
+                    loja = Configuration.Instance.Lojas.FirstOrDefault(l => l.Id == "negro") ?? loja;
+                    cats = new[] { "Veiculos raros", "Pecas raras" };
+                }
                 // armas pesadas: se tem os outros cantinhos do negro perto, mostra só as armas
                 if (id == 51247 && NpcPerto(pos, 60f, 51250, 51251, 51252)) cats = NegroArmas;
                 AbrirLoja(p, loja, pos, cats);
@@ -278,7 +306,8 @@ namespace SobrevivenciaCore
             {
                 case "negro": return C(Vermelho, "Zona PvP. Itens raros e caros. Cuidado na saida!");
                 case "cacador": return C(Ambar, "Zona PvP. Venda carne, couro e tudo que cacar.");
-                case "garagem": return "Veiculo aparece aqui do lado, trancado pra voce.";
+                case "garagem":
+                case "hangar": return C(Verde, "Comprou? Vai pra sua GARAGEM. Tire no terminal da vaga, do heliponto ou da pista.");
                 default: return C(Verde, "Safe zone. Saque no ATM e pague em dinheiro.");
             }
         }
