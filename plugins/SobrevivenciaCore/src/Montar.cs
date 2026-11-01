@@ -162,9 +162,11 @@ namespace SobrevivenciaCore
                     Physics.SyncTransforms();
                     var eixo = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
                     float min = float.MaxValue, max = float.MinValue, yMin = float.MaxValue, yMax = float.MinValue;
-                    foreach (var col in d.model.GetComponentsInChildren<Collider>(true))
+                    var cols = d.model.GetComponentsInChildren<Collider>(true).Where(k => !k.isTrigger).ToList();
+                    // só o corpo da peça (camada de estrutura); se não tiver nenhum nela, usa todos
+                    if (cols.Any(k => k.gameObject.layer == LayerMasks.STRUCTURE)) cols = cols.Where(k => k.gameObject.layer == LayerMasks.STRUCTURE).ToList();
+                    foreach (var col in cols)
                     {
-                        if (col.isTrigger) continue;
                         foreach (var v in Cantos(col))
                         {
                             float c = Vector3.Dot(v, eixo);
@@ -471,7 +473,7 @@ namespace SobrevivenciaCore
                     foreach (var rot in new[] { S.MontarRotacaoX, S.MontarRotacaoX == 0f ? -90f : 0f })
                     {
                         if (!MedirEstrutura(idp, centro, yawPiso, donoP, out var l, out var tp0, out var bp0, out var er, rot)) { erroPiso = er; continue; }
-                        if (tp0 - bp0 > 1.5f) { erroPiso = $"a peca {idp} fica em pe"; continue; }
+                        if (tp0 - bp0 > 1.5f) { erroPiso = $"a peca {idp} mediu {tp0 - bp0:0.0} m de altura"; continue; }
                         idPiso = idp; rotPiso = rot; lado = l; topoPiso = tp0; basePiso = bp0;
                         break;
                     }
