@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Faz backup dos saves, banco e configs do servidor em /home/unturned/backups
+# Backup do mundo, jogadores, banco e configs do servidor em /home/unturned/backups.
+# Pula a pasta Workshop (mods), que o servidor baixa de novo sozinho.
+# Guarda os 14 mais novos (só os dayz-*.tar.gz; outros arquivos da pasta ficam).
 set -euo pipefail
 DEST="/home/unturned/backups"
 mkdir -p "$DEST"
-tar czf "$DEST/dayz-$(date +%F-%H%M).tar.gz" -C /home/unturned/server/Servers dayz
-ls -1t "$DEST"/*.tar.gz | tail -n +15 | xargs -r rm -f
+tar czf "$DEST/dayz-$(date +%F-%H%M).tar.gz" --exclude=dayz/Workshop -C /home/unturned/server/Servers dayz
+ls -1t "$DEST"/dayz-*.tar.gz | tail -n +15 | xargs -r rm -f
 echo "Backup salvo em $DEST"

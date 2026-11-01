@@ -40,6 +40,9 @@ type Estado struct {
 	// discord -> steam já avisado do vínculo; alertas de raid desligados
 	Vinculados      map[string]string `json:"vinculados,omitempty"`
 	AlertaDesligado map[string]bool   `json:"alertaDesligado,omitempty"`
+	// canal -> discord do dono (tickets abertos e salas de voz particulares)
+	Tickets map[string]string `json:"tickets,omitempty"`
+	Salas   map[string]string `json:"salas,omitempty"`
 }
 
 var (
@@ -68,10 +71,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	dg.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMembers
+	dg.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMembers | discordgo.IntentsGuildVoiceStates
 	dg.AddHandler(aoFicarPronto)
 	dg.AddHandler(aoEntrarMembro)
 	dg.AddHandler(aoInteragir)
+	dg.AddHandler(aoMudarVoz)
 	dg.AddHandler(func(s *discordgo.Session, g *discordgo.GuildCreate) { go prepararGuild(s, g.Guild) })
 
 	if err := dg.Open(); err != nil {
@@ -87,6 +91,7 @@ func main() {
 	go laco(dg, 15*time.Second, enviarLogsRaid)
 	go laco(dg, 10*time.Second, enviarLogsGuard)
 	go laco(dg, 20*time.Second, conferirVinculos)
+	go laco(dg, 2*time.Minute, limparSalas)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM)
@@ -199,6 +204,7 @@ var estrutura = []categoriaDef{
 		{"voz_suporte", "🎧 Suporte", "", discordgo.ChannelTypeGuildVoice, false, false},
 	}},
 	{"cat_voz", "🔊 VOZ", []canalDef{
+		{"voz_criar", "➕ Criar sala", "", discordgo.ChannelTypeGuildVoice, false, false},
 		{"voz_geral", "🔊 Geral", "", discordgo.ChannelTypeGuildVoice, false, false},
 		{"voz_squad1", "🎯 Squad 1", "", discordgo.ChannelTypeGuildVoice, false, false},
 		{"voz_squad2", "🎯 Squad 2", "", discordgo.ChannelTypeGuildVoice, false, false},
@@ -542,6 +548,8 @@ func registrarComandos(s *discordgo.Session, appID string, guilds []*discordgo.G
 			}}}},
 		{Name: "perfil", Description: "Estatísticas de um jogador", Options: []*discordgo.ApplicationCommandOption{{
 			Type: discordgo.ApplicationCommandOptionString, Name: "nome", Description: "Nome no jogo", Required: true}}},
+		{Name: "pedir-sala", Description: "Pedir pra entrar na sala de voz de alguém", Options: []*discordgo.ApplicationCommandOption{{
+			Type: discordgo.ApplicationCommandOptionUser, Name: "dono", Description: "Dono da sala", Required: true}}},
 	}
 	for _, g := range guilds {
 		if _, err := s.ApplicationCommandBulkOverwrite(appID, g.ID, cmds); err != nil {
@@ -578,20 +586,20 @@ func aoInteragir(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			responder(s, i, embedTop(por), false)
 		case "perfil":
 			responder(s, i, embedPerfil(d.Options[0].StringValue()), false)
+		case "pedir-sala":
+			pedirSala(s, i, d.Options[0].UserValue(s))
 		}
 	case discordgo.InteractionMessageComponent:
-		if tratarComponente(s, i) {
+		if tratarComponente(s, i) || tratarSala(s, i) {
 			return
 		}
 		switch i.MessageComponentData().CustomID {
 		case "abrir_ticket":
 			abrirTicket(s, i, "outro")
 		case "fechar_ticket":
-			_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{Content: "Fechando o ticket em 5 segundos..."}})
-			canal := i.ChannelID
-			go func() { time.Sleep(5 * time.Second); _, _ = s.ChannelDelete(canal) }()
+			fecharTicket(s, i)
+		case "assumir_ticket":
+			assumirTicket(s, i)
 		}
 	}
 }
@@ -649,6 +657,10 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 	if nomesMotivo[motivo] == "" {
 		motivo = "outro"
 	}
+	if aberto := ticketDe(s, u.ID); aberto != "" {
+		responder(s, i, &discordgo.MessageEmbed{Description: fmt.Sprintf("Você já tem um ticket aberto: <#%s>", aberto), Color: corAmbar}, true)
+		return
+	}
 	nome := motivo + "-" + strings.ToLower(strings.Map(func(r rune) rune {
 		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
 			return r
@@ -670,10 +682,20 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 		Content: fmt.Sprintf("<@%s> <@&%s>", u.ID, staff),
 		Embeds: []*discordgo.MessageEmbed{{Title: "🎫 Ticket aberto: " + nomesMotivo[motivo], Color: corLaranja,
 			Description: "Conte o que aconteceu com o máximo de detalhes. Mande prints ou vídeo se tiver.\nA staff responde aqui." + steamDoTicket(u.ID)}},
-		Components: []discordgo.MessageComponent{discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			discordgo.Button{Label: "Fechar ticket", Style: discordgo.DangerButton, CustomID: "fechar_ticket", Emoji: &discordgo.ComponentEmoji{Name: "🔒"}},
-		}}},
+		Components: []discordgo.MessageComponent{linha(
+			botao("Assumir", "assumir_ticket", "🙋", discordgo.PrimaryButton),
+			botao("Fechar ticket", "fechar_ticket", "🔒", discordgo.DangerButton),
+		)},
 	})
+	mu.Lock()
+	if estado.Tickets == nil {
+		estado.Tickets = map[string]string{}
+	}
+	estado.Tickets[ch.ID] = u.ID
+	salvarEstado()
+	postar(s, "logs", &discordgo.MessageSend{Content: fmt.Sprintf("🎫 **Ticket aberto** (%s) por <@%s>: <#%s>", nomesMotivo[motivo], u.ID, ch.ID),
+		AllowedMentions: &discordgo.MessageAllowedMentions{}})
+	mu.Unlock()
 	responder(s, i, &discordgo.MessageEmbed{Description: fmt.Sprintf("Ticket aberto: <#%s>", ch.ID), Color: corVerde}, true)
 }
 

@@ -1,0 +1,8 @@
+[Unit]
+Description=Backup diario do mundo do Unturned
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+ExecStart=/usr/local/bin/dz-backup.sh

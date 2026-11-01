@@ -92,6 +92,19 @@ if ! cmp -s "$REPO/scripts/unturned-sync.sh" /usr/local/bin/unturned-sync.sh; th
   echo "sincronizador atualizado"
 fi
 
+# 6b) Backup diário do mundo às 5h de Brasília (não reinicia o jogo)
+if ! cmp -s "$REPO/scripts/backup.sh" /usr/local/bin/dz-backup.sh; then
+  install -m 755 "$REPO/scripts/backup.sh" /usr/local/bin/dz-backup.sh
+  echo "backup atualizado"
+fi
+bk=0
+for u in dz-backup.service dz-backup.timer; do
+  if ! cmp -s "$REPO/scripts/$u" "/etc/systemd/system/$u"; then
+    cp "$REPO/scripts/$u" "/etc/systemd/system/$u"; bk=1
+  fi
+done
+if [ "$bk" = 1 ]; then systemctl daemon-reload; systemctl enable --now dz-backup.timer; echo "backup diario ligado"; fi
+
 # 7) Reinício: só com o servidor vazio. Com gente online, fica pendente e o
 #    sincronizador tenta de novo a cada 5 min (no máximo 6 h esperando).
 PENDENTE="$ESTADO/reiniciar-pendente"
