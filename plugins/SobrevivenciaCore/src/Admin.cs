@@ -736,12 +736,36 @@ namespace SobrevivenciaCore
             }
         }
 
+        string ultimoReinicioDiario;
+
+        /// <summary>Marca o reinício do dia 15 minutos antes do horário (Brasília = UTC-3).</summary>
+        void TickReinicioDiario()
+        {
+            if (reinicioEm > 0 || string.IsNullOrWhiteSpace(S.ReinicioDiario)) return;
+            if (!TimeSpan.TryParse(S.ReinicioDiario, out var hora)) return;
+            // não reinicia logo depois de ligar (servidor que acabou de subir)
+            if (Time.realtimeSinceStartup < 1200f) return;
+            var agora = DateTime.UtcNow.AddHours(-3);
+            var alvo = agora.Date + hora;
+            var falta = (alvo - agora).TotalSeconds;
+            if (falta < 0 || falta > 900) return;
+            var dia = agora.ToString("yyyyMMdd");
+            if (ultimoReinicioDiario == dia) return;
+            ultimoReinicioDiario = dia;
+            reinicioEm = Time.realtimeSinceStartup + (float)falta; ultimoAvisoReinicio = -1;
+            Rocket.Core.Logging.Logger.Log($"[ADMIN] reinicio diario marcado pras {S.ReinicioDiario} (Brasilia)");
+            Chat.Todos(Chat.Cor(S.CorPerigo, Chat.Forte($"REINICIO DIARIO AS {S.ReinicioDiario} (em {Math.Max(1, (int)Math.Round(falta / 60))} min).")) + Chat.Cor(S.CorApagada, " Volta em 1 a 2 minutos."));
+        }
+
         void TickReinicio()
         {
+            TickReinicioDiario();
             if (reinicioEm < 0) return;
             int resta = Mathf.CeilToInt(reinicioEm - Time.realtimeSinceStartup);
             if (resta == ultimoAvisoReinicio) return;
             ultimoAvisoReinicio = resta;
+            if (resta == 900 || resta == 600 || resta == 300 || resta == 120)
+                Chat.Todos(Chat.Cor(S.CorPerigo, Chat.Forte($"O SERVIDOR VAI REINICIAR EM {resta / 60} MINUTOS.")) + Chat.Cor(S.CorApagada, " Guarde suas coisas. Volta em 1 a 2 minutos."));
             if (resta == 60 || resta == 30 || resta == 10 || (resta > 0 && resta <= 5))
                 Chat.Todos(Chat.Cor(S.CorPerigo, Chat.Forte($"O SERVIDOR VAI REINICIAR EM {resta}s.")) + Chat.Cor(S.CorApagada, " Volta em 1 a 2 minutos."));
             if (resta > 0) return;

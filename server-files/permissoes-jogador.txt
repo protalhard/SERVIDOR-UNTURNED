@@ -46,3 +46,4 @@ desbanir
 espiao
 item
 staff
+bomba

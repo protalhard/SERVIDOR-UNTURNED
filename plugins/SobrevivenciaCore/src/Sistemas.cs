@@ -172,6 +172,8 @@ namespace SobrevivenciaCore
         public int VersaoPadroes = 0;
 
         // DZ GUARD (anti-cheat do servidor)
+        /// <summary>Reinício automático todo dia (horário de Brasília, HH:mm; vazio = desligado). Avisa 15 min antes.</summary>
+        public string ReinicioDiario = "07:00";
         public bool GuardLigado = true;
         public bool GuardBanAutomatico = true;   // caso claro (speed/voo absurdo) bane sozinho
         public double GuardBanHoras = 0;          // 0 = permanente
@@ -317,6 +319,12 @@ namespace SobrevivenciaCore
                 if (string.IsNullOrWhiteSpace(LinkSiteServidor) || LinkSiteServidor.TrimEnd('/') == "http://54.94.93.87")
                     LinkSiteServidor = "https://dayz.snaplag.com.br";
                 VersaoPadroes = 14;
+                mudou = true;
+            }
+            if (VersaoPadroes < 15)
+            {
+                if (string.IsNullOrWhiteSpace(ReinicioDiario)) ReinicioDiario = "07:00";
+                VersaoPadroes = 15;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

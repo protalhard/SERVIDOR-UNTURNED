@@ -282,6 +282,26 @@ namespace SobrevivenciaCore
             return $"Montado {area} modelo {modelo}: {nPecas} pecas ({nNpcs} NPCs, {nExpostos} itens nos mostruarios). Desfazer: /desmontar";
         }
 
+        /// <summary>/bomba: coloca uma bomba de gasolina (combustível infinito, não quebra) onde o dono está, virada pra onde ele olha.</summary>
+        public string ColocarBomba(UnturnedPlayer adm)
+        {
+            var id = IdPeca("bomba", NaSafe(adm.Position) ? "safe" : "cidade");
+            if (id == 0) return "Nao achei a bomba de gasolina (pack DZ ou Fuel Drum).";
+            var pos = adm.Position + adm.Player.look.aim.forward.normalized * 2f;
+            pos.y = Chao(pos);
+            var d = Colocar(id, pos, adm.Player.look.yaw + 180f, Id(adm));
+            if (d == null) return "Nao consegui colocar aqui. Tente num chao plano.";
+            pecasMontadas = null;
+            try
+            {
+                File.AppendAllText(ArqMontagens, $"{DateTime.Now:yyyy-MM-dd HH:mm}\tbomba\t{d.instanceID}\t" +
+                    $"{pos.x:0.0} {pos.y:0.0} {pos.z:0.0}{Environment.NewLine}");
+            }
+            catch { }
+            LogAdmin(adm, $"BOMBA de gasolina em {pos.x:0} {pos.z:0}");
+            return "Bomba colocada (gasolina infinita, nao quebra). Desfazer: /desmontar";
+        }
+
         public string Desmontar()
         {
             if (!File.Exists(ArqMontagens)) return "Nada pra desfazer.";
@@ -344,6 +364,17 @@ namespace SobrevivenciaCore
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
             Chat.Info(p, P.Desmontar());
+        }
+    }
+
+    public class CmdBomba : ComandoSistema
+    {
+        public override string Name => "bomba";
+        public override string Help => "Coloca uma bomba de gasolina na sua frente (dono).";
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
+            Chat.Info(p, P.ColocarBomba(p));
         }
     }
 }
