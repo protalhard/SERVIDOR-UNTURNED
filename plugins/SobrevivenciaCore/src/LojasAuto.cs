@@ -138,7 +138,7 @@ namespace SobrevivenciaCore
             try { AjustarEconomia(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
 
-        public const int VersaoEconomia = 2;
+        public const int VersaoEconomia = 3;
 
         static int Subir(int atual, int minimo) => Math.Max(atual, minimo);
 
@@ -161,6 +161,11 @@ namespace SobrevivenciaCore
                 foreach (var i in pc.Itens ?? new List<ItemKit>()) (pc.Preco >= 4000 ? top : baixo).Add(i.Id);
             baixo.ExceptWith(top);
             bool v1 = cfg.VersaoEconomia < 1;
+            // v3: o Navajo (heli armado, só no mercado negro) não foi pego como helicóptero na v2
+            if (cfg.VersaoEconomia < 3)
+                foreach (var i in cfg.Lojas.SelectMany(l => l.Itens).Where(i => i.Veiculo && i.Id == 4010 && i.Compra < 300000))
+                    i.Compra = 300000;
+            if (cfg.VersaoEconomia == 2) { cfg.VersaoEconomia = VersaoEconomia; Configuration.Save(); Rocket.Core.Logging.Logger.Log("SobrevivenciaCore: economia v3: Navajo 300000."); return; }
 
             int armas = 0, kits = 0, helis = 0, baratos = 0;
             foreach (var l in cfg.Lojas)
