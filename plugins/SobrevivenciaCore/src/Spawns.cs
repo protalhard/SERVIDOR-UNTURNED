@@ -26,6 +26,16 @@ namespace SobrevivenciaCore
         const ushort SpawnUiId = 51296; const short SpawnUiKey = 5129;
         readonly Dictionary<ulong, float> escolherSafeAte = new Dictionary<ulong, float>();
         readonly Dictionary<ulong, bool> spawnAberto = new Dictionary<ulong, bool>();
+        // última safe escolhida e quantas vezes seguidas: repetir a mesma pede 1 min, depois 2, 3...; escolher outra zera
+        class UltimaSafe { public string Nome; public int Seguidas; public float Quando; }
+        readonly Dictionary<ulong, UltimaSafe> ultimaSafe = new Dictionary<ulong, UltimaSafe>();
+
+        /// <summary>Segundos que faltam pra poder escolher essa safe de novo (0 = livre).</summary>
+        int EsperaSafe(ulong id, string nome)
+        {
+            if (!ultimaSafe.TryGetValue(id, out var u) || !u.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase)) return 0;
+            return Mathf.Max(0, Mathf.CeilToInt(u.Quando + u.Seguidas * 60f - Time.realtimeSinceStartup));
+        }
 
         List<SpawnSafe> Spawns => Configuration.Instance.SpawnsSafe ?? (Configuration.Instance.SpawnsSafe = new List<SpawnSafe>());
 
@@ -65,9 +75,10 @@ namespace SobrevivenciaCore
 
         void SpawnAoConectar(UnturnedPlayer p, bool novo)
         {
-            if (SafesComSpawn().Count == 0) return;
-            if (novo) StartCoroutine(Depois(2f, p, () => { var s = SpawnAleatorio(); if (s != null) IrPraSafe(p, s.Nome); }));
-            StartCoroutine(Depois(novo ? 5f : 4f, p, () => AbrirEscolhaSafe(p, !novo)));
+            // só na primeira vez no servidor: quem só reconectou (ou voltou de um reinício) fica onde estava
+            if (!novo || SafesComSpawn().Count == 0) return;
+            StartCoroutine(Depois(2f, p, () => { var s = SpawnAleatorio(); if (s != null) IrPraSafe(p, s.Nome); }));
+            StartCoroutine(Depois(5f, p, () => AbrirEscolhaSafe(p, false)));
         }
 
         void SpawnAoRenascer(UnturnedPlayer p, Vector3 pos)
@@ -100,7 +111,10 @@ namespace SobrevivenciaCore
                         && (sp.player.transform.position - new Vector3(s.X, s.Y, s.Z)).sqrMagnitude < 150f * 150f));
                     float dist = Vector3.Distance(p.Position, new Vector3(SpawnDa(nomes[i]).X, p.Position.y, SpawnDa(nomes[i]).Z));
                     EffectManager.sendUIEffectText(SpawnUiKey, c, true, "Spawn_Safe_" + (i + 1) + "_Nome", Chat.Limpar(nomes[i]).ToUpperInvariant());
-                    EffectManager.sendUIEffectText(SpawnUiKey, c, true, "Spawn_Safe_" + (i + 1) + "_Info", $"{gente} jogando aqui · {dist / 1000f:0.0} km");
+                    int espera = EsperaSafe(Id(p), nomes[i]);
+                    EffectManager.sendUIEffectText(SpawnUiKey, c, true, "Spawn_Safe_" + (i + 1) + "_Info", espera > 0
+                        ? $"<color=#FF5A5A>liberada em {espera / 60}:{espera % 60:00}</color> · escolha outra"
+                        : $"{gente} jogando aqui · {dist / 1000f:0.0} km");
                 }
                 p.Player.enablePluginWidgetFlag(EPluginWidgetFlags.Modal);
                 spawnAberto[Id(p)] = true;
@@ -108,7 +122,11 @@ namespace SobrevivenciaCore
             }
             Chat.Para(p, Chat.Cor(S.CorDestaque, Chat.Forte("ESCOLHA SUA SAFE: ")) + Chat.Cor(S.CorTexto, $"voce tem {Math.Max(30, S.EscolherSafeSegundos)}s"));
             for (int i = 0; i < nomes.Count; i++)
-                Chat.Para(p, Chat.Cor(S.CorPrincipal, Chat.Forte($"/irsafe {i + 1}")) + Chat.Cor(S.CorTexto, "  " + Chat.Limpar(nomes[i])));
+            {
+                int espera = EsperaSafe(Id(p), nomes[i]);
+                Chat.Para(p, Chat.Cor(S.CorPrincipal, Chat.Forte($"/irsafe {i + 1}")) + Chat.Cor(S.CorTexto, "  " + Chat.Limpar(nomes[i]))
+                    + (espera > 0 ? Chat.Cor("#FF5A5A", $"  (liberada em {espera / 60}:{espera % 60:00})") : ""));
+            }
             if (ficar) Chat.Para(p, Chat.Cor(S.CorApagada, "Ou fique onde esta (nao precisa digitar nada)."));
         }
 
@@ -126,6 +144,16 @@ namespace SobrevivenciaCore
             if (!escolherSafeAte.TryGetValue(Id(p), out var ate) || Time.realtimeSinceStartup > ate)
             { Chat.Erro(p, "A escolha de safe so vale logo depois de entrar no servidor ou renascer."); return; }
             if (EmCombate(p, out var resta)) { Chat.Erro(p, $"Voce esta em combate. Espere {resta}s."); return; }
+            int espera = EsperaSafe(Id(p), nome);
+            if (espera > 0)
+            {
+                Chat.Erro(p, $"Voce acabou de ir pra {Chat.Limpar(nome)}. Ela libera em {espera / 60}:{espera % 60:00}. Escolha outra safe.");
+                AbrirEscolhaSafe(p, true);
+                return;
+            }
+            if (ultimaSafe.TryGetValue(Id(p), out var u) && u.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase)) u.Seguidas++;
+            else ultimaSafe[Id(p)] = u = new UltimaSafe { Nome = nome, Seguidas = 1 };
+            u.Quando = Time.realtimeSinceStartup;
             escolherSafeAte.Remove(Id(p));
             IrPraSafe(p, nome);
             Chat.Ok(p, "Voce foi pra safe " + Chat.Limpar(nome) + ".");
