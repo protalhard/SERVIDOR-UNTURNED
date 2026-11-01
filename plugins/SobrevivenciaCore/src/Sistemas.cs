@@ -335,6 +335,15 @@ namespace SobrevivenciaCore
                 VersaoPadroes = 15;
                 mudou = true;
             }
+            // v17: piso e pilar do /montar ... nivelar (concreto do CA2, metal do jogo base no lugar)
+            if (VersaoPadroes < 17)
+            {
+                if (MontarPecas != null)
+                    foreach (var x in new[] { "piso=4552|369", "pilar=4556|374" })
+                        if (!MontarPecas.Exists(y => y.StartsWith(x.Split('=')[0] + "="))) MontarPecas.Add(x);
+                VersaoPadroes = 17;
+                mudou = true;
+            }
             // v16: California 2 é montanhoso; com as cercas inclinando, 10 m de desnível fica bom
             if (VersaoPadroes < 16)
             {
