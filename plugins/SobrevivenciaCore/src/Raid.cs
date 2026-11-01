@@ -81,12 +81,15 @@ namespace SobrevivenciaCore
 
         void VarrerClaims()
         {
+            if (!Level.isLoaded || BarricadeManager.regions == null) return;
             var lista = new List<(Vector3, ulong, ulong, uint)>();
             foreach (var reg in BarricadeManager.regions)
+                if (reg?.drops != null)
                 foreach (var d in reg.drops)
                 {
-                    if (!(d.asset is ItemBarricadeAsset a) || a.build != EBuild.CLAIM) continue;
+                    if (d?.model == null || !(d.asset is ItemBarricadeAsset a) || a.build != EBuild.CLAIM) continue;
                     var sd = d.GetServersideData();
+                    if (sd == null) continue;
                     lista.Add((d.model.position, sd.owner, sd.group, d.instanceID));
                     if (!claimRenovada.ContainsKey(d.instanceID)) claimRenovada[d.instanceID] = DateTime.UtcNow; // flag nova ou de antes do sistema
                 }

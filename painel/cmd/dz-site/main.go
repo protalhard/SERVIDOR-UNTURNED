@@ -284,11 +284,14 @@ func lerSessao(r *http.Request) string {
 	return p[0]
 }
 
-// pastaIconesPadrao: <repo>/server-files/icones (o binário fica em <repo>/painel/bin).
+// pastaIconesPadrao: o repositório na AWS (/home/unturned/repo) ou <repo>/server-files/icones ao lado do binário.
 func pastaIconesPadrao() string {
-	exe, err := os.Executable()
-	if err != nil {
-		return "icones"
+	const naAws = "/home/unturned/repo/server-files/icones"
+	if _, err := os.Stat(naAws); err == nil {
+		return naAws
 	}
-	return filepath.Join(filepath.Dir(exe), "..", "..", "server-files", "icones")
+	if exe, err := os.Executable(); err == nil {
+		return filepath.Join(filepath.Dir(exe), "..", "..", "server-files", "icones")
+	}
+	return "icones"
 }

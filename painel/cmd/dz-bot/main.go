@@ -175,7 +175,6 @@ var estrutura = []categoriaDef{
 		{"top", "🏆│top-jogadores", "Ranking atualizado a cada 10 minutos.", discordgo.ChannelTypeGuildText, true, false},
 		{"raid", "🚨│raid-alert", "Alertas de raid (em breve).", discordgo.ChannelTypeGuildText, true, false},
 		{"banimentos", "🔨│banimentos", "Jogadores banidos.", discordgo.ChannelTypeGuildText, true, false},
-		{"raid", "💥│alerta-raid", "Bases sendo atacadas, em tempo real.", discordgo.ChannelTypeGuildText, true, false},
 	}},
 	{"cat_comunidade", "💬 COMUNIDADE", []canalDef{
 		{"geral", "💬│chat-geral", "Papo livre. Respeito sempre.", discordgo.ChannelTypeGuildText, false, false},

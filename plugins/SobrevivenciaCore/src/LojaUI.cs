@@ -163,6 +163,16 @@ namespace SobrevivenciaCore
                 cfg.VersaoLojas = 4;
                 mudou = true;
             }
+            // v5: construtor ganha pisos, pilares, telhados, portas e escadas do California 2
+            if (cfg.VersaoLojas < 5)
+            {
+                var c = cfg.Lojas.FirstOrDefault(l => l.Id == "construcao");
+                if (c != null)
+                    foreach (var i in LojasPadrao.Construcao().Itens)
+                        if (!c.Itens.Any(x => x.Id == i.Id)) c.Itens.Add(i);
+                cfg.VersaoLojas = 5;
+                mudou = true;
+            }
             if (!cfg.Notas.Any(n => n.Id == 7012))
             {
                 cfg.Notas.Add(new Nota(7012, 10000) { SoAceita = true });

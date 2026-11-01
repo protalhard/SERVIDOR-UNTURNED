@@ -15,7 +15,7 @@ func enviarLogsAdmin(s *discordgo.Session) {
 	enviarLog(s, "admin_log.txt", "logs", "🛡️ **Admin**", &estado.LogAdminPos)
 }
 
-// enviarLogsRaid manda pro canal #alerta-raid as bases atacadas (raid_log.txt do plugin).
+// enviarLogsRaid manda pro canal #raid-alert as bases atacadas (raid_log.txt do plugin).
 func enviarLogsRaid(s *discordgo.Session) {
 	enviarLog(s, "raid_log.txt", "raid", "💥 **Raid em andamento**", &estado.LogRaidPos)
 }
