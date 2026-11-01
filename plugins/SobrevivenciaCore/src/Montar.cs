@@ -93,6 +93,55 @@ namespace SobrevivenciaCore
             return 0;
         }
 
+        ushort IdEstrutura(string peca)
+        {
+            foreach (var s in S.MontarPecas ?? new List<string>())
+            {
+                var i = s.IndexOf('=');
+                if (i <= 0 || !s.Substring(0, i).Trim().Equals(peca, StringComparison.OrdinalIgnoreCase)) continue;
+                foreach (var x in s.Substring(i + 1).Split('|'))
+                    if (ushort.TryParse(x.Trim(), out var id) && Assets.find(EAssetType.ITEM, id) is ItemStructureAsset) return id;
+            }
+            return 0;
+        }
+
+        StructureDrop ColocarEstrutura(ushort id, Vector3 pos, float yaw, ulong dono, float rotX = -90f)
+        {
+            if (id == 0 || !(Assets.find(EAssetType.ITEM, id) is ItemStructureAsset asset)) return null;
+            if (!Regions.tryGetCoordinate(pos, out var x, out var y) || !StructureManager.tryGetRegion(x, y, out var reg)) return null;
+            int antes = reg.drops.Count;
+            if (!StructureManager.dropReplicatedStructure(new Structure(asset, asset.health), pos, Quaternion.Euler(rotX, yaw, 0f), dono, 0)) return null;
+            return reg.drops.Count > antes ? reg.drops[reg.drops.Count - 1] : null;
+        }
+
+        /// <summary>Mede uma estrutura de teste (largura ao longo do yaw, e alturas do topo e da base em relação ao ponto). Tira ela depois.</summary>
+        bool MedirEstrutura(ushort id, Vector3 onde, float yaw, ulong dono, out float largura, out float topo, out float baseY, float rotX = -90f)
+        {
+            largura = 0; topo = 0; baseY = 0;
+            var d = ColocarEstrutura(id, onde, yaw, dono, rotX);
+            if (d?.model == null) return false;
+            try
+            {
+                var eixo = Quaternion.Euler(0f, yaw, 0f) * Vector3.right;
+                float min = float.MaxValue, max = float.MinValue, yMin = float.MaxValue, yMax = float.MinValue;
+                foreach (var col in d.model.GetComponentsInChildren<Collider>(true))
+                {
+                    if (col.isTrigger) continue;
+                    var b = col.bounds;
+                    float c = Vector3.Dot(b.center, eixo), meia = Mathf.Abs(eixo.x) * b.extents.x + Mathf.Abs(eixo.z) * b.extents.z;
+                    min = Mathf.Min(min, c - meia); max = Mathf.Max(max, c + meia);
+                    yMin = Mathf.Min(yMin, b.min.y); yMax = Mathf.Max(yMax, b.max.y);
+                }
+                if (max <= min) return false;
+                largura = max - min; topo = yMax - onde.y; baseY = yMin - onde.y;
+                return largura > .5f && largura < 20f;
+            }
+            finally
+            {
+                if (StructureManager.tryGetRegion(d.model, out var x, out var y, out _)) StructureManager.destroyStructure(d, x, y, Vector3.zero);
+            }
+        }
+
         static float Chao(Vector3 pos)
         {
             // chão de verdade (terreno, estrada, prédio), ignorando barricadas já colocadas
@@ -303,7 +352,7 @@ namespace SobrevivenciaCore
                    (outros.Count > 0 ? " Outras opcoes: " + string.Join(" | ", outros) + ". Use /montar " + area + " " + modelo + " procurar de novo em outro lugar pra ver mais." : "");
         }
 
-        public string Montar(UnturnedPlayer adm, string area, int modelo, bool forcar = false, bool testar = false)
+        public string Montar(UnturnedPlayer adm, string area, int modelo, bool forcar = false, bool testar = false, bool nivelar = false)
         {
             if (!ModelosMontar().TryGetValue(area + modelo, out var pecas)) return "Modelo nao existe. Use /montar safe|negro|cacador 1|2|3";
             var faltaNpc = pecas.Where(x => x.Tipo == "npc" && ushort.TryParse(x.Extra, out var n) && !(Assets.find(EAssetType.ITEM, n) is ItemBarricadeAsset))
@@ -314,8 +363,9 @@ namespace SobrevivenciaCore
             var frente = adm.Player.transform.forward; frente.y = 0; frente.Normalize();
             var direita = new Vector3(frente.z, 0, -frente.x);
             Vector3 Plano(float x, float y) => centro - direita * x - frente * y;
-            Vector3 Mundo(float x, float y) { var v = Plano(x, y); v.y = Chao(v); return v; }
-            Vector3 MundoPeca(float x, float y) { var v = Plano(x, y); v.y = ChaoPeca(v); return v; }
+            float nivel = float.NaN; // com "nivelar": tudo fica em cima do piso, nessa altura
+            Vector3 Mundo(float x, float y) { var v = Plano(x, y); v.y = float.IsNaN(nivel) ? Chao(v) : nivel; return v; }
+            Vector3 MundoPeca(float x, float y) { var v = Plano(x, y); v.y = float.IsNaN(nivel) ? ChaoPeca(v) : nivel; return v; }
 
             // ---- mede o chão onde o modelo vai ficar ----
             float hMin = float.MaxValue, hMax = float.MinValue, raioModelo = 0f;
@@ -355,8 +405,83 @@ namespace SobrevivenciaCore
                 (arvores.Count > 0 ? $", {arvores.Count} arvores (saem na montagem)" : "") + ".";
             if (testar)
                 return relatorio + (desnivel <= S.MontarDesnivelMax && obstaculos == 0 ? " Lugar bom, pode montar." : " Procure um lugar mais plano e livre.");
-            if (!forcar && (desnivel > S.MontarDesnivelMax || obstaculos > 3))
-                return relatorio + $" Muito torto/ocupado pra montar aqui: ia ficar peca enterrada e flutuando. Use /montar {area} {modelo} procurar (te leva pro lugar mais plano por perto) ou /montar {area} {modelo} forcar.";
+            if (!forcar && !nivelar && (desnivel > S.MontarDesnivelMax || obstaculos > 3))
+                return relatorio + $" Muito torto/ocupado pra montar aqui: ia ficar peca enterrada e flutuando. Use /montar {area} {modelo} procurar (te leva pro lugar mais plano por perto) ou /montar {area} {modelo} nivelar (piso plano) ou forcar.";
+
+            // ---- nivelar: piso numa altura só (a do ponto mais alto do chão) e pilares até o chão ----
+            var estruturas = new List<uint>();
+            ulong donoP = Id(adm);
+            if (nivelar)
+            {
+                ushort idPiso = IdEstrutura("piso"), idPilar = IdEstrutura("pilar");
+                if (idPiso == 0) return "Nao achei a peca de piso no servidor (config MontarPecas: piso=ID).";
+                float yawPiso = Yaw(0, 1);
+                // o piso tem que ficar deitado (fino); se medir alto, a rotação certa é a outra
+                float rotPiso = S.MontarRotacaoX;
+                if (!MedirEstrutura(idPiso, centro + Vector3.down * 40f, yawPiso, donoP, out var lado, out var topoPiso, out var basePiso, rotPiso))
+                    return "Nao consegui medir a peca de piso.";
+                if (topoPiso - basePiso > 1.5f)
+                {
+                    rotPiso = rotPiso == 0f ? -90f : 0f;
+                    if (!MedirEstrutura(idPiso, centro + Vector3.down * 40f, yawPiso, donoP, out lado, out topoPiso, out basePiso, rotPiso) || topoPiso - basePiso > 1.5f)
+                        return "A peca de piso nao fica deitada; confira o id do piso.";
+                }
+                float altPilar = 0, basePilar = 0;
+                if (idPilar != 0 && MedirEstrutura(idPilar, centro + Vector3.down * 40f, yawPiso, donoP, out _, out var tp, out var bp, rotPiso)) { altPilar = tp - bp; basePilar = bp; }
+                // retângulo do modelo (com 3 m de folga), em coordenadas do modelo
+                float x0 = float.MaxValue, x1 = float.MinValue, y0 = float.MaxValue, y1 = float.MinValue;
+                foreach (var pc in pecas)
+                {
+                    if (pc.Tipo == "zona") continue;
+                    x0 = Mathf.Min(x0, pc.X); x1 = Mathf.Max(x1, pc.X); y0 = Mathf.Min(y0, pc.Y); y1 = Mathf.Max(y1, pc.Y);
+                    if (pc.Tipo == "cerca" || pc.Tipo == "parede") { x0 = Mathf.Min(x0, pc.X2); x1 = Mathf.Max(x1, pc.X2); y0 = Mathf.Min(y0, pc.Y2); y1 = Mathf.Max(y1, pc.Y2); }
+                }
+                x0 -= 3; x1 += 3; y0 -= 3; y1 += 3;
+                int nx = Mathf.CeilToInt((x1 - x0) / lado), ny = Mathf.CeilToInt((y1 - y0) / lado);
+                float ox = (x0 + x1) / 2f - nx * lado / 2f, oy = (y0 + y1) / 2f - ny * lado / 2f;
+                // altura: o chão mais alto debaixo do piso (cantos e meio de cada placa)
+                float hMaxP = float.MinValue, hMinP = float.MaxValue;
+                for (int i = 0; i <= nx * 2; i++)
+                    for (int j = 0; j <= ny * 2; j++)
+                    {
+                        var v = Plano(ox + i * lado / 2f, oy + j * lado / 2f);
+                        float h = Terreno(v.x, v.z);
+                        if (float.IsNaN(h)) continue;
+                        hMaxP = Mathf.Max(hMaxP, h); hMinP = Mathf.Min(hMinP, h);
+                    }
+                if (hMaxP < hMinP) return "Nao achei o chao aqui.";
+                nivel = hMaxP + .15f;
+                float vao = nivel - hMinP;
+                if (vao > 15f && !forcar)
+                    return $"O piso ficaria {vao:0} m acima do chao no lado mais baixo (muito alto). Use /montar {area} {modelo} procurar, ou /montar {area} {modelo} nivelar forcar.";
+                int nPiso = 0, nPilar = 0;
+                for (int i = 0; i < nx; i++)
+                    for (int j = 0; j < ny; j++)
+                    {
+                        var v = Plano(ox + (i + .5f) * lado, oy + (j + .5f) * lado);
+                        v.y = nivel - topoPiso;
+                        var d = ColocarEstrutura(idPiso, v, yawPiso, donoP, rotPiso);
+                        if (d != null) { estruturas.Add(d.instanceID); nPiso++; }
+                    }
+                // pilares nos cantos das placas, empilhados do piso até o chão
+                if (idPilar != 0 && altPilar > .5f)
+                    for (int i = 0; i <= nx; i++)
+                        for (int j = 0; j <= ny; j++)
+                        {
+                            var v = Plano(ox + i * lado, oy + j * lado);
+                            float chao = Terreno(v.x, v.z);
+                            if (float.IsNaN(chao)) continue;
+                            float fundo = nivel - (topoPiso - basePiso); // embaixo do piso
+                            int k = 0;
+                            for (float topoP = fundo; topoP > chao + .2f && k < 8; topoP -= altPilar, k++)
+                            {
+                                v.y = topoP - altPilar - basePilar;
+                                var d = ColocarEstrutura(idPilar, v, yawPiso, donoP, rotPiso);
+                                if (d != null) { estruturas.Add(d.instanceID); nPilar++; }
+                            }
+                        }
+                LogAdmin(adm, $"NIVELOU {area}{modelo}: {nPiso} pisos, {nPilar} pilares, altura {nivel:0.0} (vao {vao:0.0} m)");
+            }
 
             // tira as árvores do lugar (cortadas; a safe não deixa elas voltarem)
             foreach (var arv in arvores)
@@ -558,7 +683,7 @@ namespace SobrevivenciaCore
             try
             {
                 File.AppendAllText(ArqMontagens, $"{DateTime.Now:yyyy-MM-dd HH:mm}\t{area}{modelo}\t{string.Join(",", colocados)}\t" +
-                    $"{centro.x:0.0} {centro.y:0.0} {centro.z:0.0}\t{DiffConfig(antes, cfg)}{Environment.NewLine}");
+                    $"{centro.x:0.0} {centro.y:0.0} {centro.z:0.0}\t{DiffConfig(antes, cfg)}\t{string.Join(",", estruturas)}{Environment.NewLine}");
             }
             catch { }
             LogAdmin(adm, $"MONTOU {area} modelo {modelo} em {centro.x:0} {centro.z:0}: {nPecas} pecas, {nNpcs} NPCs, {nExpostos} itens expostos");
@@ -585,6 +710,38 @@ namespace SobrevivenciaCore
             return "Bomba colocada (gasolina infinita, nao quebra). Desfazer: /desmontar";
         }
 
+        /// <summary>Tira, num raio em volta do admin, tudo que foi colocado pelo dono (ou por quem roda o comando):
+        /// barricadas, NPCs, piso/pilares, e as safes, ATMs e vagas do config que estão ali. Base de jogador fica.</summary>
+        public string LimparArea(UnturnedPlayer adm, float raio)
+        {
+            var c = adm.Position; float r2 = raio * raio;
+            var donos = new HashSet<ulong>((S.Donos ?? "").Split(new[] { ',', ' ', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => ulong.TryParse(x, out var v) ? v : 0).Where(v => v != 0)) { Id(adm) };
+            bool Perto(Vector3 v) { float dx = v.x - c.x, dz = v.z - c.z; return dx * dx + dz * dz < r2; }
+            int pecas = 0, est = 0;
+            for (byte x = 0; x < Regions.WORLD_SIZE; x++)
+                for (byte y = 0; y < Regions.WORLD_SIZE; y++)
+                {
+                    var reg = BarricadeManager.regions[x, y];
+                    foreach (var d in reg.drops.Where(d => d?.model != null && Perto(d.model.position) && donos.Contains(d.GetServersideData()?.owner ?? 0)).ToList())
+                    {
+                        if (d.interactable is InteractableStorage bau) bau.items.clear();
+                        BarricadeManager.destroyBarricade(d, x, y, ushort.MaxValue); pecas++;
+                    }
+                    if (StructureManager.tryGetRegion(x, y, out var sreg))
+                        foreach (var d in sreg.drops.Where(d => d?.model != null && Perto(d.model.position) && donos.Contains(d.GetServersideData()?.owner ?? 0)).ToList())
+                        { StructureManager.destroyStructure(d, x, y, Vector3.zero); est++; }
+                }
+            var cfg = Configuration.Instance;
+            int zonas = cfg.ZonasSeguras.RemoveAll(z => z.Definido && Perto(new Vector3(z.X, z.Y, z.Z)));
+            int atms = cfg.Atms.RemoveAll(z => Perto(new Vector3(z.X, z.Y, z.Z)));
+            int vagas = cfg.Vagas?.RemoveAll(v => Perto(new Vector3(v.X, v.Y, v.Z))) ?? 0;
+            if (zonas + atms + vagas > 0) Configuration.Save();
+            pecasMontadas = null;
+            LogAdmin(adm, $"LIMPOU raio {raio:0} em {c.x:0} {c.z:0}: {pecas} pecas, {est} piso/pilares, {zonas} safes, {atms} ATMs, {vagas} vagas");
+            return $"Limpo (raio {raio:0} m): {pecas} pecas/NPCs, {est} piso/pilares, {zonas} safe zone, {atms} ATM, {vagas} vagas. Bases de jogador nao foram tocadas.";
+        }
+
         public string Desmontar()
         {
             if (!File.Exists(ArqMontagens)) return "Nada pra desfazer.";
@@ -605,6 +762,19 @@ namespace SobrevivenciaCore
                         BarricadeManager.destroyBarricade(d, x, y, ushort.MaxValue); tirados++;
                     }
                 }
+            // piso e pilares do "nivelar" (6a coluna)
+            var est = new HashSet<uint>((ult.Length > 5 ? ult[5] : "").Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => uint.TryParse(x, out var v) ? v : 0).Where(v => v != 0));
+            int tiradasEst = 0;
+            if (est.Count > 0)
+                for (byte x = 0; x < Regions.WORLD_SIZE; x++)
+                    for (byte y = 0; y < Regions.WORLD_SIZE; y++)
+                    {
+                        if (!StructureManager.tryGetRegion(x, y, out var sreg)) continue;
+                        foreach (var d in sreg.drops.Where(d => est.Contains(d.instanceID)).ToList())
+                        { StructureManager.destroyStructure(d, x, y, Vector3.zero); tiradasEst++; }
+                    }
+            if (tiradasEst > 0) tirados += tiradasEst;
             linhas.RemoveAt(linhas.Count - 1);
             pecasMontadas = null;
             File.WriteAllLines(ArqMontagens, linhas);
@@ -617,7 +787,7 @@ namespace SobrevivenciaCore
     {
         public override string Name => "montar";
         public override string Help => "Monta safe, mercado negro ou cacador em volta de voce (dono).";
-        public override string Syntax => "<safe|negro|cacador> <1|2|3> [testar|forcar|procurar]";
+        public override string Syntax => "<safe|negro|cacador> <1|2|3> [testar|forcar|procurar|nivelar]";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
@@ -640,13 +810,27 @@ namespace SobrevivenciaCore
                 Chat.Ok(p, P.ProcurarLugar(p, area, modelo));
                 return;
             }
-            Chat.Ok(p, P.Montar(p, area, modelo, forcar, testar));
+            bool nivelar = a.Any(x => x.Equals("nivelar", StringComparison.OrdinalIgnoreCase) || x.Equals("nivel", StringComparison.OrdinalIgnoreCase));
+            Chat.Ok(p, P.Montar(p, area, modelo, forcar, testar, nivelar));
         }
     }
 
     public partial class Plugin
     {
         public void ModelosRecarregar() => modelosMontar = null;
+    }
+
+    public class CmdLimpar : ComandoSistema
+    {
+        public override string Name => "limpar";
+        public override string Help => "Tira tudo que o dono colocou em volta de voce (pecas, NPCs, piso, safe, ATM, vagas). Bases de jogador nao sao tocadas.";
+        public override string Syntax => "[raio em metros, padrao 80]";
+        protected override void Rodar(UnturnedPlayer p, string[] a)
+        {
+            if (!P.EhDono(p) && !p.IsAdmin) { Chat.Erro(p, "So o dono usa isso."); return; }
+            float raio = a.Length > 0 && float.TryParse(a[0], out var r) ? Mathf.Clamp(r, 5f, 250f) : 80f;
+            Chat.Info(p, P.LimparArea(p, raio));
+        }
     }
 
     public class CmdDesmontar : ComandoSistema

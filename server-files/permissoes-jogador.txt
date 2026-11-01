@@ -36,6 +36,7 @@ hud
 statsui
 montar
 desmontar
+limpar
 raid
 atm
 garagem
