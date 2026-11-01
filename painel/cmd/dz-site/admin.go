@@ -262,3 +262,30 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 		jsonOK(w, map[string]any{"ok": true, "quando": time.Now().Unix()})
 	})
 }
+
+// separarAdmin: com o domínio do painel configurado, o painel só abre nele (a raiz já leva pro /admin)
+// e some do site público e do IP (404).
+func separarAdmin(dominioAdmin string, h http.Handler) http.Handler {
+	dominioAdmin = strings.ToLower(strings.TrimSpace(dominioAdmin))
+	if dominioAdmin == "" {
+		return h
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := strings.ToLower(r.Host)
+		if i := strings.LastIndexByte(host, ':'); i > 0 && !strings.Contains(host[i:], "]") {
+			host = host[:i]
+		}
+		ehPainel := strings.HasPrefix(r.URL.Path, "/admin") || strings.HasPrefix(r.URL.Path, "/api/admin")
+		if host == dominioAdmin {
+			if r.URL.Path == "/" {
+				http.Redirect(w, r, "/admin", http.StatusFound)
+				return
+			}
+			w.Header().Set("X-Robots-Tag", "noindex, nofollow")
+		} else if ehPainel {
+			http.NotFound(w, r)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}

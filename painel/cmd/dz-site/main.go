@@ -41,6 +41,9 @@ func main() {
 	flag.StringVar(&ip, "ip", "54.94.93.87:27015", "IP:porta do servidor do jogo")
 	pastaIcones := flag.String("icones", pastaIconesPadrao(), "pasta com os PNGs dos itens (<id>.png)")
 	arqChave := flag.String("chave-vinculo", dados.ArqChavePadrao, "chave dividida com o bot pra vincular Discord e Steam")
+	dominio := flag.String("dominio", "", "domínio do site com https (ex.: dayz.snaplag.com.br); vazio = só http")
+	dominioAdmin := flag.String("dominio-admin", "", "domínio só do painel admin (ex.: painel-dz.snaplag.com.br); com ele, /admin some do site público")
+	pastaCert := flag.String("certs", "/home/unturned/dz-site/certs", "pasta dos certificados https (Let's Encrypt)")
 	flag.Parse()
 	chaveVinculo = dados.Chave(*arqChave)
 	fonte = dados.Fonte{Pasta: *pasta}
@@ -96,7 +99,12 @@ func main() {
 		arquivos.ServeHTTP(w, r)
 	})
 
-	srv := &http.Server{Addr: *addr, Handler: cabecalhos(mux), ReadTimeout: 10 * time.Second, WriteTimeout: 20 * time.Second}
+	h := cabecalhos(separarAdmin(*dominioAdmin, mux))
+	if *dominio != "" || *dominioAdmin != "" {
+		servirHTTPS(*addr, strings.Trim(*dominio+","+*dominioAdmin, ","), *pastaCert, h)
+		return
+	}
+	srv := &http.Server{Addr: *addr, Handler: h, ReadTimeout: 10 * time.Second, WriteTimeout: 20 * time.Second}
 	log.Println("dz-site em", *addr)
 	log.Fatal(srv.ListenAndServe())
 }
