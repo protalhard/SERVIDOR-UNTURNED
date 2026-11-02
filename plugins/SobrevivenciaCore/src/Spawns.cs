@@ -297,6 +297,52 @@ namespace SobrevivenciaCore
 
         // ---------- /por: o dono coloca a barricada/estrutura que está na mão onde está olhando ----------
 
+        static bool EhPiso(ItemStructureAsset a) => a.construct == EConstruct.FLOOR || a.construct == EConstruct.FLOOR_POLY;
+
+        /// <summary>Acha o piso já colocado mais perto do ponto mirado e devolve a posição do lado dele (frente, trás, esquerda ou direita).</summary>
+        (bool ok, Vector3 pos, Quaternion rot, string erro) EncaixePiso(Vector3 mira)
+        {
+            StructureDrop perto = null; float melhor = float.MaxValue;
+            foreach (var reg in StructureManager.regions)
+                if (reg?.drops != null)
+                    foreach (var d in reg.drops)
+                    {
+                        if (d?.model == null || !(d.asset is ItemStructureAsset a) || !EhPiso(a)) continue;
+                        var dp = d.model.position;
+                        if (Mathf.Abs(dp.y - mira.y) > 3f) continue;
+                        float dist = new Vector2(dp.x - mira.x, dp.z - mira.z).sqrMagnitude;
+                        if (dist < melhor) { melhor = dist; perto = d; }
+                    }
+            if (perto == null || melhor > 8f * 8f) return (false, mira, Quaternion.identity, null);
+            float yawP = perto.model.rotation.eulerAngles.y;
+            var dir = Quaternion.Euler(0f, yawP, 0f);
+            Vector3 eixoX = dir * Vector3.right, eixoZ = dir * Vector3.forward;
+            // tamanho do piso vizinho nos dois eixos
+            var cols = perto.model.GetComponentsInChildren<Collider>(true).Where(k => !k.isTrigger).ToList();
+            if (cols.Any(k => k.gameObject.layer == LayerMasks.STRUCTURE)) cols = cols.Where(k => k.gameObject.layer == LayerMasks.STRUCTURE).ToList();
+            float x0 = float.MaxValue, x1 = float.MinValue, z0 = float.MaxValue, z1 = float.MinValue;
+            foreach (var col in cols)
+                foreach (var v in Cantos(col))
+                {
+                    float cx = Vector3.Dot(v, eixoX), cz = Vector3.Dot(v, eixoZ);
+                    x0 = Mathf.Min(x0, cx); x1 = Mathf.Max(x1, cx); z0 = Mathf.Min(z0, cz); z1 = Mathf.Max(z1, cz);
+                }
+            float lx = x1 - x0, lz = z1 - z0;
+            if (lx < .5f || lx > 20f || lz < .5f || lz > 20f) return (false, mira, Quaternion.identity, null);
+            var centro = perto.model.position;
+            var rel = mira - centro;
+            float px = Vector3.Dot(rel, eixoX) / lx, pz = Vector3.Dot(rel, eixoZ) / lz;
+            var passo = Mathf.Abs(px) >= Mathf.Abs(pz) ? eixoX * Mathf.Sign(px) * lx : eixoZ * Mathf.Sign(pz) * lz;
+            var novo = centro + passo;
+            // já tem piso nesse lugar?
+            foreach (var reg in StructureManager.regions)
+                if (reg?.drops != null)
+                    foreach (var d in reg.drops)
+                        if (d?.model != null && d.asset is ItemStructureAsset a2 && EhPiso(a2) && (d.model.position - novo).sqrMagnitude < 1f)
+                            return (false, novo, perto.model.rotation, "Ja tem piso desse lado. Mire no lado livre do piso.");
+            return (true, novo, perto.model.rotation, null);
+        }
+
         public string PorNaMira(UnturnedPlayer p, float giro)
         {
             var eq = p.Player.equipment;
@@ -306,7 +352,17 @@ namespace SobrevivenciaCore
             float yaw = p.Player.look.yaw + 180f + giro;
             bool ok;
             if (eq.asset is ItemStructureAsset sa)
-                ok = StructureManager.dropReplicatedStructure(new Structure(sa, sa.health), hit.point, Quaternion.Euler(-90f, yaw, 0f), Id(p), p.Player.quests.groupID.m_SteamID);
+            {
+                // piso: encaixa do lado do piso mais perto (mesma altura e giro), igual a grade normal do jogo
+                var pos = hit.point; var rot = Quaternion.Euler(-90f, yaw, 0f);
+                if (EhPiso(sa))
+                {
+                    var enc = EncaixePiso(hit.point);
+                    if (enc.erro != null) return enc.erro;
+                    if (enc.ok) { pos = enc.pos; rot = enc.rot; }
+                }
+                ok = StructureManager.dropReplicatedStructure(new Structure(sa, sa.health), pos, rot, Id(p), p.Player.quests.groupID.m_SteamID);
+            }
             else if (eq.asset is ItemBarricadeAsset ba)
             {
                 // igual ao /montar: a origem da barricada fica "offset" acima do chão (senão o NPC afunda)
