@@ -95,7 +95,7 @@ namespace SobrevivenciaCore
             foreach (var v in VagasPerto(terminal).Where(v => v.Tipo == tipo).OrderBy(v => (new Vector3(v.X, v.Y, v.Z) - terminal).sqrMagnitude))
             {
                 lista.Clear();
-                VehicleManager.getVehiclesInRadius(new Vector3(v.X, v.Y, v.Z), RaioVaga(tipo), lista);
+                VehicleManager.getVehiclesInRadius(new Vector3(v.X, v.Y, v.Z), RaioVaga(tipo) * RaioVaga(tipo), lista);
                 if (lista.Count == 0) return v;
             }
             return null;
@@ -182,7 +182,7 @@ namespace SobrevivenciaCore
         List<InteractableVehicle> Estacionados(Vector3 terminal)
         {
             var perto = new List<InteractableVehicle>();
-            VehicleManager.getVehiclesInRadius(terminal, 90f, perto);
+            VehicleManager.getVehiclesInRadius(terminal, 90f * 90f, perto);
             return perto.Where(v => v != null && !v.isDead && !v.isExploded && v.asset != null && VagaDoVeiculo(v, terminal) > 0)
                         .OrderBy(v => VagaDoVeiculo(v, terminal)).ToList();
         }
