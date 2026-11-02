@@ -174,6 +174,48 @@ namespace SobrevivenciaCore
 
         float proximoAirdropAuto = -1f;
 
+        // California 2 vem com o airdrop nativo desligado e o jogo não carrega os pontos de queda;
+        // estes são os 37 pontos de airdrop do próprio arquivo do mapa (Nodes.dat).
+        static readonly Vector3[] PontosAirdropCa2 = {
+            new Vector3(497.5f, 96.5f, 865.9f),
+            new Vector3(751.4f, 125.4f, -46.7f),
+            new Vector3(731.0f, 91.8f, -18.3f),
+            new Vector3(-185.5f, 92.0f, 125.4f),
+            new Vector3(-769.8f, 36.4f, 114.7f),
+            new Vector3(409.6f, 108.0f, -581.9f),
+            new Vector3(785.8f, 127.0f, -853.8f),
+            new Vector3(-440.6f, 39.9f, 706.9f),
+            new Vector3(165.1f, 154.9f, 265.7f),
+            new Vector3(545.0f, 80.8f, -75.2f),
+            new Vector3(-117.1f, 83.9f, -661.0f),
+            new Vector3(-311.6f, 40.3f, -779.3f),
+            new Vector3(1201.3f, 129.2f, 111.8f),
+            new Vector3(1327.9f, 91.2f, -550.1f),
+            new Vector3(1567.1f, 82.5f, -1219.5f),
+            new Vector3(1626.2f, 80.5f, -721.8f),
+            new Vector3(-333.9f, 38.4f, 1613.8f),
+            new Vector3(18.3f, 38.3f, 1789.7f),
+            new Vector3(998.4f, 90.9f, 1758.2f),
+            new Vector3(1830.4f, 212.6f, 1575.1f),
+            new Vector3(1793.4f, 155.4f, 695.9f),
+            new Vector3(2131.1f, 171.4f, 630.0f),
+            new Vector3(1929.0f, 64.1f, 2907.5f),
+            new Vector3(1462.3f, 45.3f, 3090.1f),
+            new Vector3(1654.9f, 54.3f, 3395.1f),
+            new Vector3(1814.2f, 97.2f, 3667.2f),
+            new Vector3(532.3f, 66.4f, 3523.0f),
+            new Vector3(428.6f, 95.1f, 3769.3f),
+            new Vector3(-595.7f, 31.3f, 3582.2f),
+            new Vector3(-148.0f, 46.8f, 3745.6f),
+            new Vector3(-403.1f, 36.3f, 3352.7f),
+            new Vector3(1971.9f, 211.3f, 2157.9f),
+            new Vector3(2168.3f, 60.6f, 3348.7f),
+            new Vector3(1359.1f, 98.4f, 2532.7f),
+            new Vector3(672.7f, 113.9f, 2382.7f),
+            new Vector3(738.6f, 142.9f, 1135.4f),
+            new Vector3(1552.6f, 234.5f, 647.5f)
+        };
+
         /// <summary>Airdrop automático (pedido do dono): a cada AirdropAutoMinutos, num ponto de airdrop do mapa fora das safes,
         /// 70% armas boas e 30% equipamento. Cai mesmo com pouca gente online.</summary>
         void TickAirdropAuto()
@@ -188,8 +230,7 @@ namespace SobrevivenciaCore
             for (int t = 0; t < 15 && onde == null; t++)
             {
                 var no = LevelManager.GetRandomAirdropNode();
-                if (no == null) break;
-                var pos = no.transform.position;
+                var pos = no != null ? no.transform.position : PontosAirdropCa2[sorte.Next(PontosAirdropCa2.Length)];
                 if (ZonaSeguraEm(pos) == null) onde = pos;
             }
             if (onde == null) { Rocket.Core.Logging.Logger.Log("[Airdrop auto] mapa sem ponto de airdrop fora das safes."); return; }
