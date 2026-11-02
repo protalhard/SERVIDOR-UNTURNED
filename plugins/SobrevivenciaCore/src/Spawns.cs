@@ -191,7 +191,7 @@ namespace SobrevivenciaCore
                     case "cerca":
                     case "parede":
                     {
-                        if (area == "safe") continue; // na safe vem só 6 por NPC, pra separar as lojas (abaixo)
+                        if (area == "safe" || area == "cacador") continue; // safe: 6 por NPC (abaixo); caçador agora fica dentro da safe, sem cerca
                         id = IdPeca(pc.Tipo, area);
                         float esp = Mathf.Max(.5f, pc.Tipo == "cerca" ? S.MontarEspacoCerca : S.MontarEspacoParede);
                         if (Assets.find(EAssetType.ITEM, id) is ItemBarricadeAsset ba && ba.radius > .3f) esp = ba.radius * 2f;
