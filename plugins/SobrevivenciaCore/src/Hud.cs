@@ -101,7 +101,7 @@ namespace SobrevivenciaCore
             }
             HudT(p, env, "Hud_Abates", f.Abates.ToString("N0"));
             HudT(p, env, "Hud_Mortes", f.Mortes.ToString("N0"));
-            HudT(p, env, "Hud_Xp", f.Xp.ToString("N0"));
+            HudT(p, env, "Hud_Xp", f.XpSaldo.ToString("N0")); // saldo gastável (o mesmo da loja de XP)
             HudT(p, env, "Hud_Hs", f.PorcentoCabeca + "%");
             HudT(p, env, "Hud_Kd", f.Kd.ToString("0.00"));
             HudT(p, env, "Hud_Posicao", posicoes.TryGetValue(Id(p), out var pos) ? "#" + pos : "-");
