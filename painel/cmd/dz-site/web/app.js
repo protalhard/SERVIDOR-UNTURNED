@@ -77,6 +77,12 @@
 
       <section class="secao"><h2>Nosso <span>servidor</span></h2>${cartaoServidor(st)}</section>
 
+      <section class="secao"><h2>Conheça o <span>servidor</span></h2>
+        <a class="arte-larga" href="/img/divulgacao/07-banner.webp" target="_blank" rel="noopener"><img src="/img/divulgacao/07-banner.webp" alt="DAY Z Brasil: sobreviva, lucre, domine" loading="lazy"></a>
+        <div class="artes">${[['02-safe-zone', 'Safe zone completa', 'Lojas, caçador, ATM e garagem, sem PvP.'], ['03-economia', 'Economia de verdade', 'Cace, venda e guarde no banco.'], ['04-garagem-heli', 'Carro e helicóptero', 'Guarde na garagem e chame quando quiser.'], ['05-fora-da-safe', 'Fora da safe é guerra', 'Mercado negro, airdrops e raids.']]
+          .map(([f, t, d]) => `<a class="arte" href="/img/divulgacao/${f}.webp" target="_blank" rel="noopener"><img src="/img/divulgacao/${f}.webp" alt="${t}" loading="lazy"><span><b>${t}</b>${d}</span></a>`).join('')}</div>
+      </section>
+
       <section class="grade g4 numeros">
         <div class="painel"><div class="rotulo">Status</div><div class="numero ${s.online ? 'laranja' : ''}">${s.online ? 'ONLINE' : 'OFFLINE'}</div></div>
         <div class="painel"><div class="rotulo">Jogadores</div><div class="numero">${st.jogadores}/${s.max || '–'}</div></div>

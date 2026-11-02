@@ -13,7 +13,7 @@ const (
 	ipServidor   = "54.94.93.87:27015"
 	site         = "https://snaplag.com.br/"
 	iconeURL     = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon.png"
-	capaURL      = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/capa.jpg"
+	capaURL      = "https://dayz.snaplag.com.br/img/og.jpg"
 	rodape       = "DAY Z BRASIL OFICIAL • powered by SnapLag"
 )
 

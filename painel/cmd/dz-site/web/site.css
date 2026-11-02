@@ -410,3 +410,15 @@ td.ord { color: var(--c); font-weight: 800; }
 .kit-itens { margin-top: 0; }
 .kit-itens .vip-item { width: 48px; height: 48px; background: radial-gradient(circle, rgba(255,255,255,.16), rgba(255,255,255,.04) 70%); border: 1px solid var(--borda); border-radius: 8px; }
 .kit-itens .vip-item img { max-width: 42px; max-height: 42px; }
+
+/* Conheça o servidor: artes de divulgação */
+.arte-larga { display: block; border-radius: 16px; overflow: hidden; border: 1px solid var(--borda); box-shadow: 0 0 40px rgba(255,90,0,.18); margin-bottom: 14px; }
+.arte-larga img { width: 100%; display: block; aspect-ratio: 16 / 9; object-fit: cover; }
+.artes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.arte { position: relative; display: block; border-radius: 14px; overflow: hidden; border: 1px solid var(--borda); color: #fff; text-decoration: none; }
+.arte img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.arte:hover img { transform: scale(1.04); }
+.arte span { display: grid; gap: 4px; padding: 12px 14px; background: rgba(10,10,12,.92); border-top: 2px solid var(--c); font-size: 13px; color: var(--fraco, #b9b9bf); }
+.arte span b { color: #fff; font-size: 15px; }
+@media (max-width: 900px) { .artes { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .artes { grid-template-columns: 1fr; } }
