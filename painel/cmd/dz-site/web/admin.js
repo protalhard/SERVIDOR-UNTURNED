@@ -722,7 +722,16 @@
   }
 
   $$("[data-i]").forEach((i) => i.append(icone(i.dataset.i)));
-  $$("#abas button").forEach((b) => b.addEventListener("click", () => abrir(b.dataset.aba)));
+  $$("#abas button").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.aba === "entradas") {
+      log = "entradas";
+      $$("#sub-logs button").forEach((x) => x.classList.toggle("ativa", x.dataset.log === "entradas"));
+      abrir("logs");
+      $$("#abas button").forEach((x) => x.classList.toggle("ativa", x === b));
+      return;
+    }
+    abrir(b.dataset.aba);
+  }));
   $$("#sub-logs button").forEach((b) => b.addEventListener("click", () => {
     $$("#sub-logs button").forEach((x) => x.classList.toggle("ativa", x === b));
     log = b.dataset.log; carregarLog();

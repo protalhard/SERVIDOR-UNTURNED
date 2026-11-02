@@ -207,6 +207,9 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 			arq = "guard_log.txt"
 		case "raid":
 			arq = "raid_log.txt"
+		case "entradas":
+			jsonOK(w, logEntradas(400))
+			return
 		}
 		l := []string{}
 		linhas := lerTSV(arq, 400)
@@ -349,4 +352,39 @@ func separarAdmin(dominioAdmin string, h http.Handler) http.Handler {
 		}
 		h.ServeHTTP(w, r)
 	})
+}
+
+// logEntradas: jogadores_log.tsv (gravado pelo plugin) em texto legível, do mais novo pro mais velho, no horário de Brasília.
+func logEntradas(max int) []string {
+	nomes := map[string]string{"tentando": "TENTANDO ENTRAR", "entrou": "ENTROU", "saiu": "SAIU", "recusado": "RECUSADO", "chutado": "CHUTADO"}
+	br := time.FixedZone("BRT", -3*3600)
+	l := []string{}
+	linhas := lerTSV("jogadores_log.tsv", max)
+	for i := len(linhas) - 1; i >= 0; i-- {
+		c := linhas[i]
+		if len(c) < 4 {
+			continue
+		}
+		quando := c[0]
+		if t, err := time.Parse(time.RFC3339Nano, c[0]); err == nil {
+			quando = t.In(br).Format("02/01 15:04:05")
+		}
+		ev := nomes[c[3]]
+		if ev == "" {
+			ev = strings.ToUpper(c[3])
+		}
+		nome := c[2]
+		if nome == "" {
+			nome = "?"
+		}
+		txt := fmt.Sprintf("[%s] %-15s %s (%s)", quando, ev, nome, c[1])
+		if len(c) > 4 && strings.TrimSpace(c[4]) != "" {
+			txt += " - " + c[4]
+		}
+		l = append(l, txt)
+	}
+	if len(l) == 0 {
+		l = append(l, "Nenhuma entrada registrada ainda. O log começa a contar a partir da próxima atualização do jogo.")
+	}
+	return l
 }

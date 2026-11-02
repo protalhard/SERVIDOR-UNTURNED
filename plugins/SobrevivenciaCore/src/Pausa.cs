@@ -41,6 +41,7 @@ namespace SobrevivenciaCore
             {
                 var p = UnturnedPlayer.FromSteamPlayer(sp);
                 if (p == null || EhStaff(p) || p.IsAdmin) continue;
+                LogJogador(p.CSteamID, p.SteamName, "chutado", "Manutencao (pausa pelo painel)");
                 Provider.kick(p.CSteamID, MsgPausa);
             }
         }
@@ -55,7 +56,9 @@ namespace SobrevivenciaCore
         System.Collections.IEnumerator Chutar(UnturnedPlayer p)
         {
             yield return new WaitForSeconds(1f);
-            if (p?.Player != null) Provider.kick(p.CSteamID, MsgPausa);
+            if (p?.Player == null) yield break;
+            LogJogador(p.CSteamID, p.SteamName, "recusado", "Servidor em manutencao (so staff entra)");
+            Provider.kick(p.CSteamID, MsgPausa);
         }
     }
 }

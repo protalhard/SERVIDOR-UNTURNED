@@ -35,6 +35,7 @@ namespace SobrevivenciaCore
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
             U.Events.OnPlayerConnected += AoConectar;
             U.Events.OnPlayerDisconnected += AoDesconectar;
+            LigarLogJogadores();
             UnturnedPlayerEvents.OnPlayerRevive += AoRenascer;
             ChatManager.onChatted += AoFalar;
             InvokeRepeating(nameof(ChecarZonas), 1f, 1f);
@@ -57,6 +58,7 @@ namespace SobrevivenciaCore
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
             U.Events.OnPlayerConnected -= AoConectar;
             U.Events.OnPlayerDisconnected -= AoDesconectar;
+            DesligarLogJogadores();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
             ChatManager.onChatted -= AoFalar;
             Instancia = null;
@@ -129,6 +131,7 @@ namespace SobrevivenciaCore
         void AoConectar(UnturnedPlayer p)
         {
             entrouEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
+            try { LogEntrou(p); } catch { }
             BarrarNaPausa(p);
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);
@@ -149,6 +152,7 @@ namespace SobrevivenciaCore
 
         void AoDesconectar(UnturnedPlayer p)
         {
+            try { LogSaiu(p); } catch { }
             zonaAtual.Remove(p.CSteamID.m_SteamID);
             saiuSafeEm.Remove(p.CSteamID.m_SteamID);
             guard.Remove(p.CSteamID.m_SteamID);
