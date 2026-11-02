@@ -282,9 +282,10 @@
     async sobre () {
       const cmds = [
         ['/menu', 'Mostra tudo que o servidor tem'], ['/kits · /kit nome', 'Seus kits e o que falta pra cada um'],
-        ['/safe', 'Volta pra safe zone (15 s parado)'], ['/home', 'Vai pra sua cama (10 s parado)'],
+        ['/safe', 'Vai pra uma safe: dentro de uma safe, ou logo depois de entrar ou morrer (fora de combate)'], ['/home', 'Vai pra sua cama (10 s parado)'],
         ['/tpa nome · /tpaceitar', 'Teleporte até um amigo'], ['/saldo · /depositar · /sacar', 'Dinheiro no ATM'],
         ['/lojas · /loja · /comprar · /vender', 'Lojas de armas, comida, geral, caçador e mercado negro'],
+        ['/marcar negro · /marcar cacador', 'Marca no mapa (aperte M) o mercado negro ou o caçador'],
         ['/perfil · /top', 'Suas estatísticas e o ranking'], ['/vault', 'Seu cofre pessoal'], ['/lojaxp', 'Troque XP por equipamento'],
       ];
       return cabeca('Sobre o servidor', 'Sobrevivência <em>de verdade</em>', 'Um servidor brasileiro de Unturned feito pra quem gosta de sobrevivência de verdade: lootear, negociar, caçar e lutar.') + `
@@ -295,6 +296,20 @@
             <p style="margin-top:10px" class="fraco">A cada 30 minutos os itens do chão são limpos, com aviso antes. O que está em caixas não some.</p></div>
           <div class="painel"><h3 style="margin-bottom:8px">Comandos</h3>${cmds.map(([c, d]) =>
             `<div class="regra"><span class="t mono" style="color:var(--c2)">${c}</span><span class="fraco" style="text-align:right">${d}</span></div>`).join('')}</div>
+        </div>
+        <div class="grade g3" style="margin-top:20px">
+          <div class="painel"><h3 style="margin-bottom:12px">🕶️ Mercado negro</h3>
+            <p>Fica <b>fora da safe</b>, então lá o <b>PvP é liberado</b>: vá armado e de olho em quem chega.</p>
+            <p style="margin-top:10px">É onde estão as <b>melhores armas</b> do servidor (snipers, rifles fortes e metralhadoras), equipamento tático, explosivos de raid e a venda de <b>helicóptero</b>.</p>
+            <p style="margin-top:10px" class="fraco">Pra achar: digite <span class="mono">/marcar negro</span> e aperte M.</p></div>
+          <div class="painel"><h3 style="margin-bottom:12px">📦 Airdrops</h3>
+            <p>A cada <b>30 minutos</b> cai um airdrop num ponto aleatório do mapa, sempre fora das safes. O aviso sai no chat: olhe pro céu.</p>
+            <p style="margin-top:10px">O que vem é sorteado: <b>70% de chance de armas boas</b> (rifles e metralhadoras, com pentes; as raras saem menos) e o resto é <b>equipamento</b> (mochila, colete, capacete, ferramentas e remédio).</p>
+            <p style="margin-top:10px" class="fraco">Quem chegar primeiro leva. Espere briga.</p></div>
+          <div class="painel"><h3 style="margin-bottom:12px">💰 Economia</h3>
+            <p>O dinheiro são as notas do jogo. Guarde no <b>ATM</b>: o que está no bolso cai quando você morre.</p>
+            <p style="margin-top:10px">As lojas compram de volta qualquer item por <b>60% do preço</b> de compra (uma arma de $1.000 vende por $600).</p>
+            <p style="margin-top:10px"><b>Caça dá dinheiro:</b> mate o bicho, corte o corpo com uma faca e venda carne e couro no <b>caçador</b>, dentro da safe. Carne crua $60, assada $80, couro $50. Um grizzly rende mais de $600.</p></div>
         </div>
         <div class="painel destaque creditos" style="margin-top:20px"><h3 style="margin-bottom:8px">🙏 Créditos e agradecimento</h3>
           <p>O DAY Z BRASIL se inspirou no servidor <b>Zumbas Brasil</b>. Reconhecemos o ótimo trabalho que eles fazem pela comunidade brasileira de Unturned e agradecemos pela inspiração na construção do nosso servidor. Valeu, Zumbas!</p></div>`;
