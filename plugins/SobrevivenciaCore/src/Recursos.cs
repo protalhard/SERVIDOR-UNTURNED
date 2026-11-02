@@ -34,7 +34,7 @@ namespace SobrevivenciaCore
         readonly Dictionary<string, float> intervalos = new Dictionary<string, float>(); // "id|tipo" -> fim
         public readonly Dictionary<ulong, (ulong de, float expira)> pedidosTpa = new Dictionary<ulong, (ulong, float)>();
 
-        float proximaLimpeza, proximoAnuncio, proximoAnuncioNegro, proximoAnuncioCaca;
+        float proximaLimpeza, proximoAnuncio, proximoAnuncioNegro, proximoAnuncioCaca, proximoAnuncioSite;
         int indiceAnuncio, ultimaContagemLimpeza = -1;
         int segundosParaSalvar = 60;
 
@@ -49,6 +49,7 @@ namespace SobrevivenciaCore
             proximoAnuncio = Time.realtimeSinceStartup + S.AnuncioSegundos;
             proximoAnuncioNegro = Time.realtimeSinceStartup + Math.Max(60, S.AnuncioNegroSegundos / 2); // meio ciclo depois dos outros avisos
             proximoAnuncioCaca = Time.realtimeSinceStartup + Math.Max(60, S.AnuncioCacaSegundos / 4);
+            proximoAnuncioSite = Time.realtimeSinceStartup + 600;
             // ValidarItens roda depois que o mapa carrega (ConferirMenu): os itens dos mods do Workshop chegam depois do plugin
         }
 
@@ -250,6 +251,15 @@ namespace SobrevivenciaCore
             {
                 proximoAnuncioCaca = agora + S.AnuncioCacaSegundos;
                 Chat.Todos(Chat.Cor("#3DDC84", S.AnuncioCaca));
+            }
+            if (S.AnuncioSiteSegundos > 0 && agora >= proximoAnuncioSite)
+            {
+                proximoAnuncioSite = agora + S.AnuncioSiteSegundos;
+                var site = (S.LinkSiteServidor ?? "").Trim();
+                var disc = S.Discord;
+                var txt = "Acesse nosso site " + (site != "" ? site.Replace("https://", "") : "") + ": ranking, faccoes, kits e Loja VIP."
+                    + (disc != "" ? " Entre no nosso Discord: " + disc.Replace("https://", "") + " (eventos, grupo e ganhe o kit Discord)." : " Temos Discord: o link esta no site.");
+                Chat.Todos(Chat.Cor(S.CorPrincipal, txt));
             }
 
             if (--segundosParaSalvar <= 0) { segundosParaSalvar = 60; Stats.Salvar(); }
