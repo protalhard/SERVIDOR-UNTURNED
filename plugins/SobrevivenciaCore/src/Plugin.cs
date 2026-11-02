@@ -21,6 +21,7 @@ namespace SobrevivenciaCore
         protected override void Load()
         {
             Instancia = this;
+            ItemLoja.RevendaPorcento = System.Math.Max(0, System.Math.Min(100, Configuration.Instance.RevendaPorcento > 0 ? Configuration.Instance.RevendaPorcento : 60));
             Banco = new Banco(Directory);
             IniciarSistemas();
             LigarSafeZone();
@@ -153,6 +154,7 @@ namespace SobrevivenciaCore
         void AoDesconectar(UnturnedPlayer p)
         {
             try { LogSaiu(p); } catch { }
+            GuardarBolsoAoSair(p);
             zonaAtual.Remove(p.CSteamID.m_SteamID);
             saiuSafeEm.Remove(p.CSteamID.m_SteamID);
             guard.Remove(p.CSteamID.m_SteamID);

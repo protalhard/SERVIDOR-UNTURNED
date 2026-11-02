@@ -650,6 +650,15 @@ namespace SobrevivenciaCore
                     LogAdminNome(NomeDe(quem) + " (site)", quem, seg == 0 ? "LIMPOU ITENS DO CHAO" : $"LIMPEZA DE ITENS em {seg}s");
                     continue;
                 }
+                // economia pelo painel (aba Economia): precisa de "Precos" ou ser dono
+                if (c[0] == "economia")
+                {
+                    if (!EhDono(quem) && !(staff.TryGetValue(quem, out var me) && me.Perms.Contains("Precos")))
+                    { LogGuard($"COMANDO NEGADO do site: economia por {quem} (sem permissao Precos)"); continue; }
+                    var re = AjusteEconomia(c.Length > 4 ? c[4] : "");
+                    LogAdminNome(NomeDe(quem) + " (site)", quem, "ECONOMIA: " + re);
+                    continue;
+                }
                 // pausa (manutenção) pelo painel: só staff fica e entra. Precisa de "Reiniciar" ou ser dono. texto = "1" pausa, "0" volta
                 if (c[0] == "pausa")
                 {

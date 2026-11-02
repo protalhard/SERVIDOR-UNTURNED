@@ -94,6 +94,8 @@ namespace SobrevivenciaCore
         public bool BloquearZumbisNaSafe;
         public bool AvisarEntradaSafe;
         public int SaldoInicialBanco;
+        /// <summary>Quanto (%) a loja paga na revenda, sobre o menor preço de compra do item. Muda pelo painel do site (aba Economia).</summary>
+        public int RevendaPorcento = 60;
         public bool KitAoRenascer;
         public List<ItemKit> KitInicial;
         public int DinheiroKitInicial;

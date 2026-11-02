@@ -326,6 +326,68 @@ func registrarPainel(mux *http.ServeMux) {
 		}
 		jsonOK(w, map[string]any{"ok": true, "segundos": q.Segundos})
 	})
+	// aba Economia: o jogo grava economia.json a cada 2 min; o POST manda o ajuste pro jogo
+	mux.HandleFunc("/api/admin/economia", func(w http.ResponseWriter, r *http.Request) {
+		a, ok := exigirStaff(w, r)
+		if !ok {
+			return
+		}
+		if r.Method == http.MethodGet {
+			b, err := os.ReadFile(filepath.Join(fonte.Pasta, "economia.json"))
+			if err != nil {
+				jsonOK(w, map[string]any{"vazio": true})
+				return
+			}
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			_, _ = w.Write(b)
+			return
+		}
+		if r.Method != http.MethodPost || r.Header.Get("X-DZ") != "1" {
+			http.Error(w, "metodo", http.StatusMethodNotAllowed)
+			return
+		}
+		if !a.Precos {
+			http.Error(w, "voce nao tem a permissao Precos", http.StatusForbidden)
+			return
+		}
+		var q struct {
+			Tipo  string
+			Valor float64
+			Loja  string
+		}
+		if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024)).Decode(&q); err != nil {
+			http.Error(w, "pedido invalido", http.StatusBadRequest)
+			return
+		}
+		switch q.Tipo {
+		case "revenda":
+			if q.Valor < 0 || q.Valor > 100 {
+				http.Error(w, "revenda tem que ser de 0 a 100", http.StatusBadRequest)
+				return
+			}
+		case "compra", "soCompra":
+			if q.Valor == 0 || q.Valor <= -95 || q.Valor > 1000 {
+				http.Error(w, "porcentagem fora do limite (-95 a 1000)", http.StatusBadRequest)
+				return
+			}
+		default:
+			http.Error(w, "tipo invalido", http.StatusBadRequest)
+			return
+		}
+		loja := strings.Map(func(r rune) rune {
+			if r == '|' || r == '\t' || r == '\n' || r == '\r' {
+				return -1
+			}
+			return r
+		}, strings.TrimSpace(q.Loja))
+		texto := q.Tipo + "|" + strconv.FormatFloat(q.Valor, 'f', -1, 64) + "|" + loja
+		if err := comandoJogo("economia", "0", a.Steam, 0, texto); err != nil {
+			http.Error(w, "nao consegui falar com o jogo", http.StatusInternalServerError)
+			return
+		}
+		jsonOK(w, map[string]any{"ok": true})
+	})
 	mux.HandleFunc("/api/admin/pausa", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.Header.Get("X-DZ") != "1" {
 			http.Error(w, "metodo", http.StatusMethodNotAllowed)

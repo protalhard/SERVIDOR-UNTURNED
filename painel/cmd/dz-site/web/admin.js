@@ -19,9 +19,11 @@
     suspeitos: ["Suspeitos", "O que o DZ GUARD (anti-cheat) achou estranho."], reports: ["Reports", "Denúncias feitas com /report no jogo."],
     banir: ["Banir por Steam ID", "Funciona com o jogador online ou offline."], logs: ["Logs", "Ações da staff, anti-cheat e raids."],
     staff: ["Staff", "Quem é da staff e o que cada um pode fazer."],
-    faccoes: ["Facções", "Todas as facções: membros, cofre e quando alguém entrou pela última vez."] };
+    faccoes: ["Facções", "Todas as facções: membros, cofre e quando alguém entrou pela última vez."],
+    economia: ["Economia", "Todo o dinheiro do jogo e os ajustes de preço. Atualiza a cada 2 minutos."] };
 
   const ICONES = {
+    dinheiro: '<path d="M2 6h20v12H2zm2 2v8h16V8zm8 1.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM5 9h2v2H5zm12 4h2v2h-2z"/>',
     painel: '<path d="M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z"/>',
     msg: '<path d="M4 4h16v12H7l-3 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
     wipe: '<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -660,6 +662,94 @@
     catch (e) { aviso("Erro: " + e.message, true); }
   }
 
+  // ---------------- economia ----------------
+  let economia = null;
+  const dz = (n) => "$" + Number(n || 0).toLocaleString("pt-BR");
+  async function carregarEconomia() {
+    try { economia = await api("/api/admin/economia"); if (aba === "economia") desenharEconomia(); }
+    catch (e) { aviso("Erro: " + e.message, true); }
+  }
+  async function ajustarEconomia(tipo, valor, loja, frase) {
+    if (!eu.precos) { aviso("Você não tem a permissão Precos.", true); return; }
+    if (!isFinite(valor) || (tipo !== "revenda" && valor === 0)) { aviso("Coloque um número.", true); return; }
+    if (!confirm(frase)) return;
+    try { await post("/api/admin/economia", { tipo, valor, loja: loja || "" }); aviso("Enviado pro jogo. Os números aqui atualizam em até 2 minutos."); setTimeout(carregarEconomia, 5000); }
+    catch (e) { aviso("Erro: " + e.message, true); }
+  }
+  function desenharEconomia() {
+    const E = $("#economia");
+    const e = economia;
+    if (!e) { E.replaceChildren(vazio("Carregando...")); return; }
+    if (e.vazio) { E.replaceChildren(vazio("O jogo ainda não mandou os números. Eles chegam uns 2 minutos depois que o servidor liga com a versão nova do plugin.")); return; }
+    const t = e.totais || {};
+    const pct = (v) => t.total ? Math.round(v * 100 / t.total) + "% do total" : "";
+    const partes = [
+      el("div", { class: "adm-tiles" },
+        tile("Dinheiro total", dz(t.total), "banco + bolso + baús + chão", "laranja"),
+        tile("No banco", dz(t.banco), pct(t.banco)),
+        tile("No bolso", dz(t.bolso), pct(t.bolso) + " · em notas"),
+        tile("Em baús", dz(t.baus), `${t.bausComDinheiro || 0} baús com dinheiro · ${pct(t.baus)}`),
+        tile("No chão", dz(t.chao), pct(t.chao)),
+        tile("Revenda", (e.revenda || 0) + "%", "do preço de compra a loja paga")),
+      el("p", { class: "fraco" }, "Atualizado em " + data(e.atualizado) + ". O bolso de quem está offline é o que ele tinha quando saiu.")];
+
+    // controles
+    const lojas = e.lojas || [];
+    const selLoja = () => el("select", {}, el("option", { value: "" }, "Todas as lojas"), lojas.map((l) => el("option", { value: l.id }, `${l.nome} (${l.tipo})`)));
+    const nRev = el("input", { type: "number", min: 0, max: 100, step: 1, value: e.revenda || 60 });
+    const nCompra = el("input", { type: "number", min: -95, max: 1000, step: 1, placeholder: "ex: 10 ou -10" });
+    const lCompra = selLoja();
+    const nSo = el("input", { type: "number", min: -95, max: 1000, step: 1, placeholder: "ex: 10 ou -10" });
+    const lSo = selLoja();
+    const nomeLoja = (s) => s.value ? s.options[s.selectedIndex].text : "todas as lojas";
+    const pode = !!eu.precos;
+    partes.push(el("div", { class: "adm-grade" },
+      el("article", { class: "adm-bloco" }, el("h2", {}, "Revenda (quanto a loja paga)"),
+        el("p", { class: "fraco" }, "Quando o jogador vende um item que a loja também vende, ela paga essa porcentagem do menor preço de compra. Ex: 60% = arma de $1.000 é revendida por $600."),
+        el("div", { class: "adm-linha" }, el("label", { class: "adm-campo" }, el("span", {}, "Porcentagem (0 a 100)"), nRev),
+          el("button", { class: "botao pequeno", disabled: !pode, onclick: () => ajustarEconomia("revenda", Number(nRev.value), "", `Mudar a revenda para ${Number(nRev.value)}%?`) }, "Salvar revenda"))),
+      el("article", { class: "adm-bloco" }, el("h2", {}, "Preço de compra"),
+        el("p", { class: "fraco" }, "Sobe ou desce em % o preço de tudo que o jogador compra. Positivo encarece, negativo barateia. A revenda acompanha sozinha."),
+        el("div", { class: "adm-linha" }, el("label", { class: "adm-campo" }, el("span", {}, "Porcentagem"), nCompra), el("label", { class: "adm-campo" }, el("span", {}, "Loja"), lCompra)),
+        el("button", { class: "botao pequeno", disabled: !pode, onclick: () => { const v = Number(nCompra.value); ajustarEconomia("compra", v, lCompra.value, `${v > 0 ? "Aumentar" : "Baixar"} em ${Math.abs(v)}% os preços de compra em ${nomeLoja(lCompra)}?`); } }, "Aplicar")),
+      el("article", { class: "adm-bloco" }, el("h2", {}, "Itens que a loja só compra (caça)"),
+        el("p", { class: "fraco" }, "Carne, couro e outros itens que o jogador só vende. Sobe ou desce em % o que a loja paga por eles."),
+        el("div", { class: "adm-linha" }, el("label", { class: "adm-campo" }, el("span", {}, "Porcentagem"), nSo), el("label", { class: "adm-campo" }, el("span", {}, "Loja"), lSo)),
+        el("button", { class: "botao pequeno", disabled: !pode, onclick: () => { const v = Number(nSo.value); ajustarEconomia("soCompra", v, lSo.value, `${v > 0 ? "Aumentar" : "Baixar"} em ${Math.abs(v)}% o que a loja paga pela caça em ${nomeLoja(lSo)}?`); } }, "Aplicar"))));
+    if (!pode) partes.push(el("p", { class: "adm-erro" }, "Você só pode ver. Para mudar preços precisa da permissão Precos."));
+
+    const th = (x, num) => el("th", { class: num ? "num" : "" }, x);
+    const td = (x, num) => el("td", { class: num ? "num" : "" }, x);
+    // notas
+    const notas = e.notas || [];
+    partes.push(el("div", { class: "adm-secao" }, el("h2", {}, "Notas espalhadas")),
+      el("div", { class: "adm-tabela-envolve" }, el("table", { class: "adm-tabela" },
+        el("thead", {}, el("tr", {}, th("Nota"), th("No bolso", 1), th("Em baús", 1), th("No chão", 1), th("Valor somado", 1))),
+        el("tbody", {}, notas.map((n) => el("tr", {}, td(dz(n.valor)), td(n.bolso, 1), td(n.baus, 1), td(n.chao, 1), td(dz(n.valor * (n.bolso + n.baus + n.chao)), 1)))))));
+    // lojas
+    partes.push(el("div", { class: "adm-secao" }, el("h2", {}, "Lojas")),
+      el("div", { class: "adm-tabela-envolve" }, el("table", { class: "adm-tabela" },
+        el("thead", {}, el("tr", {}, th("Loja"), th("Tipo"), th("Itens à venda", 1), th("Preço médio", 1), th("Itens que só compra", 1))),
+        el("tbody", {}, lojas.map((l) => el("tr", {}, td(l.nome), td(el("span", { class: "adm-tag" }, l.tipo)), td(l.itensCompra, 1), td(dz(l.mediaCompra), 1), td(l.itensSoCompra, 1)))))));
+    // jogadores
+    const busca = el("input", { type: "search", placeholder: "Buscar jogador ou Steam ID", class: "adm-busca-local" });
+    const corpo = el("tbody");
+    const pintar = () => {
+      const q = busca.value.trim().toLowerCase();
+      const l = (e.jogadores || []).filter((j) => !q || j.nome.toLowerCase().includes(q) || j.id === q);
+      corpo.replaceChildren(...l.slice(0, 300).map((j, i) => el("tr", {}, td(String(i + 1), 1),
+        td([el("span", { class: "adm-ponto" + (j.online ? " on" : ""), title: j.online ? "online" : "offline" }), j.nome]),
+        td(dz(j.banco), 1), td(dz(j.bolso), 1), td(dz(j.banco + j.bolso), 1), td(steamLink(j.id)))));
+      if (!l.length) corpo.replaceChildren(el("tr", {}, el("td", { colspan: 6 }, "Ninguém encontrado.")));
+    };
+    busca.addEventListener("input", pintar);
+    partes.push(el("div", { class: "adm-secao" }, el("h2", {}, "Dinheiro de cada jogador")), busca,
+      el("div", { class: "adm-tabela-envolve" }, el("table", { class: "adm-tabela" },
+        el("thead", {}, el("tr", {}, th("#", 1), th("Jogador"), th("Banco", 1), th("Bolso", 1), th("Total", 1), th("Steam"))), corpo)));
+    pintar();
+    E.replaceChildren(...partes);
+  }
+
   // ---------------- navegação e carga ----------------
   function abrir(nova) {
     aba = nova;
@@ -673,6 +763,7 @@
     if (aba === "logs") carregarLog();
     if (aba === "jogadores") carregarJogadores();
     if (aba === "faccoes") carregarFaccoes();
+    if (aba === "economia") carregarEconomia();
     if (aba === "mensagens" || aba === "wipe" || aba === "dashboard") carregarPainel();
   }
   function desenhar() {
@@ -686,6 +777,7 @@
     if (aba === "staff") desenharStaff();
     if (aba === "jogadores") desenharJogadores();
     if (aba === "faccoes") desenharFaccoes();
+    if (aba === "economia") desenharEconomia();
     const f = { banidos: cardBanido, suspeitos: cardSuspeito, reports: cardReport }[aba];
     if (f) {
       const itens = dados[aba].filter(filtro);

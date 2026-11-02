@@ -21,13 +21,14 @@ import (
 )
 
 type acessoAdmin struct {
-	Steam string `json:"steam"`
-	Nome  string `json:"nome"`
-	Staff bool   `json:"staff"`
-	Dono  bool   `json:"dono"`
-	Ban   bool   `json:"ban"`
-	Mundo bool   `json:"mundo"` // anúncios e mensagens (aba Mensagens)
-	Pausa bool   `json:"pausa"` // pausar o jogo pra manutenção (permissão Reiniciar)
+	Steam  string `json:"steam"`
+	Nome   string `json:"nome"`
+	Staff  bool   `json:"staff"`
+	Dono   bool   `json:"dono"`
+	Ban    bool   `json:"ban"`
+	Mundo  bool   `json:"mundo"`  // anúncios e mensagens (aba Mensagens)
+	Pausa  bool   `json:"pausa"`  // pausar o jogo pra manutenção (permissão Reiniciar)
+	Precos bool   `json:"precos"` // aba Economia: mudar revenda e preços (permissão Precos)
 }
 
 // permissoesAdmin: as mesmas do plugin (Plugin.PermissoesAdmin).
@@ -40,7 +41,7 @@ func acessoDe(id string) acessoAdmin {
 	}
 	for _, d := range strings.FieldsFunc(fonte.LerConfig().Donos, func(r rune) bool { return r == ',' || r == ' ' || r == ';' }) {
 		if d == id {
-			a.Dono, a.Staff, a.Ban, a.Mundo, a.Pausa = true, true, true, true, true
+			a.Dono, a.Staff, a.Ban, a.Mundo, a.Pausa, a.Precos = true, true, true, true, true, true
 		}
 	}
 	for _, c := range lerTSV("staff.tsv", 0) {
@@ -56,6 +57,9 @@ func acessoDe(id string) acessoAdmin {
 				}
 				if p == "Reiniciar" {
 					a.Pausa = true
+				}
+				if p == "Precos" {
+					a.Precos = true
 				}
 			}
 		}

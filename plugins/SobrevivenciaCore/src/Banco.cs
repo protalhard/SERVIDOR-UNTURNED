@@ -31,6 +31,7 @@ namespace SobrevivenciaCore
         }
 
         public bool Existe(ulong id) => saldos.ContainsKey(id);
+        public IEnumerable<KeyValuePair<ulong, long>> Todos => saldos;
         public long Saldo(ulong id) => saldos.TryGetValue(id, out var v) ? v : 0;
 
         public void Somar(ulong id, long valor)
