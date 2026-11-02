@@ -135,6 +135,14 @@ namespace SobrevivenciaCore
         void CompletarLojasDepois()
         {
             try { CompletarLojas(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            ItemLoja.MenorCompra = id =>
+            {
+                int m = 0;
+                foreach (var l in Configuration.Instance.Lojas ?? new List<Loja>())
+                    foreach (var i in l.Itens ?? new List<ItemLoja>())
+                        if (i.Id == id && !i.Veiculo && i.Compra > 0 && (m == 0 || i.Compra < m)) m = i.Compra;
+                return m;
+            };
             try { AjustarEconomia(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { AjustarKitsMadeira(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }

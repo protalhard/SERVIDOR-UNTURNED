@@ -46,6 +46,21 @@ namespace SobrevivenciaCore
         [XmlAttribute] public string Categoria = "";
         // true = Id é de veículo (aparece do lado do vendedor, trancado pro comprador)
         [XmlAttribute] public bool Veiculo;
+        /// <summary>Quanto a loja paga ao jogador de verdade: item que a loja vende paga RevendaPorcento do preço de compra
+        /// (pedido do dono: 40% a menos que a compra); item que ela só compra (carne, couro) usa o Venda fixo.</summary>
+        /// Usa o menor preço de compra do item entre todas as lojas, pra ninguém comprar barato numa e vender caro na outra.
+        [XmlIgnore] public int Paga
+        {
+            get
+            {
+                if (Veiculo || Compra <= 0) return Venda;
+                int menor = MenorCompra != null ? MenorCompra(Id) : Compra;
+                if (menor <= 0 || menor > Compra) menor = Compra;
+                return System.Math.Max(1, (int)((long)menor * RevendaPorcento / 100));
+            }
+        }
+        public static int RevendaPorcento = 60;
+        public static System.Func<ushort, int> MenorCompra;
         public ItemLoja() { }
         public ItemLoja(ushort id, int compra, int venda = 0) { Id = id; Compra = compra; Venda = venda; }
     }

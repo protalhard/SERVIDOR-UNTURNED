@@ -122,7 +122,7 @@ namespace SobrevivenciaCore
             {
                 var it = loja.Itens[i];
                 var compra = it.Compra > 0 ? $"compra ${it.Compra}" : "";
-                var venda = it.Venda > 0 ? $"vende ${it.Venda}" : "";
+                var venda = it.Paga > 0 ? $"vende ${it.Paga}" : "";
                 P.Msg(p, $"{i + 1}. {Itens.Nome(it.Id)}  {compra}  {venda}".Trim());
             }
         }
@@ -163,14 +163,14 @@ namespace SobrevivenciaCore
             if (a.Length < 1 || !int.TryParse(a[0], out var n) || n < 1 || n > loja.Itens.Count)
             { P.Erro(p, "Use: /vender <numero> [quantidade|tudo]"); return; }
             var it = loja.Itens[n - 1];
-            if (it.Venda <= 0) { P.Erro(p, "Essa loja nao compra esse item."); return; }
+            if (it.Paga <= 0) { P.Erro(p, "Essa loja nao compra esse item."); return; }
             int tem = Itens.Contar(p, it.Id);
             int qtd = a.Length > 1 && a[1].Equals("tudo", StringComparison.OrdinalIgnoreCase) ? tem
                 : a.Length > 1 && int.TryParse(a[1], out var q) ? Math.Max(1, q) : 1;
             if (tem == 0) { P.Erro(p, $"Voce nao tem {Itens.Nome(it.Id)}."); return; }
             qtd = Math.Min(qtd, tem);
             int removidos = Itens.Remover(p, it.Id, qtd);
-            long ganho = (long)it.Venda * removidos;
+            long ganho = (long)it.Paga * removidos;
             Dinheiro.Dar(p, ganho);
             P.Msg(p, $"Vendeu {removidos}x {Itens.Nome(it.Id)} por ${ganho}.");
         }
@@ -185,10 +185,10 @@ namespace SobrevivenciaCore
             var loja = P.LojaPerto(p.Position);
             if (loja == null) { P.Erro(p, "Voce nao esta em nenhuma loja."); return; }
             long total = 0; int itens = 0;
-            foreach (var it in loja.Itens.Where(i => i.Venda > 0 && i.Compra == 0))
+            foreach (var it in loja.Itens.Where(i => i.Paga > 0 && i.Compra == 0))
             {
                 int r = Itens.Remover(p, it.Id, Itens.Contar(p, it.Id));
-                itens += r; total += (long)r * it.Venda;
+                itens += r; total += (long)r * it.Paga;
             }
             if (itens == 0) { P.Erro(p, "Voce nao tem nada que essa loja compre."); return; }
             Dinheiro.Dar(p, total);

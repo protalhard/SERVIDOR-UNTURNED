@@ -522,13 +522,13 @@ namespace SobrevivenciaCore
                 V(p, n, true);
                 T(p, n + "_Nome", (it == e.PrecoSel ? C(Laranja, "> ") : "") + Chat.Limpar(NomeDe(it)) + C(Cinza, " #" + it.Id));
                 T(p, n + "_Compra", it.Compra > 0 ? "$ " + it.Compra.ToString("N0") : C(Cinza, "-"));
-                T(p, n + "_Venda", it.Venda > 0 ? "$ " + it.Venda.ToString("N0") : C(Cinza, "-"));
+                T(p, n + "_Venda", it.Paga > 0 ? "$ " + it.Paga.ToString("N0") : C(Cinza, "-"));
                 var modelo = it.Veiculo ? S.IconeVeiculoUrl : S.IconeUrl;
                 if (!string.IsNullOrEmpty(modelo)) Img(p, n + "_Icone", modelo.Replace("{id}", it.Id.ToString()));
             }
             T(p, "Preco_Pagina", $"{e.PrecoPagina + 1}/{paginas}");
             T(p, "Preco_Sel_Nome", e.PrecoSel == null ? C(Cinza, "Clique num item") :
-                Chat.Limpar(NomeDe(e.PrecoSel)) + C(Cinza, $"  compra $ {e.PrecoSel.Compra:N0} | venda $ {e.PrecoSel.Venda:N0}"));
+                Chat.Limpar(NomeDe(e.PrecoSel)) + C(Cinza, $"  compra $ {e.PrecoSel.Compra:N0} | venda $ {e.PrecoSel.Paga:N0}"));
         }
 
         static int AplicarPorcento(int v, double porc) => v <= 0 ? v : Math.Max(1, (int)Math.Round(v * (1 + porc / 100.0)));

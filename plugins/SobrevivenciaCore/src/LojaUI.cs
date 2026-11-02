@@ -292,7 +292,7 @@ namespace SobrevivenciaCore
             LT(p, "Loja_Titulo", Chat.Limpar(loja.Nome).ToUpperInvariant());
             LT(p, "Loja_Subtitulo", SubtituloLoja(loja));
             LT(p, "Loja_Aviso", "");
-            bool compra = loja.Itens.Any(i => i.Compra > 0), venda = loja.Itens.Any(i => i.Venda > 0);
+            bool compra = loja.Itens.Any(i => i.Compra > 0), venda = loja.Itens.Any(i => i.Paga > 0);
             LV(p, "Loja_ModoComprar", compra && venda);
             LV(p, "Loja_ModoVender", compra && venda);
             LV(p, "Loja_VenderTudo", loja.Tipo == "cacador");
@@ -319,7 +319,7 @@ namespace SobrevivenciaCore
             if (!MenuAberto(p)) p.Player.disablePluginWidgetFlag(EPluginWidgetFlags.Modal);
         }
 
-        bool ValeNoModo(EstadoLoja e, ItemLoja i) => e.Vender ? i.Venda > 0 : i.Compra > 0;
+        bool ValeNoModo(EstadoLoja e, ItemLoja i) => e.Vender ? i.Paga > 0 : i.Compra > 0;
 
         static string NomeDe(ItemLoja i)
             => i.Veiculo ? ((Assets.find(EAssetType.VEHICLE, i.Id) as VehicleAsset)?.vehicleName ?? ("Veiculo " + i.Id)) : Itens.Nome(i.Id);
@@ -368,7 +368,7 @@ namespace SobrevivenciaCore
                 LV(p, n, true);
                 LT(p, n + "_Nome", Chat.Limpar(NomeDe(it)).ToUpperInvariant() + (e.Vender ? $" x{Itens.Contar(p, it.Id)}" : ""));
                 LI(p, n + "_Icone", it);
-                LT(p, n + "_Preco", "$ " + (e.Vender ? it.Venda : it.Compra).ToString("N0"));
+                LT(p, n + "_Preco", "$ " + (e.Vender ? it.Paga : it.Compra).ToString("N0"));
                 LV(p, n + "_Sel", idx == e.Sel);
             }
             LT(p, "Itens_Pagina", $"{e.Pagina + 1}/{paginas}");
@@ -385,7 +385,7 @@ namespace SobrevivenciaCore
             }
             var it = e.Lista[e.Sel];
             if (it.Veiculo) e.Qtd = 1;
-            long preco = e.Vender ? it.Venda : it.Compra;
+            long preco = e.Vender ? it.Paga : it.Compra;
             LT(p, "Det_Nome", Chat.Limpar(NomeDe(it)).ToUpperInvariant());
             LI(p, "Det_Icone", it);
             string desc = it.Veiculo ? "Veiculo. Aparece aqui do lado, trancado pra voce."
@@ -495,11 +495,11 @@ namespace SobrevivenciaCore
             if (e.Sel < 0 || e.Sel >= e.Lista.Count) { AvisoLoja(p, "Escolha um item.", false); return; }
             if (!PertoDoNpc(p, e)) return;
             var it = e.Lista[e.Sel];
-            if (it.Venda <= 0 || it.Veiculo) return;
+            if (it.Paga <= 0 || it.Veiculo) return;
             int tem = Itens.Contar(p, it.Id);
             if (tem == 0) { AvisoLoja(p, $"Voce nao tem {Chat.Limpar(NomeDe(it))}.", false); return; }
             int r = Itens.Remover(p, it.Id, Math.Min(tem, e.Qtd));
-            long ganho = (long)it.Venda * r;
+            long ganho = (long)it.Paga * r;
             Dinheiro.Dar(p, ganho);
             LT(p, "Loja_Dinheiro", C(Verde, "$ " + Dinheiro.NoBolso(p).ToString("N0")) + C(Cinza, " no bolso"));
             // a lista de venda só mostra o que ele tem: atualiza (some se vendeu tudo)
@@ -514,10 +514,10 @@ namespace SobrevivenciaCore
         {
             if (!PertoDoNpc(p, e)) return;
             long total = 0; int qtd = 0;
-            foreach (var it in e.Loja.Itens.Where(i => i.Venda > 0 && i.Compra == 0 && !i.Veiculo))
+            foreach (var it in e.Loja.Itens.Where(i => i.Paga > 0 && i.Compra == 0 && !i.Veiculo))
             {
                 int r = Itens.Remover(p, it.Id, Itens.Contar(p, it.Id));
-                qtd += r; total += (long)r * it.Venda;
+                qtd += r; total += (long)r * it.Paga;
             }
             if (qtd == 0) { AvisoLoja(p, "Voce nao tem nada que esse vendedor compre.", false); return; }
             Dinheiro.Dar(p, total);
