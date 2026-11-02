@@ -238,6 +238,8 @@ namespace SobrevivenciaCore
             var kit = new KitAirdrop { Nome = armas ? "auto:auto_armas" : "auto:auto_equip" };
             if (!MandarAirdrop(onde.Value, kit, out var erro, armas ? "ARMAS" : "EQUIPAMENTO"))
                 Rocket.Core.Logging.Logger.Log("[Airdrop auto] " + erro);
+            else
+                Rocket.Core.Logging.Logger.Log($"[Airdrop auto] {(armas ? "ARMAS" : "EQUIPAMENTO")} caiu em X {onde.Value.x:0} Z {onde.Value.z:0}");
         }
 
         static string DescreverDrop(KitAirdrop kit)
