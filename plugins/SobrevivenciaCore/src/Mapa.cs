@@ -38,6 +38,20 @@ namespace SobrevivenciaCore
                     }
             }
             catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            // pontos gravados à mão com /marcar gravar (mercado negro ou caçador montado com /por)
+            try
+            {
+                if (File.Exists(ArqAreas))
+                    foreach (var l in File.ReadAllLines(ArqAreas))
+                    {
+                        var c = l.Split('\t');
+                        if (c.Length < 4 || !NomeArea.ContainsKey(c[0])) continue;
+                        var ci = System.Globalization.CultureInfo.InvariantCulture; var st = System.Globalization.NumberStyles.Float;
+                        if (float.TryParse(c[1], st, ci, out var x) && float.TryParse(c[2], st, ci, out var y) && float.TryParse(c[3], st, ci, out var z))
+                            r.Add(new AreaMapa { Tipo = c[0], Nome = NomeArea[c[0]], Pos = new Vector3(x, y, z) });
+                    }
+            }
+            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             var cfg = Configuration.Instance;
             foreach (var z in cfg.ZonasSeguras ?? new List<Ponto>())
             {
@@ -48,6 +62,31 @@ namespace SobrevivenciaCore
             foreach (var a in cfg.Atms ?? new List<Ponto>())
                 r.Add(new AreaMapa { Tipo = "atm", Nome = "ATM", Pos = new Vector3(a.X, a.Y, a.Z) });
             return r;
+        }
+
+        string ArqAreas => Path.Combine(Directory, "areas_mapa.tsv");
+
+        /// <summary>/marcar gravar negro|cacador: grava onde o dono está como mercado negro ou caçador no mapa. /marcar apagar tira o mais perto (30 m).</summary>
+        public string GravarArea(UnturnedPlayer p, string tipo, bool apagar)
+        {
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            var linhas = File.Exists(ArqAreas) ? File.ReadAllLines(ArqAreas).Where(l => l.Trim() != "").ToList() : new List<string>();
+            if (apagar)
+            {
+                int antes = linhas.Count;
+                linhas.RemoveAll(l =>
+                {
+                    var c = l.Split('\t');
+                    return c.Length >= 4 && float.TryParse(c[1], System.Globalization.NumberStyles.Float, ci, out var x) && float.TryParse(c[3], System.Globalization.NumberStyles.Float, ci, out var z)
+                        && new Vector2(x - p.Position.x, z - p.Position.z).sqrMagnitude < 30f * 30f;
+                });
+                File.WriteAllLines(ArqAreas, linhas);
+                return antes > linhas.Count ? "Ponto do mapa apagado." : "Nenhum ponto gravado a ate 30 m daqui.";
+            }
+            var pos = p.Position;
+            linhas.Add($"{tipo}\t{pos.x.ToString("0.0", ci)}\t{pos.y.ToString("0.0", ci)}\t{pos.z.ToString("0.0", ci)}");
+            File.WriteAllLines(ArqAreas, linhas);
+            return $"{NomeArea[tipo]} gravado aqui. Quem entrar no servidor ve ele marcado no mapa (M) e pode usar /marcar {tipo}.";
         }
 
         public static string TipoArea(string s)
@@ -90,6 +129,15 @@ namespace SobrevivenciaCore
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (a.Length >= 1 && a[0].ToLowerInvariant() == "limpar") { p.Player.quests.replicateSetMarker(false, Vector3.zero, ""); Chat.Info(p, "Marcador apagado."); return; }
+            var cmd0 = a.Length >= 1 ? a[0].ToLowerInvariant() : "";
+            if (cmd0 == "gravar" || cmd0 == "apagar")
+            {
+                if (!P.EhDono(p)) { Chat.Erro(p, "So o dono grava pontos no mapa."); return; }
+                var t = a.Length >= 2 ? Plugin.TipoArea(a[1]) : null;
+                if (cmd0 == "gravar" && (t == null || t == "safe" || t == "atm")) { Chat.Info(p, "Use: /marcar gravar negro | /marcar gravar cacador (fique no meio do lugar). /marcar apagar tira o mais perto."); return; }
+                Chat.Info(p, P.GravarArea(p, t, cmd0 == "apagar"));
+                return;
+            }
             var tipo = a.Length >= 1 ? Plugin.TipoArea(a[0]) : null;
             if (tipo == null) { Chat.Info(p, "Use: /marcar safe | /marcar negro | /marcar cacador | /marcar atm | /marcar limpar"); return; }
             Chat.Info(p, P.MarcarArea(p, tipo));
