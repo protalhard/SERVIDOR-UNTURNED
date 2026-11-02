@@ -94,6 +94,10 @@ namespace SobrevivenciaCore
         public int WarpIntervalo = 30;
         /// <summary>Warp pra safe só vale até X segundos depois de renascer (morreu). 0 = livre sempre.</summary>
         public int WarpSafeAposMorrer = 60;
+        /// <summary>Airdrop automático: a cada X minutos num ponto de airdrop do mapa (fora das safes). 0 = desligado.</summary>
+        public int AirdropAutoMinutos = 30;
+        /// <summary>Chance (%) do airdrop automático vir de armas boas; o resto vem de equipamento.</summary>
+        public int AirdropAutoChanceArmas = 70;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)

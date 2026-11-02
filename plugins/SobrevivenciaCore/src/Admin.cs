@@ -656,7 +656,7 @@ namespace SobrevivenciaCore
 
         static SpawnAsset tabelaAirdrop;
 
-        bool MandarAirdrop(Vector3 onde, KitAirdrop kit, out string erro)
+        bool MandarAirdrop(Vector3 onde, KitAirdrop kit, out string erro, string titulo = null)
         {
             erro = null;
             if (kit == null) { erro = "Nenhum conteudo de airdrop configurado."; return false; }
@@ -669,7 +669,7 @@ namespace SobrevivenciaCore
             if (tabelaAirdrop == null) { erro = "Nao achei tabela de airdrop no servidor."; return false; }
             airdrops.Add(new AirdropPendente { Pos = onde, Kit = kit, Fim = Time.realtimeSinceStartup + 300f, JaExistiam = new HashSet<uint>(CaixasPerto(onde).Select(d => d.instanceID)) });
             LevelManager.SpawnAirdrop(onde, tabelaAirdrop);
-            Chat.Todos(Chat.Cor(S.CorDestaque, Chat.Forte("AIRDROP " + kit.Nome.ToUpperInvariant() + " A CAMINHO!")) + Chat.Cor(S.CorApagada, " Olhe pro ceu."));
+            Chat.Todos(Chat.Cor(S.CorDestaque, Chat.Forte("AIRDROP " + (titulo ?? kit.Nome).ToUpperInvariant() + " A CAMINHO!")) + Chat.Cor(S.CorApagada, " Olhe pro ceu."));
             return true;
         }
 
@@ -715,6 +715,7 @@ namespace SobrevivenciaCore
         void TickAdmin()
         {
             TickAirdrops();
+            try { TickAirdropAuto(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             TickReinicio();
 
             // marcadores da visão de admin (efeito 51232, só o admin vê)
