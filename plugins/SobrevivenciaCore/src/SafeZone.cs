@@ -112,6 +112,7 @@ namespace SobrevivenciaCore
             if (temNegro) partes.Add(Chat.Cor("#FF5A00", "/marcar negro") + " (mercado negro)");
             if (temCacador) partes.Add(Chat.Cor("#3DDC84", "/marcar cacador") + " (cacador)");
             Chat.Info(p, "Aperte M pra ver no mapa. Pra marcar: " + string.Join(" e ", partes) + ".");
+            if (temNegro && !string.IsNullOrWhiteSpace(S.AnuncioNegro)) Chat.Para(p, Chat.Cor("#FF5A00", S.AnuncioNegro));
         }
 
         public bool ProtegidoSafe(Player pl)

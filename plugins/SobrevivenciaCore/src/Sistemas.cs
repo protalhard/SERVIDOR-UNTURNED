@@ -133,6 +133,9 @@ namespace SobrevivenciaCore
 
         // Anúncios
         public int AnuncioSegundos = 300;
+        /// <summary>Aviso do mercado negro: a cada X segundos e quando o jogador entra (0 = desligado).</summary>
+        public int AnuncioNegroSegundos = 300;
+        public string AnuncioNegro = "MERCADO NEGRO: as melhores armas do servidor e venda de helicoptero! Digite /marcar negro e aperte M para ver no mapa. Cuidado: la o PvP e liberado.";
         public bool VaultSoNaSafe = true;
         public bool SafeSemConstrucao = true;
         public bool SafeProtegeBases = true;

@@ -34,7 +34,7 @@ namespace SobrevivenciaCore
         readonly Dictionary<string, float> intervalos = new Dictionary<string, float>(); // "id|tipo" -> fim
         public readonly Dictionary<ulong, (ulong de, float expira)> pedidosTpa = new Dictionary<ulong, (ulong, float)>();
 
-        float proximaLimpeza, proximoAnuncio;
+        float proximaLimpeza, proximoAnuncio, proximoAnuncioNegro;
         int indiceAnuncio, ultimaContagemLimpeza = -1;
         int segundosParaSalvar = 60;
 
@@ -47,6 +47,7 @@ namespace SobrevivenciaCore
             Homes = new Casas(Directory);
             proximaLimpeza = S.LimpezaMinutos > 0 ? Time.realtimeSinceStartup + S.LimpezaMinutos * 60 : float.MaxValue;
             proximoAnuncio = Time.realtimeSinceStartup + S.AnuncioSegundos;
+            proximoAnuncioNegro = Time.realtimeSinceStartup + Math.Max(60, S.AnuncioNegroSegundos / 2); // meio ciclo depois dos outros avisos
             // ValidarItens roda depois que o mapa carrega (ConferirMenu): os itens dos mods do Workshop chegam depois do plugin
         }
 
@@ -238,6 +239,11 @@ namespace SobrevivenciaCore
             {
                 proximoAnuncio = agora + S.AnuncioSegundos;
                 Chat.Todos(Chat.Cor(S.CorTexto, S.Anuncios[indiceAnuncio++ % S.Anuncios.Count]));
+            }
+            if (S.AnuncioNegroSegundos > 0 && agora >= proximoAnuncioNegro && !string.IsNullOrWhiteSpace(S.AnuncioNegro))
+            {
+                proximoAnuncioNegro = agora + S.AnuncioNegroSegundos;
+                if (AreasDoMapa().Any(a => a.Tipo == "negro")) Chat.Todos(Chat.Cor("#FF5A00", S.AnuncioNegro));
             }
 
             if (--segundosParaSalvar <= 0) { segundosParaSalvar = 60; Stats.Salvar(); }
