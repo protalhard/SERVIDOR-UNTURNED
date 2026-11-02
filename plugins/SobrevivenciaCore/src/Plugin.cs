@@ -128,6 +128,7 @@ namespace SobrevivenciaCore
 
         void AoConectar(UnturnedPlayer p)
         {
+            entrouEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);
             bool novo = !Stats.Existe(id);
@@ -156,6 +157,14 @@ namespace SobrevivenciaCore
         }
 
         readonly Dictionary<ulong, float> renasceuEm = new Dictionary<ulong, float>();
+        readonly Dictionary<ulong, float> entrouEm = new Dictionary<ulong, float>();
+
+        /// <summary>Segundos desde que o jogador entrou no servidor nesta sessão. -1 = não sabe.</summary>
+        public float SegundosDesdeEntrar(UnturnedPlayer p)
+            => entrouEm.TryGetValue(p.CSteamID.m_SteamID, out var t) ? Time.realtimeSinceStartup - t : -1f;
+
+        /// <summary>Dentro de qualquer safe: a nossa (/addsafe) ou a safe zone do próprio mapa.</summary>
+        public bool EmQualquerSafe(UnturnedPlayer p) => ZonaSeguraEm(p.Position) != null || (p.Player?.movement?.isSafe ?? false);
 
         /// <summary>Segundos desde que o jogador renasceu (depois de morrer). -1 = não morreu desde que entrou.</summary>
         public float SegundosDesdeRenascer(UnturnedPlayer p)

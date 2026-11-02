@@ -40,16 +40,18 @@ namespace SobrevivenciaCore
 
         internal static void Warp(Plugin P, Sistemas S, UnturnedPlayer p, ComandoSistema cmd)
         {
+            // Pode ir pra safe (sempre fora de combate) se: está dentro de alguma safe, acabou de entrar no servidor ou acabou de morrer.
+            if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
+            int janela = Math.Max(1, S.WarpSafeAposMorrer);
+            float morreu = P.SegundosDesdeRenascer(p), entrou = P.SegundosDesdeEntrar(p);
+            bool naSafe = P.EmQualquerSafe(p);
+            bool pode = naSafe || (morreu >= 0 && morreu <= janela) || (entrou >= 0 && entrou <= janela);
+            if (!pode) { Chat.Erro(p, $"O TP pra safe so funciona dentro de uma safe, ou ate {janela}s depois de entrar no servidor ou de morrer."); return; }
+            // tem safes do mapa com ônibus: abre a lista pra escolher (a mesma do nascer)
+            if (P.SafesComSpawn().Count > 0) { P.AbrirEscolhaSafe(p, true); return; }
             var zonas = P.Configuration.Instance.ZonasSeguras.Where(z => z.Definido).ToList();
             if (zonas.Count == 0) { Chat.Erro(p, "Ainda nao tem safe zone marcada."); return; }
             if (P.ZonaSeguraEm(p.Position) != null) { Chat.Info(p, "Voce ja esta na safe zone."); return; }
-            if (S.WarpSafeAposMorrer > 0)
-            {
-                float desde = P.SegundosDesdeRenascer(p);
-                if (desde < 0 || desde > S.WarpSafeAposMorrer)
-                { Chat.Erro(p, $"O warp pra safe so funciona ate {S.WarpSafeAposMorrer}s depois de morrer."); return; }
-            }
-            if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
             if (P.EmIntervalo(p, "safe", out var ri)) { Chat.Erro(p, $"Espere {Chat.Tempo(ri)} pra usar de novo."); return; }
             var alvo = zonas.OrderBy(z => Vector3.Distance(p.Position, new Vector3(z.X, z.Y, z.Z))).First();
             P.AgendarTeleporte(p, "a safe zone " + Chat.Limpar(alvo.Nome), S.WarpEspera,

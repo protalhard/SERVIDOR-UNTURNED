@@ -277,8 +277,8 @@ namespace SobrevivenciaCore
             {
                 float desde = SegundosDesdeRenascer(p);
                 int resta = desde < 0 ? 0 : Mathf.Max(0, S.WarpSafeAposMorrer - Mathf.FloorToInt(desde));
-                T(p, "Homes_Safe_Texto", $"So funciona ate {S.WarpSafeAposMorrer}s depois de morrer. Fique parado na contagem: se mexer ou levar dano, cancela."
-                    + (resta > 0 ? $" Liberado agora: {resta}s." : " Agora: bloqueado."));
+                T(p, "Homes_Safe_Texto", $"Funciona dentro de uma safe, ou ate {S.WarpSafeAposMorrer}s depois de entrar no servidor ou de morrer. Nunca em combate."
+                    + (EmQualquerSafe(p) ? " Agora: liberado (voce esta numa safe)." : resta > 0 ? $" Liberado agora: {resta}s." : " Agora: bloqueado."));
             }
         }
 
