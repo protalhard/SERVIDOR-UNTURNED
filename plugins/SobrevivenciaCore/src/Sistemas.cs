@@ -135,6 +135,8 @@ namespace SobrevivenciaCore
         public int AnuncioSegundos = 300;
         /// <summary>Aviso do mercado negro: a cada X segundos e quando o jogador entra (0 = desligado).</summary>
         public int AnuncioNegroSegundos = 300;
+        public int AnuncioCacaSegundos = 600;
+        public string AnuncioCaca = "CACA DA DINHEIRO: mate veado, urso, coiote e outros bichos, corte o corpo com uma faca e venda a carne e o couro no CACADOR dentro da safe. Um grizzly rende mais de $600! Carne assada vale mais.";
         public string AnuncioNegro = "MERCADO NEGRO: as melhores armas do servidor e venda de helicoptero! Digite /marcar negro e aperte M para ver no mapa. Cuidado: la o PvP e liberado.";
         public bool VaultSoNaSafe = true;
         public bool SafeSemConstrucao = true;
