@@ -172,6 +172,7 @@ func registrarPainel(mux *http.ServeMux) {
 			"acao":        lerAcao(),
 			"historico":   lerHistorico(10),
 			"votacaoJogo": lerVotacaoJogo(),
+			"pausa":       lerPausa(),
 		})
 	})
 
@@ -324,6 +325,31 @@ func registrarPainel(mux *http.ServeMux) {
 			return
 		}
 		jsonOK(w, map[string]any{"ok": true, "segundos": q.Segundos})
+	})
+	mux.HandleFunc("/api/admin/pausa", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.Header.Get("X-DZ") != "1" {
+			http.Error(w, "metodo", http.StatusMethodNotAllowed)
+			return
+		}
+		a, ok := exigirStaff(w, r)
+		if !ok {
+			return
+		}
+		if !a.Pausa {
+			http.Error(w, "voce nao tem a permissao Reiniciar", http.StatusForbidden)
+			return
+		}
+		var q struct{ Ligar bool }
+		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 1024)).Decode(&q)
+		v := "0"
+		if q.Ligar {
+			v = "1"
+		}
+		if err := comandoJogo("pausa", "0", a.Steam, 0, v); err != nil {
+			http.Error(w, "nao consegui falar com o jogo", http.StatusInternalServerError)
+			return
+		}
+		jsonOK(w, map[string]any{"ok": true, "pausa": q.Ligar})
 	})
 	mux.HandleFunc("/api/admin/servidor", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.Header.Get("X-DZ") != "1" {
@@ -508,4 +534,17 @@ func lerVotacaoJogo() map[string]any {
 	}
 	return map[string]any{"id": c[0], "pergunta": c[2], "termina": termina, "encerrada": time.Now().Unix() >= termina,
 		"respostas": resp, "total": total}
+}
+
+// lerPausa: o jogo grava pausa.txt (data em UTC) enquanto está em manutenção.
+func lerPausa() map[string]any {
+	b, err := os.ReadFile(filepath.Join(fonte.Pasta, "pausa.txt"))
+	if err != nil {
+		return map[string]any{"ativa": false}
+	}
+	desde := int64(0)
+	if t, e := time.Parse(time.RFC3339Nano, strings.SplitN(strings.TrimSpace(string(b)), "\t", 2)[0]); e == nil {
+		desde = t.Unix()
+	}
+	return map[string]any{"ativa": true, "desde": desde}
 }

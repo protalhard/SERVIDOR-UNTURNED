@@ -650,6 +650,17 @@ namespace SobrevivenciaCore
                     LogAdminNome(NomeDe(quem) + " (site)", quem, seg == 0 ? "LIMPOU ITENS DO CHAO" : $"LIMPEZA DE ITENS em {seg}s");
                     continue;
                 }
+                // pausa (manutenção) pelo painel: só staff fica e entra. Precisa de "Reiniciar" ou ser dono. texto = "1" pausa, "0" volta
+                if (c[0] == "pausa")
+                {
+                    if (!EhDono(quem) && !(staff.TryGetValue(quem, out var mp) && mp.Perms.Contains("Reiniciar")))
+                    { LogGuard($"COMANDO NEGADO do site: pausa por {quem} (sem permissao Reiniciar)"); continue; }
+                    bool ligar = c.Length > 4 && c[4].Trim() == "1";
+                    var motivoP = c.Length > 5 ? Chat.Limpar(c[5]).Trim() : "";
+                    MudarPausa(ligar, motivoP);
+                    LogAdminNome(NomeDe(quem) + " (site)", quem, ligar ? "PAUSOU O SERVIDOR (manutencao)" : "VOLTOU O SERVIDOR");
+                    continue;
+                }
                 // anúncio no chat do jogo (painel do site, aba Mensagens): precisa de "Mundo" ou ser dono
                 if (c[0] == "anuncio")
                 {

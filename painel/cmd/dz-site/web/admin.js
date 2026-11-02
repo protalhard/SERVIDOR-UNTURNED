@@ -297,6 +297,21 @@
   }
 
   let contador = 0;
+  function linhaPausa(resumo) {
+    if (!eu.pausa || !resumo) return null;
+    const pz = (painel && painel.pausa) || {};
+    return pz.ativa
+      ? el("div", { class: "adm-acoes-linha" },
+          el("span", { class: "adm-tag" }, "⏸️ EM MANUTENÇÃO" + (pz.desde ? " desde " + data(pz.desde) : "")),
+          el("button", { class: "botao pequeno", onclick: () => pausar(false) }, "▶️ Voltar servidor"))
+      : el("div", { class: "adm-acoes-linha" },
+          el("button", { class: "botao fantasma pequeno", onclick: () => pausar(true) }, "⏸️ Pausar servidor (só a staff fica)"));
+  }
+  async function pausar(ligar) {
+    if (!confirm(ligar ? "Pausar o servidor? Quem não é da staff é desconectado em 10 segundos e não consegue entrar até você clicar em Voltar." : "Liberar o servidor para todo mundo de novo?")) return;
+    try { await post("/api/admin/pausa", { ligar }); aviso(ligar ? "Pausa enviada. O jogo avisa e desconecta em 10 s." : "Servidor liberado."); setTimeout(carregarPainel, 2500); }
+    catch (e) { aviso("Erro: " + e.message, true); }
+  }
   function desenharAgendado(alvo, resumo) {
     const ac = painel && painel.acao;
     alvo.className = "adm-bloco" + (ac ? " destaque" : "");
@@ -309,6 +324,7 @@
       if (eu.mundo && resumo) filhos.push(el("div", { class: "adm-acoes-linha" },
         el("button", { class: "botao fantasma pequeno", onclick: () => limparItens(30) }, "🧹 Limpar itens do chão (30 s)"),
         el("button", { class: "botao fantasma pequeno", onclick: () => limparItens(0) }, "Agora")));
+      const lp = linhaPausa(resumo); if (lp) filhos.push(lp);
       alvo.replaceChildren(...filhos);
       return;
     }
@@ -317,7 +333,8 @@
     alvo.replaceChildren(el("h2", {}, nome), el("p", {}, dataLonga(ac.quando)), cont,
       ac.itens ? el("p", { class: "pequeno" }, "Vai apagar: " + Object.keys(ac.itens).map((k) => NOMES_WIPE[k] || k).join(", ")) : null,
       el("p", { class: "pequeno fraco" }, "Marcado por " + (ac.porNome || ac.por) + " em " + data(ac.criado)),
-      eu.dono ? el("div", { class: "adm-acoes-linha" }, el("button", { class: "botao fantasma pequeno", onclick: cancelar }, "Cancelar")) : null);
+      eu.dono ? el("div", { class: "adm-acoes-linha" }, el("button", { class: "botao fantasma pequeno", onclick: cancelar }, "Cancelar")) : null,
+      linhaPausa(resumo));
     const tic = () => {
       const s = ac.quando - Math.floor(Date.now() / 1000);
       cont.textContent = s > 0 ? `${Math.floor(s / 86400) ? Math.floor(s / 86400) + "d " : ""}${String(Math.floor(s % 86400 / 3600)).padStart(2, "0")}:${String(Math.floor(s % 3600 / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}` : "executando…";

@@ -129,6 +129,7 @@ namespace SobrevivenciaCore
         void AoConectar(UnturnedPlayer p)
         {
             entrouEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
+            BarrarNaPausa(p);
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);
             bool novo = !Stats.Existe(id);
