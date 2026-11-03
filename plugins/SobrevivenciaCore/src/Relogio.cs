@@ -236,7 +236,7 @@ namespace SobrevivenciaCore
                     relogioDica.Remove(kv.Key);
                     var up = UnturnedPlayer.FromCSteamID(new CSteamID(kv.Key));
                     if (up?.Player == null) continue;
-                    Chat.Para(up, $"<color=#FF5A00>RELOGIO DZ:</color> va em Opcoes > Controles e coloque o <b>H</b> na <b>Code Hotkey {Configuration.Instance.RelogioTecla}</b>. Segure H para olhar o relogio.");
+                    Chat.Para(up, $"<color=#FF5A00>RELOGIO DZ:</color> segure <b><plugin_{Configuration.Instance.RelogioTecla - 1}/></b> para olhar o relogio. Para usar o <b>H</b>, va em Opcoes > Controles e troque a <b>Code Hotkey {Configuration.Instance.RelogioTecla}</b>.");
                 }
             if (relogios.Count == 0) return;
             foreach (var sp in Provider.clients)
