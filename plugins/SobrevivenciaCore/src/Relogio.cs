@@ -29,6 +29,27 @@ namespace SobrevivenciaCore
         }
         readonly Dictionary<ulong, EstadoRelogio> relogios = new Dictionary<ulong, EstadoRelogio>();
         bool relogioAvisouSemEfeito;
+        // dica da tecla: aparece 20 s depois de entrar, até o jogador usar o relógio a primeira vez
+        readonly Dictionary<ulong, float> relogioDica = new Dictionary<ulong, float>();
+        HashSet<ulong> relogioJaUsou;
+        string ArqRelogioUsou => System.IO.Path.Combine(Directory, "relogio_usou.txt");
+
+        HashSet<ulong> JaUsou
+        {
+            get
+            {
+                if (relogioJaUsou != null) return relogioJaUsou;
+                relogioJaUsou = new HashSet<ulong>();
+                try
+                {
+                    if (System.IO.File.Exists(ArqRelogioUsou))
+                        foreach (var l in System.IO.File.ReadAllLines(ArqRelogioUsou))
+                            if (ulong.TryParse(l.Trim(), out var id)) relogioJaUsou.Add(id);
+                }
+                catch { }
+                return relogioJaUsou;
+            }
+        }
 
         EstadoRelogio Rel(ulong id)
         {
@@ -40,6 +61,8 @@ namespace SobrevivenciaCore
         {
             TirarRelogioDoInventario(p.Player); // sobra de queda do servidor no meio da consulta
             p.Player.inventory.onDropItemRequested += RelogioNaoLarga;
+            if (RelogioEfeitoAsset != null && !JaUsou.Contains(p.CSteamID.m_SteamID))
+                relogioDica[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup + 20f;
             if (Configuration.Instance.RelogioEsconderHudNativo && RelogioEfeitoAsset != null)
                 EsconderHudNativo(p.Player, true);
         }
@@ -48,6 +71,7 @@ namespace SobrevivenciaCore
         {
             try { TirarRelogioDoInventario(p.Player); p.Player.inventory.onDropItemRequested -= RelogioNaoLarga; } catch { }
             relogios.Remove(p.CSteamID.m_SteamID);
+            relogioDica.Remove(p.CSteamID.m_SteamID);
         }
 
         static void EsconderHudNativo(Player pl, bool esconder)
@@ -105,6 +129,9 @@ namespace SobrevivenciaCore
             }
             e.Aberto = true;
             e.AbriuEm = Time.realtimeSinceStartup;
+            ulong quem = pl.channel.owner.playerID.steamID.m_SteamID;
+            relogioDica.Remove(quem);
+            if (JaUsou.Add(quem)) try { System.IO.File.AppendAllText(ArqRelogioUsou, quem + "\n"); } catch { }
             e.Textos.Clear(); e.Visiveis.Clear();
             EffectManager.sendUIEffect(asset.id, RelogioKey, ConDe(pl), true);
             // braço erguendo o relógio: só a pé e se o item estiver no inventário
@@ -201,8 +228,17 @@ namespace SobrevivenciaCore
         /// <summary>Roda no tick do admin (~a cada frame): atualiza quem está com o relógio aberto e fecha se precisar.</summary>
         void TickRelogio()
         {
-            if (relogios.Count == 0) return;
             float agora = Time.realtimeSinceStartup;
+            if (relogioDica.Count > 0)
+                foreach (var kv in new List<KeyValuePair<ulong, float>>(relogioDica))
+                {
+                    if (agora < kv.Value) continue;
+                    relogioDica.Remove(kv.Key);
+                    var up = UnturnedPlayer.FromCSteamID(new CSteamID(kv.Key));
+                    if (up?.Player == null) continue;
+                    Chat.Para(up, $"<color=#FF5A00>RELOGIO DZ:</color> va em Opcoes > Controles e coloque o <b>H</b> na <b>Code Hotkey {Configuration.Instance.RelogioTecla}</b>. Segure H para olhar o relogio.");
+                }
+            if (relogios.Count == 0) return;
             foreach (var sp in Provider.clients)
             {
                 var pl = sp?.player;
