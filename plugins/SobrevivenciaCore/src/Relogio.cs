@@ -38,11 +38,17 @@ namespace SobrevivenciaCore
 
         void RelogioEntrou(UnturnedPlayer p)
         {
+            TirarRelogioDoInventario(p.Player); // sobra de queda do servidor no meio da consulta
+            p.Player.inventory.onDropItemRequested += RelogioNaoLarga;
             if (Configuration.Instance.RelogioEsconderHudNativo && RelogioEfeitoAsset != null)
                 EsconderHudNativo(p.Player, true);
         }
 
-        void RelogioSaiu(UnturnedPlayer p) => relogios.Remove(p.CSteamID.m_SteamID);
+        void RelogioSaiu(UnturnedPlayer p)
+        {
+            try { TirarRelogioDoInventario(p.Player); p.Player.inventory.onDropItemRequested -= RelogioNaoLarga; } catch { }
+            relogios.Remove(p.CSteamID.m_SteamID);
+        }
 
         static void EsconderHudNativo(Player pl, bool esconder)
         {
@@ -103,7 +109,10 @@ namespace SobrevivenciaCore
             EffectManager.sendUIEffect(asset.id, RelogioKey, ConDe(pl), true);
             // braço erguendo o relógio: só a pé e se o item estiver no inventário
             ushort item = Configuration.Instance.RelogioItem;
-            if (item != 0 && pl.movement.getVehicle() == null && AcharItem(pl, item, out byte pg, out byte x, out byte y))
+            // o relógio não fica no inventário: aparece na mão só enquanto segura a tecla e some ao soltar
+            if (item != 0 && pl.movement.getVehicle() == null &&
+                (AcharItem(pl, item, out byte pg, out byte x, out byte y) ||
+                 (pl.inventory.tryAddItem(new Item(item, true), false, false) && AcharItem(pl, item, out pg, out x, out y))))
             {
                 var eq = pl.equipment;
                 e.VoltarPagina = eq.asset != null ? eq.equippedPage : (byte)255;
@@ -130,6 +139,40 @@ namespace SobrevivenciaCore
                     else eq.dequip();
                 }
             }
+            TirarRelogioDoInventario(pl);
+        }
+
+        /// <summary>O item relógio nunca fica com o jogador fora da consulta: não cai ao morrer e não ocupa espaço.</summary>
+        void TirarRelogioDoInventario(Player pl)
+        {
+            ushort id = Configuration.Instance.RelogioItem;
+            if (id == 0 || pl?.inventory?.items == null) return;
+            if (pl.equipment.asset != null && pl.equipment.asset.id == id) pl.equipment.dequip();
+            for (byte pg = 0; pg < PlayerInventory.PAGES - 2; pg++)
+            {
+                var items = pl.inventory.items[pg];
+                if (items == null) continue;
+                for (int i = items.getItemCount() - 1; i >= 0; i--)
+                    if (items.getItem((byte)i).item.id == id) pl.inventory.removeItem(pg, (byte)i);
+            }
+        }
+
+        // antes de morrer: tira o relógio pra ele não cair no chão
+        void RelogioAntesDeMorrer(PlayerLife life)
+        {
+            try
+            {
+                var pl = life.player;
+                if (relogios.TryGetValue(pl.channel.owner.playerID.steamID.m_SteamID, out var e)) { e.Aberto = false; e.ItemNaMao = false; }
+                TirarRelogioDoInventario(pl);
+            }
+            catch (Exception ex) { Rocket.Core.Logging.Logger.LogException(ex); }
+        }
+
+        // ninguém joga o relógio no chão
+        void RelogioNaoLarga(PlayerInventory inv, Item item, ref bool permitir)
+        {
+            if (item != null && Configuration.Instance.RelogioItem != 0 && item.id == Configuration.Instance.RelogioItem) permitir = false;
         }
 
         static bool AcharItem(Player pl, ushort id, out byte page, out byte x, out byte y)
@@ -167,7 +210,7 @@ namespace SobrevivenciaCore
                 if (e.Segurando && !e.Aberto && RelogioBloqueado(pl) == null) { AbrirRelogio(pl, e); continue; }
                 if (!e.Aberto) continue;
                 // cancela: morreu, foi nadar, ou trocou o relógio por outra coisa na mão
-                if (pl.life.isDead || pl.stance.stance == EPlayerStance.SWIM ||
+                if (pl.life.isDead || pl.stance.stance == EPlayerStance.SWIM || pl.movement.getVehicle() != null && e.ItemNaMao ||
                     (e.ItemNaMao && (pl.equipment.asset == null || pl.equipment.asset.id != Configuration.Instance.RelogioItem) && agora - e.AbriuEm > 1.5f))
                 {
                     e.ItemNaMao = false;

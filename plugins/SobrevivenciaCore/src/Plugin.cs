@@ -36,6 +36,7 @@ namespace SobrevivenciaCore
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
             U.Events.OnPlayerConnected += AoConectar;
             PlayerInput.onPluginKeyTick += RelogioTecla;
+            PlayerLife.OnPreDeath += RelogioAntesDeMorrer;
             U.Events.OnPlayerDisconnected += AoDesconectar;
             LigarLogJogadores();
             UnturnedPlayerEvents.OnPlayerRevive += AoRenascer;
@@ -60,6 +61,7 @@ namespace SobrevivenciaCore
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
             U.Events.OnPlayerConnected -= AoConectar;
             PlayerInput.onPluginKeyTick -= RelogioTecla;
+            PlayerLife.OnPreDeath -= RelogioAntesDeMorrer;
             U.Events.OnPlayerDisconnected -= AoDesconectar;
             DesligarLogJogadores();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
