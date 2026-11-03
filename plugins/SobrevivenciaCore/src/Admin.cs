@@ -716,6 +716,7 @@ namespace SobrevivenciaCore
         {
             TickAirdrops();
             TickEconomia();
+            TickRelogio();
             try { TickAirdropAuto(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             TickReinicio();
 

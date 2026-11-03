@@ -96,6 +96,11 @@ namespace SobrevivenciaCore
         public int SaldoInicialBanco;
         /// <summary>Quanto (%) a loja paga na revenda, sobre o menor preço de compra do item. Muda pelo painel do site (aba Economia).</summary>
         public int RevendaPorcento = 60;
+        // Relógio tático (Relogio.cs). 0 = desligado até o mod do Unity ter o efeito/item.
+        public byte RelogioTecla = 2;          // tecla de plugin 1 a 5 (o jogador põe o H nela nas opções)
+        public ushort RelogioEfeito = 0;       // ID do efeito de UI da tela do relógio (DZ_Relogio)
+        public ushort RelogioItem = 0;         // ID do item relógio (braço erguendo o relógio); 0 = só a tela
+        public bool RelogioEsconderHudNativo = false; // esconde as barras da esquerda do Unturned
         public bool KitAoRenascer;
         public List<ItemKit> KitInicial;
         public int DinheiroKitInicial;

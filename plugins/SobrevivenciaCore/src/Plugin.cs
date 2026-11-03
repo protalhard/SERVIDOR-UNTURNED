@@ -35,6 +35,7 @@ namespace SobrevivenciaCore
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
             U.Events.OnPlayerConnected += AoConectar;
+            PlayerInput.onPluginKeyTick += RelogioTecla;
             U.Events.OnPlayerDisconnected += AoDesconectar;
             LigarLogJogadores();
             UnturnedPlayerEvents.OnPlayerRevive += AoRenascer;
@@ -58,6 +59,7 @@ namespace SobrevivenciaCore
             PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
             U.Events.OnPlayerConnected -= AoConectar;
+            PlayerInput.onPluginKeyTick -= RelogioTecla;
             U.Events.OnPlayerDisconnected -= AoDesconectar;
             DesligarLogJogadores();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
@@ -133,6 +135,7 @@ namespace SobrevivenciaCore
         {
             entrouEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
             try { LogEntrou(p); } catch { }
+            RelogioEntrou(p);
             BarrarNaPausa(p);
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);
@@ -155,6 +158,7 @@ namespace SobrevivenciaCore
         {
             try { LogSaiu(p); } catch { }
             GuardarBolsoAoSair(p);
+            RelogioSaiu(p);
             zonaAtual.Remove(p.CSteamID.m_SteamID);
             saiuSafeEm.Remove(p.CSteamID.m_SteamID);
             guard.Remove(p.CSteamID.m_SteamID);
