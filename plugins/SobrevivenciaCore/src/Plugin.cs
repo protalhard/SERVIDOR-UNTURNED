@@ -69,6 +69,7 @@ namespace SobrevivenciaCore
             DesligarLogJogadores();
             DesligarLogRoubos();
             DesligarArena();
+            try { AcabarComboio(); } catch { }
             DesligarRecompensas();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
             ChatManager.onChatted -= AoFalar;

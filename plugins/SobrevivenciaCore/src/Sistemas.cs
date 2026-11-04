@@ -129,6 +129,15 @@ namespace SobrevivenciaCore
         public bool LeilaoLigado = true;
         public int LeilaoTaxa = 5;
         public int LeilaoMaxPorJogador = 3;
+        /// <summary>Comboio emboscado: a cada X minutos com pelo menos N online (0 = desligado). Dura Y minutos.
+        /// ComboioVeiculo 0 = acha um caminhão militar pelo nome.</summary>
+        public int ComboioIntervaloMinutos = 150;
+        public int ComboioMinJogadores = 2;
+        public int ComboioMinutos = 15;
+        public int ComboioCaixas = 2;
+        public int ComboioZumbis = 15;
+        public int ComboioSegundosArrombar = 45;
+        public ushort ComboioVeiculo = 0;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)

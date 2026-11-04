@@ -17,6 +17,7 @@ namespace SobrevivenciaCore
 
         void LigarLogRoubos()
         {
+            BarricadeManager.onOpenStorageRequested += AoAbrirCaixaComboio;
             BarricadeManager.onOpenStorageRequested += AoAbrirBauLog;
             VehicleManager.onSiphonVehicleRequested += AoTirarGasolina;
             VehicleManager.onEnterVehicleRequested += AoEntrarCarro;
@@ -25,6 +26,7 @@ namespace SobrevivenciaCore
 
         void DesligarLogRoubos()
         {
+            BarricadeManager.onOpenStorageRequested -= AoAbrirCaixaComboio;
             BarricadeManager.onOpenStorageRequested -= AoAbrirBauLog;
             VehicleManager.onSiphonVehicleRequested -= AoTirarGasolina;
             VehicleManager.onEnterVehicleRequested -= AoEntrarCarro;

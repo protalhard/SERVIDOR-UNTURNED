@@ -116,16 +116,23 @@ namespace SobrevivenciaCore
 
         /// <summary>Acorda zumbis do próprio mapa em volta do ponto (os mortos daquela área primeiro,
         /// depois os vivos que estão longe de todo mundo). Devolve quantos nasceram.</summary>
-        int NascerZumbis(Vector3 centro, int quantos)
+        int NascerZumbis(Vector3 centro, int quantos) => NascerZumbis(centro, quantos, false);
+
+        /// <summary>militar = prefere zumbis de tabela militar e faz um deles virar chefe (mega).</summary>
+        int NascerZumbis(Vector3 centro, int quantos, bool militar)
         {
             if (quantos <= 0 || ZombieManager.regions == null) return 0;
             if (!LevelNavigation.tryGetBounds(centro, out var bound) || bound >= ZombieManager.regions.Length) return 0;
             var reg = ZombieManager.regions[bound];
             if (reg?.zombies == null || reg.zombies.Count == 0) return 0;
             bool LongeDeTodos(Zombie z) => Provider.clients.All(c => c.player == null || (c.player.transform.position - z.transform.position).sqrMagnitude > 150f * 150f);
-            var usar = reg.zombies.Where(z => z != null && z.isDead && !z.isBoss)
-                .Concat(reg.zombies.Where(z => z != null && !z.isDead && !z.isBoss && LongeDeTodos(z)))
-                .Take(quantos).ToList();
+            bool EhMilitar(Zombie z) => LevelZombies.tables != null && z.type < LevelZombies.tables.Count
+                && (LevelZombies.tables[z.type].name ?? "").IndexOf("milit", StringComparison.OrdinalIgnoreCase) >= 0;
+            var candidatos = reg.zombies.Where(z => z != null && z.isDead && !z.isBoss)
+                .Concat(reg.zombies.Where(z => z != null && !z.isDead && !z.isBoss && LongeDeTodos(z)));
+            if (militar) candidatos = candidatos.OrderByDescending(z => EhMilitar(z) ? 1 : 0);
+            var usar = candidatos.Take(quantos).ToList();
+            bool chefe = militar;
             int n = 0;
             foreach (var z in usar)
             {
@@ -135,6 +142,7 @@ namespace SobrevivenciaCore
                     p = hit.point;
                 p += Vector3.up * 0.5f;
                 var esp = z.speciality == EZombieSpeciality.NONE ? EZombieSpeciality.NORMAL : z.speciality;
+                if (chefe) { esp = EZombieSpeciality.MEGA; chefe = false; }
                 try { z.sendRevive(z.type, (byte)esp, z.shirt, z.pants, z.hat, z.gear, p, (float)(sorte.NextDouble() * 360)); n++; }
                 catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); break; }
             }
