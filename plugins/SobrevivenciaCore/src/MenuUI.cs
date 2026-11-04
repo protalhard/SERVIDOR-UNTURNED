@@ -21,7 +21,7 @@ namespace SobrevivenciaCore
         public const short MenuKey = 5123;
         const int KitsPorPagina = 24;
 
-        static readonly string[] Abas = { "Inicio", "Kits", "Vips", "Vaults", "Homes", "Comandos", "Info", "Perfil", "Faccoes", "Admin" };
+        static readonly string[] Abas = { "Inicio", "Kits", "Vips", "LojaXp", "Vaults", "Homes", "Comandos", "Info", "Perfil", "Faccoes", "Admin" };
 
         class EstadoMenu
         {
@@ -137,22 +137,27 @@ namespace SobrevivenciaCore
             e.PaginaGuia = pag;
         }
 
+        /// <summary>Página de cada aba. Kits = kits grátis; Vips = kits dos VIPs (mesma página de kits);
+        /// LojaXp = loja de XP (página que antes era a dos VIPs).</summary>
+        static string PaginaDaAba(string aba) => aba == "Vips" ? "Kits" : aba == "LojaXp" ? "Vips" : aba;
+
         void MostrarAba(UnturnedPlayer p, EstadoMenu e, string aba)
         {
             if (aba == "Admin" && !EhStaff(p)) aba = "Inicio";
             if (e.Aba != aba)
             {
-                V(p, "Pag_" + e.Aba, false);
+                if (PaginaDaAba(e.Aba) != PaginaDaAba(aba)) V(p, "Pag_" + PaginaDaAba(e.Aba), false);
                 V(p, "Aba_" + e.Aba + "_Sel", false);
+                if (PaginaDaAba(e.Aba) == "Kits") e.PaginaKit = 0;
             }
             e.Aba = aba;
-            V(p, "Pag_" + aba, true);
+            V(p, "Pag_" + PaginaDaAba(aba), true);
             V(p, "Aba_" + aba + "_Sel", true);
             switch (aba)
             {
                 case "Inicio": PreencherInicio(p); break;
-                case "Kits": PreencherKits(p, e); break;
-                case "Vips": PreencherVips(p); break;
+                case "Kits": case "Vips": PreencherKits(p, e); break;
+                case "LojaXp": PreencherVips(p); break;
                 case "Vaults": PreencherVaults(p); break;
                 case "Homes": PreencherHomes(p); break;
                 case "Perfil": PreencherPerfil(p); break;
@@ -180,14 +185,18 @@ namespace SobrevivenciaCore
 
         static bool KitVip(Kit k) => (k.Permissao ?? "").Contains("vip.");
 
-        /// <summary>Ordem dos kits no menu: primeiro os VIP que a pessoa tem, depois os liberados, depois os VIP
-        /// que ela pode comprar. Kit trancado que nenhum VIP libera (kits antigos) não aparece; o admin vê todos.</summary>
-        List<Kit> KitsDoMenu(UnturnedPlayer p)
+        /// <summary>Kits da aba. Aba Vips: os kits de VIP (os que a pessoa tem primeiro). Aba Kits: os grátis
+        /// (sem permissão, ou com permissão que a pessoa já tem, tipo o do Discord). Kit antigo que nenhum VIP
+        /// libera não aparece pra jogador; o admin vê todos.</summary>
+        List<Kit> KitsDoMenu(UnturnedPlayer p, bool vip)
         {
-            if (Pode(p, "Kits")) return S.Kits.Where(KitVip).Concat(S.Kits.Where(k => !KitVip(k))).ToList();
-            var tem = S.Kits.Where(k => TemPermissao(p, k.Permissao)).ToList();
-            return tem.Where(KitVip).Concat(tem.Where(k => !KitVip(k)))
-                .Concat(S.Kits.Where(k => KitVip(k) && !tem.Contains(k))).ToList();
+            bool adm = Pode(p, "Kits");
+            if (vip)
+            {
+                var vk = S.Kits.Where(KitVip).ToList();
+                return adm ? vk : vk.Where(k => TemPermissao(p, k.Permissao)).Concat(vk.Where(k => !TemPermissao(p, k.Permissao))).ToList();
+            }
+            return S.Kits.Where(k => !KitVip(k) && (adm || string.IsNullOrEmpty(k.Permissao) || (k.Permissao ?? "").Contains("discord") || TemPermissao(p, k.Permissao))).ToList();
         }
 
         int PaginasKit(EstadoMenu e) => Math.Max(1, (e.Kits.Count + KitsPorPagina - 1) / KitsPorPagina);
@@ -195,7 +204,9 @@ namespace SobrevivenciaCore
         void PreencherKits(UnturnedPlayer p, EstadoMenu e)
         {
             var f = FichaDe(p);
-            e.Kits = KitsDoMenu(p);
+            bool vip = e.Aba == "Vips";
+            e.Kits = KitsDoMenu(p, vip);
+            T(p, "Kits_Titulo", vip ? "KITS VIP" : "KITS GRATIS");
             e.PaginaKit = Mathf.Clamp(e.PaginaKit, 0, PaginasKit(e) - 1);
             for (int i = 0; i < KitsPorPagina; i++)
             {
@@ -212,7 +223,9 @@ namespace SobrevivenciaCore
             T(p, "Kits_Pagina", $"{e.PaginaKit + 1}/{PaginasKit(e)}");
             V(p, "Kits_Anterior", PaginasKit(e) > 1);
             V(p, "Kits_Proximo", PaginasKit(e) > 1);
-            T(p, "Kits_Legenda", $"Voce tem {C(Laranja, f.Abates.ToString())} abates");
+            T(p, "Kits_Legenda", vip ? (e.Kits.Any(k => TemPermissao(p, k.Permissao)) ? "Seus kits VIP primeiro" : "Compre VIP no site: " + C(Laranja, "dayz.snaplag.com.br/loja"))
+                : $"Voce tem {C(Laranja, f.Abates.ToString())} abates");
+            T(p, "Kits_Dica", vip ? "Kit trancado = VIP que voce ainda nao tem" : "Kits XP: aba Kits XP ou " + C(Laranja, "/lojaxp"));
         }
 
         /// <summary>Atualiza só o status dos kits em espera (contagem regressiva ao vivo).</summary>
@@ -484,7 +497,7 @@ namespace SobrevivenciaCore
             {
                 var sp = PlayerTool.getSteamPlayer(kv.Key);
                 if (sp?.player == null) { menus.Remove(kv.Key); continue; }
-                if (kv.Value.Aba == "Kits") AtualizarContagemKits(UnturnedPlayer.FromSteamPlayer(sp), kv.Value);
+                if (PaginaDaAba(kv.Value.Aba) == "Kits") AtualizarContagemKits(UnturnedPlayer.FromSteamPlayer(sp), kv.Value);
             }
             TickAdmin();
             TickHud();
