@@ -43,6 +43,7 @@
         <Permission Cooldown="0">renamehome</Permission>
         <Permission Cooldown="0">tutorial</Permission>
         <Permission Cooldown="0">arena</Permission>
+        <Permission Cooldown="0">recompensa</Permission>
       </Permissions>
     </Group>
     <Group>

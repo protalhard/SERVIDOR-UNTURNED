@@ -114,6 +114,10 @@ namespace SobrevivenciaCore
         public int ArenaTaxa = 0;
         public int ArenaMinutos = 5;
         public int ArenaSegundosPraLootear = 20;
+        /// <summary>Recompensa na cabeça: item usado como TAG (0 = desligado), valor mínimo e horas pra levar a tag pra safe.</summary>
+        public ushort RecompensaTagItem = 0;
+        public int RecompensaMin = 500;
+        public int RecompensaHorasTag = 24;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)
