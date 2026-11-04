@@ -11,3 +11,7 @@
 💎 **Loja VIP** com Pix ou cartão direto no site. O VIP é liberado sozinho quando o pagamento é aprovado.
 🏠 Base abandonada: aviso com 10 dias sem ninguém entrar, perde a proteção com 15 e é apagada com 21.
 📜 Regras atualizadas no canal de regras.
+
+## 04/11 · Relógio sem ícones por baixo
+⌚ Com o relógio na tela, os ícones de fome, sede, safe e lua não aparecem mais por baixo dele.
+🩸 Sangrando ou com a perna quebrada? Aparece um aviso na tela até você se tratar (bandagem ou tala).

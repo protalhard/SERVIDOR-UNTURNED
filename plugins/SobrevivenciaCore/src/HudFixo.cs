@@ -18,7 +18,8 @@ namespace SobrevivenciaCore
         class EstadoHudFixo
         {
             public bool Rel, Mini, Gps = true;
-            public float ProximoGps;
+            public float ProximoGps, ProximoAviso;
+            public string Aviso = "";
             public string Url, Local;
             public int Seta = -1;
             public readonly Dictionary<string, string> Textos = new Dictionary<string, string>();
@@ -106,6 +107,7 @@ namespace SobrevivenciaCore
                     e.Rel = false;
                 }
                 if (e.Rel) AtualizarRelogioFixo(pl, e);
+                if (e.Rel) AvisoSaude(pl, e, agora);
 
                 // minimapa
                 if (mini != null && S.MiniMapaPrecisaGps && agora >= e.ProximoGps) { e.ProximoGps = agora + 3f; e.Gps = TemGps(pl); }
@@ -123,6 +125,22 @@ namespace SobrevivenciaCore
                 if (e.Mini) AtualizarMinimapa(pl, e);
             }
             foreach (var id in new List<ulong>(hudFixo.Keys)) if (!vistos.Contains(id)) hudFixo.Remove(id);
+        }
+
+        // os ícones nativos ficam escondidos com o relógio; sangramento e perna quebrada viram aviso na tela
+        static void AvisoSaude(Player pl, EstadoHudFixo e, float agora)
+        {
+            var l = pl.life;
+            string aviso = l.isBleeding && l.isBroken ? "SANGRANDO E PERNA QUEBRADA: use bandagem e tala"
+                : l.isBleeding ? "SANGRANDO: use bandagem ou curativo"
+                : l.isBroken ? "PERNA QUEBRADA: use uma tala" : "";
+            if (l.isDead) aviso = "";
+            if (aviso.Length > 0 && (aviso != e.Aviso || agora >= e.ProximoAviso))
+            {
+                pl.ServerShowHint(aviso, 3f);
+                e.ProximoAviso = agora + 2.5f;
+            }
+            e.Aviso = aviso;
         }
 
         void AtualizarRelogioFixo(Player pl, EstadoHudFixo e)
