@@ -225,7 +225,7 @@ namespace SobrevivenciaCore
             V(p, "Kits_Proximo", PaginasKit(e) > 1);
             T(p, "Kits_Legenda", vip ? (e.Kits.Any(k => TemPermissao(p, k.Permissao)) ? "Seus kits VIP primeiro" : "Compre VIP no site: " + C(Laranja, "dayz.snaplag.com.br/loja"))
                 : $"Voce tem {C(Laranja, f.Abates.ToString())} abates");
-            T(p, "Kits_Dica", vip ? "Kit trancado = VIP que voce ainda nao tem" : "Kits XP: aba Kits XP ou " + C(Laranja, "/lojaxp"));
+            T(p, "Kits_Dica", vip ? "Kit trancado = VIP que voce ainda nao tem" : "Kits XP: cartao Loja no Inicio ou " + C(Laranja, "/lojaxp"));
         }
 
         /// <summary>Atualiza só o status dos kits em espera (contagem regressiva ao vivo).</summary>
@@ -387,7 +387,7 @@ namespace SobrevivenciaCore
                     case "Inicio_Discord": case "Info_Discord": case "Perfil_Discord": AbrirDiscord(p); break;
                     case "Inicio_Site": case "Info_Site": AbrirSite(p); break;
                     case "Info_Ranking": case "Perfil_Ranking": AbrirSite(p, "/ranking"); break;
-                    case "Inicio_Loja": MostrarAba(p, e, "Vips"); break;
+                    case "Inicio_Loja": MostrarAba(p, e, "LojaXp"); break;
                     case "Inicio_Guia": case "Info_Guia":
                         V(p, "DZ_Menu", false); V(p, "DZ_Guia", true); MostrarGuia(p, e, 1); break;
                     case "Homes_Safe_Ir": FecharMenu(p); CmdSafe.Warp(this, S, p, null); break;
