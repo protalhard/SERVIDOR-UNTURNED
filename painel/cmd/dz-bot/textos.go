@@ -32,14 +32,24 @@ const textoRegrasJogo = `**1.** Proibido hack, cheat, macro ou qualquer programa
 **3.** Proibido construir dentro da safe zone ou bloquear lojas e ATMs. *Remoção + aviso.*
 **4.** Proibido usar conta secundária pra fugir de punição. *Ban permanente.*
 **5.** Racismo, ameaça real ou ofensa pesada no chat. *Mute ou ban.*
-**6.** Entrar num grupo só pra roubar ou destruir a base por dentro. *Punição variada.*
-**7.** Fora da safe zone vale tudo: PvP, raid e emboscada fazem parte do jogo.`
+**6.** Entrar num grupo ou facção só pra roubar ou destruir a base por dentro. *Punição variada.*
+**7.** Usar /tpa, /home ou /safe pra levar alguém pra emboscada. *Ban.*
+**8.** Combinar mortes pra farmar recompensa, missão, arena ou torneio. *Ban e perda do prêmio.*
+**9.** Golpe ou tentativa de burlar o leilão ou a arena. *Ban.*
+**10.** Cercar airdrop, baú de evento ou comboio com construção. *Remoção + aviso.*
+
+**Bom saber**
+⚔️ Saiu do jogo em combate (até 2 min depois de um tiro)? O personagem morre e larga tudo no chão.
+🚁 O mapa só mantém 3 aeronaves destrancadas. As que passarem disso somem. Tranque a sua.
+🏠 Horário de raid, proteção offline e base abandonada: <#%s>
+🌍 Fora da safe zone vale tudo: PvP, raid e emboscada fazem parte do jogo.`
 
 const textoRegrasDiscord = `**1.** Respeito acima de tudo. Sem discriminação, assédio ou exposição de dados de ninguém. *Ban permanente.*
 **2.** Sem divulgar outros servidores, cheats ou links suspeitos. *Ban.*
 **3.** Sem flood, spam ou correntes. *Mute.*
 **4.** Problemas com a staff se resolvem em ticket, não no chat geral. *Aviso.*
 **5.** Conteúdo adulto ou violento real é proibido. *Ban permanente.*
+**6.** Pedido de unban de outra pessoa é ignorado. Cada um abre o próprio ticket.
 
 Ao entrar no servidor do jogo ou no Discord você concorda com estas regras.`
 

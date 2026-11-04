@@ -124,6 +124,14 @@ func garantirPaineis(s *discordgo.Session) {
 			{Label: "Outro assunto", Value: "outro", Emoji: &discordgo.ComponentEmoji{Name: "💬"}},
 		},
 	})})
+	mu.Lock()
+	craid := estado.Canais["regrasraid"]
+	mu.Unlock()
+	garantirPainel(s, "regras", "🎮 Regras do jogo", []*discordgo.MessageEmbed{
+		{Title: "🎮 Regras do jogo", Description: fmt.Sprintf(textoRegrasJogo, craid), Color: corLaranja},
+		{Title: "💬 Regras do Discord", Description: textoRegrasDiscord, Color: corAmbar, Footer: &discordgo.MessageEmbedFooter{Text: rodape}},
+	}, nil)
+	postarNovidades(s)
 	garantirPainel(s, "regrasraid", "🏠 Raid e proteção de bases", []*discordgo.MessageEmbed{embedRegrasRaid()}, nil)
 	garantirPainel(s, "lojavip", "💎 Loja VIP", []*discordgo.MessageEmbed{{
 		Title: "💎 Loja VIP", Color: corAmbar, URL: siteURL + "/loja",

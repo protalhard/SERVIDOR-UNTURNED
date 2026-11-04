@@ -510,13 +510,20 @@
       const leg = { perm: 'BAN PERMANENTE', ban: 'BAN', mute: 'MUTE / BAN', aviso: 'AVISO', var: 'PUNIÇÃO VARIADA' };
       const jogo = [['Hack, cheat, macro ou qualquer programa que dê vantagem', 'perm'], ['Abusar de bug ou exploit (reporte em ticket)', 'ban'],
         ['Construir dentro da safe zone ou bloquear lojas e ATMs', 'aviso'], ['Conta secundária pra fugir de punição', 'perm'],
-        ['Racismo, ameaça real ou ofensa pesada no chat', 'mute'], ['Entrar num grupo só pra roubar ou destruir a base por dentro', 'var']];
+        ['Racismo, ameaça real ou ofensa pesada no chat', 'mute'], ['Entrar num grupo ou facção só pra roubar ou destruir a base por dentro', 'var'],
+        ['Usar /tpa, /home ou /safe pra levar alguém pra emboscada', 'ban'], ['Combinar mortes pra farmar recompensa, missão, arena ou torneio', 'ban'],
+        ['Golpe ou tentativa de burlar o leilão ou a arena', 'ban'], ['Cercar airdrop, baú de evento ou comboio com construção', 'aviso']];
       const disc = [['Discriminação, assédio ou exposição de dados', 'perm'], ['Divulgar outros servidores, cheats ou links suspeitos', 'ban'],
-        ['Flood, spam ou correntes', 'mute'], ['Brigar com a staff no chat em vez de abrir ticket', 'aviso'], ['Conteúdo adulto ou violência real', 'perm']];
+        ['Flood, spam ou correntes', 'mute'], ['Brigar com a staff no chat em vez de abrir ticket', 'aviso'], ['Conteúdo adulto ou violência real', 'perm'], ['Pedir unban de outra pessoa (cada um abre o próprio ticket)', 'aviso']];
       const bloco = (t, l) => `<div class="painel" style="padding:8px 4px"><h3 style="padding:12px 16px">${t}</h3>${l.map(([r, p], i) =>
         `<div class="regra"><span class="n">${i + 1}.</span><span class="t">${r}</span><span class="pun ${p}">${leg[p]}</span></div>`).join('')}</div>`;
       return cabeca('Regras oficiais', 'Regras do <em>servidor</em>', 'Ao entrar no servidor ou no Discord você concorda com as regras abaixo. Fora da safe zone, PvP, raid e emboscada fazem parte do jogo.') +
-        `<div class="grade g2">${bloco('🎮 Jogo', jogo)}${bloco('💬 Discord', disc)}</div>`;
+        `<div class="grade g2">${bloco('🎮 Jogo', jogo)}${bloco('💬 Discord', disc)}</div>` +
+        `<div class="painel" style="margin-top:18px"><h3>Bom saber</h3><ul style="margin:0;padding-left:20px;display:grid;gap:8px">
+          <li>Saiu do jogo em combate (até 2 min depois de um tiro)? O personagem morre e larga tudo no chão.</li>
+          <li>O mapa só mantém 3 aeronaves destrancadas. As que passarem disso somem. Tranque a sua.</li>
+          <li>Raid liberado só no horário do servidor (veja no Discord, canal raid-e-proteção). Base com o dono offline fica protegida.</li>
+          <li>Base abandonada: aviso com 10 dias sem ninguém entrar, perde a proteção com 15 e é apagada com 21.</li></ul></div>`;
     },
 
     async perfil () {

@@ -48,6 +48,8 @@ type Estado struct {
 	Salas   map[string]string `json:"salas,omitempty"`
 	// enquetes criadas pelo painel admin (pra mostrar os votos lá)
 	Enquetes []dados.EnqueteDiscord `json:"enquetes,omitempty"`
+	// títulos do novidades.md já postados em #updates
+	Novidades map[string]bool `json:"novidades,omitempty"`
 }
 
 var (
@@ -351,10 +353,6 @@ func montar(s *discordgo.Session, g *discordgo.Guild) error {
 		Color:       corLaranja, Image: &discordgo.MessageEmbedImage{URL: capaURL},
 		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: iconeURL}, Footer: &discordgo.MessageEmbedFooter{Text: rodape},
 	}}})
-	postar(s, "regras", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{
-		{Title: "🎮 Regras do jogo", Description: textoRegrasJogo, Color: corLaranja},
-		{Title: "💬 Regras do Discord", Description: textoRegrasDiscord, Color: corAmbar, Footer: &discordgo.MessageEmbedFooter{Text: rodape}},
-	}})
 	postar(s, "comojogar", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{{
 		Title: "Como jogar", Description: textoComoJogar, Color: corLaranja,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: iconeURL}, Footer: &discordgo.MessageEmbedFooter{Text: rodape},
