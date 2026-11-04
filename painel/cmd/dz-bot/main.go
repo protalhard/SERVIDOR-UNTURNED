@@ -26,18 +26,19 @@ import (
 var iconePNG []byte
 
 type Estado struct {
-	Guild       string            `json:"guild"`
-	Montado     bool              `json:"montado"`
-	Canais      map[string]string `json:"canais"`
-	Cargos      map[string]string `json:"cargos"`
-	MsgStatus   string            `json:"msgStatus"`
-	MsgTop      string            `json:"msgTop"`
-	MsgTopFac   string            `json:"msgTopFac,omitempty"`
-	AvatarFeito bool              `json:"avatarFeito"`
-	Convite     string            `json:"convite"`
-	LogAdminPos *int64            `json:"logAdminPos,omitempty"`
-	LogRaidPos  *int64            `json:"logRaidPos,omitempty"`
-	LogGuardPos *int64            `json:"logGuardPos,omitempty"`
+	Guild        string            `json:"guild"`
+	Montado      bool              `json:"montado"`
+	Canais       map[string]string `json:"canais"`
+	Cargos       map[string]string `json:"cargos"`
+	MsgStatus    string            `json:"msgStatus"`
+	MsgTop       string            `json:"msgTop"`
+	MsgTopFac    string            `json:"msgTopFac,omitempty"`
+	AvatarFeito  bool              `json:"avatarFeito"`
+	Convite      string            `json:"convite"`
+	LogAdminPos  *int64            `json:"logAdminPos,omitempty"`
+	LogRaidPos   *int64            `json:"logRaidPos,omitempty"`
+	LogUpkeepPos *int64            `json:"logUpkeepPos,omitempty"`
+	LogGuardPos  *int64            `json:"logGuardPos,omitempty"`
 	// discord -> steam já avisado do vínculo; alertas de raid desligados
 	Vinculados      map[string]string `json:"vinculados,omitempty"`
 	AlertaDesligado map[string]bool   `json:"alertaDesligado,omitempty"`
@@ -92,6 +93,7 @@ func main() {
 	go laco(dg, 10*time.Minute, atualizarContador)
 	go laco(dg, 20*time.Second, enviarLogsAdmin)
 	go laco(dg, 15*time.Second, enviarLogsRaid)
+	go laco(dg, 60*time.Second, enviarLogsUpkeep)
 	go laco(dg, 10*time.Second, enviarLogsGuard)
 	go laco(dg, 20*time.Second, conferirVinculos)
 	go laco(dg, 2*time.Minute, limparSalas)

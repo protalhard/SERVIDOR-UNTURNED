@@ -149,3 +149,44 @@ func postarLinhas(s *discordgo.Session, canal, titulo string, linhas []string) {
 		})
 	}
 }
+
+var reUpkeep = regexp.MustCompile(`UPKEEP (AVISO|APAGOU): base de (.*) \((\d+)\) com (\d+) pecas, (\d+) dias sem ninguem(?:, apaga em (-?\d+) dias)?`)
+
+// enviarLogsUpkeep: bases abandonadas vão pro #logs e pra DM do dono (e da facção).
+func enviarLogsUpkeep(s *discordgo.Session) {
+	linhas := novasLinhas("upkeep_log.txt", "logs", &estado.LogUpkeepPos)
+	postarLinhas(s, "logs", "🏚️ **Upkeep**", linhas)
+	for _, l := range linhas {
+		m := reUpkeep.FindStringSubmatch(l)
+		if m == nil {
+			continue
+		}
+		alvos := map[string]bool{m[3]: true}
+		if f := reRaidFac.FindStringSubmatch(l); f != nil {
+			if fc := fonte.FaccaoPorID(f[1]); fc != nil {
+				for _, mb := range fc.Membros {
+					alvos[mb.ID] = true
+				}
+			}
+		}
+		var e *discordgo.MessageEmbed
+		if m[1] == "AVISO" {
+			txt := fmt.Sprintf("Ninguém da sua base entra no servidor há **%s dias**.\nCom 15 dias ela perde a proteção offline", m[5])
+			if m[6] != "" && m[6] != "-1" {
+				txt += fmt.Sprintf(" e em **%s dias** o servidor apaga a base", m[6])
+			}
+			txt += ".\n\nBasta você ou alguém do grupo entrar no servidor pra zerar a contagem.\n`" + ipServidor + "`"
+			e = &discordgo.MessageEmbed{Title: "🏚️ Sua base está abandonada", Description: txt, Color: corAmbar}
+		} else {
+			e = &discordgo.MessageEmbed{Title: "🏚️ Sua base foi apagada", Color: corVermelho,
+				Description: fmt.Sprintf("Sua base (%s peças) foi apagada depois de %s dias sem ninguém do grupo entrar no servidor.", m[4], m[5])}
+		}
+		e.Timestamp = time.Now().Format(time.RFC3339)
+		e.Footer = &discordgo.MessageEmbedFooter{Text: rodape}
+		for _, v := range fonte.LerVinculos() {
+			if alvos[v.Steam] {
+				dm(s, v.Discord, e)
+			}
+		}
+	}
+}

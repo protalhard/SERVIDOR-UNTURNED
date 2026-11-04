@@ -150,6 +150,11 @@ namespace SobrevivenciaCore
         public int MiniMapaAltura = 5441;
         /// <summary>Só mostra o minimapa pra quem tem GPS (item de mapa com Enables_Map) no inventário.</summary>
         public bool MiniMapaPrecisaGps = false;
+        /// <summary>Upkeep por inatividade (Upkeep.cs): dias sem ninguém da base online. Apagar 0 = nunca apaga.</summary>
+        public bool UpkeepLigado = true;
+        public int UpkeepAvisoDias = 10;
+        public int UpkeepSemProtecaoDias = 15;
+        public int UpkeepApagarDias = 21;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)

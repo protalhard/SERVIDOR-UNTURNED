@@ -140,7 +140,7 @@ namespace SobrevivenciaCore
 
             string motivo = null;
             if (!RaidAberto(out var quando)) motivo = quando;
-            else if (S.RaidProtecaoOffline && MinutosOffline(dono, grupo) >= S.RaidMinutosOffline && !FaccaoAbandonada(grupo) && TemClaimValida(pos, dono, grupo))
+            else if (S.RaidProtecaoOffline && MinutosOffline(dono, grupo) >= S.RaidMinutosOffline && !FaccaoAbandonada(grupo) && !BaseAbandonada(dono, grupo) && TemClaimValida(pos, dono, grupo))
                 motivo = "Essa base esta protegida: o dono esta offline (protecao offline com Claim Flag).";
 
             if (motivo != null)
