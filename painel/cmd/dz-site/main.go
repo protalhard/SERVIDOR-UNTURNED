@@ -82,7 +82,11 @@ func main() {
 				http.NotFound(w, r)
 				return
 			}
-			arq = filepath.Join(*pastaIcones, "sem_foto.png")
+			// a padrão vale pouco tempo: se a foto chegar depois, o navegador não fica preso no "sem foto"
+			w.Header().Set("Cache-Control", "public, max-age=300")
+			w.Header().Set("Content-Type", "image/png")
+			http.ServeFile(w, r, filepath.Join(*pastaIcones, "sem_foto.png"))
+			return
 		}
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 		w.Header().Set("Content-Type", "image/png")
