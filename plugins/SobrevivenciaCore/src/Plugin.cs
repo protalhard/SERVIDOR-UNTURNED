@@ -30,6 +30,7 @@ namespace SobrevivenciaCore
             CarregarClaims();
             LigarFaccoes();
             LigarMenu();
+            LigarTracer();
             LigarLojas();
             UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
@@ -55,6 +56,7 @@ namespace SobrevivenciaCore
             CancelInvoke(nameof(ChecarZonas));
             DesligarGuard();
             DesligarMenu();
+            DesligarTracer();
             DesligarLojas();
             DesligarFaccoes();
             UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;

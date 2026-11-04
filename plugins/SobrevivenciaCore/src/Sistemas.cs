@@ -127,6 +127,9 @@ namespace SobrevivenciaCore
         public bool MissoesLigado = true;
         /// <summary>Tela de missões do mod (0 = só no chat). O NPC de missão é a barricada 51302.</summary>
         public ushort MissoesEfeito = 51301;
+        /// <summary>Bala traçante pra todo tiro: efeito do DZ Menu (DZ_Tracer) disparado no começo de cada tiro. 0 = desligado.</summary>
+        public ushort TracerEfeito = 51304;
+        public float TracerDistancia = 400f;
         /// <summary>Leilão: taxa (%) que sai do vendedor e quantos itens cada um pode ter no leilão ao mesmo tempo.</summary>
         public bool LeilaoLigado = true;
         public int LeilaoTaxa = 5;
