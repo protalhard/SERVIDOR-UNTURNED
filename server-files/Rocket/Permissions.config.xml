@@ -42,6 +42,7 @@
         <Permission Cooldown="0">delhome</Permission>
         <Permission Cooldown="0">renamehome</Permission>
         <Permission Cooldown="0">tutorial</Permission>
+        <Permission Cooldown="0">arena</Permission>
       </Permissions>
     </Group>
     <Group>

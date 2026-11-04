@@ -40,6 +40,7 @@ namespace SobrevivenciaCore
             U.Events.OnPlayerDisconnected += AoDesconectar;
             LigarLogJogadores();
             LigarLogRoubos();
+            LigarArena();
             UnturnedPlayerEvents.OnPlayerRevive += AoRenascer;
             ChatManager.onChatted += AoFalar;
             InvokeRepeating(nameof(ChecarZonas), 1f, 1f);
@@ -66,6 +67,7 @@ namespace SobrevivenciaCore
             U.Events.OnPlayerDisconnected -= AoDesconectar;
             DesligarLogJogadores();
             DesligarLogRoubos();
+            DesligarArena();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
             ChatManager.onChatted -= AoFalar;
             Instancia = null;

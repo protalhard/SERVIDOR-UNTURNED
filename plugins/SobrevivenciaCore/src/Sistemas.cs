@@ -108,6 +108,12 @@ namespace SobrevivenciaCore
         public int EventoAvisoMinutos = 3;
         public int EventoDuracaoMinutos = 12;
         public int EventoZumbis = 14;
+        /// <summary>Arena 1x1: aposta mínima e máxima (0 = sem máximo), taxa do servidor (%), tempo da luta e tempo pro vencedor pegar o loot.</summary>
+        public int ArenaApostaMin = 100;
+        public int ArenaApostaMax = 0;
+        public int ArenaTaxa = 0;
+        public int ArenaMinutos = 5;
+        public int ArenaSegundosPraLootear = 20;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)

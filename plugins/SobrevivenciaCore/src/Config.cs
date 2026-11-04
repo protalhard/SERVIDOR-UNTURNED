@@ -106,6 +106,9 @@ namespace SobrevivenciaCore
         public int DinheiroKitInicial;
         public List<Nota> Notas;
         public List<Ponto> ZonasSeguras;
+        /// <summary>Os dois lados da arena 1x1 (o dono marca com /arena marcar 1 e 2). Raio = pra onde a pessoa fica virada.</summary>
+        public Ponto ArenaA;
+        public Ponto ArenaB;
         public List<SpawnSafe> SpawnsSafe = new List<SpawnSafe>();
         public List<Ponto> Atms;
         public List<Loja> Lojas;
