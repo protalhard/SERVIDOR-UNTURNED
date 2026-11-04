@@ -300,7 +300,7 @@
       };
       let pix = { ativo: false };
       try { pix = await fetch('/api/pix/status', { credentials: 'same-origin' }).then(r => r.json()); } catch { }
-      const botaoDe = p => pix.ativo ? `<a class="botao vip-comprar" href="/comprar?pacote=${esc(p.id)}" data-link>💳 COMPRAR</a>`
+      const botaoDe = p => pix.ativo ? `<a class="botao vip-comprar" href="/comprar?pacote=${esc(p.id)}" data-link><span class="vip-formas"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l4 4-4 4-4-4zM12 13l4 4-4 4-4-4zM3 12l4-4 4 4-4 4zM13 12l4-4 4 4-4 4z"/></svg><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg></span>COMPRAR</a>`
         : `<button class="botao vip-comprar" disabled title="O pagamento abre em breve">🔒 EM BREVE</button>`;
       const cartao = p => `<div class="painel vip-card" data-aba="${p.aba}" style="--vc:${p.cor}">
           ${fotoVip(p)}

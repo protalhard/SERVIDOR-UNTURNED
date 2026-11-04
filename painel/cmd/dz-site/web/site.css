@@ -570,3 +570,6 @@ svg.ic { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor
   .r-mes b { font-size: 48px; }
   .caixa-passo, .resumo-pedido { padding: 20px 16px; }
 }
+.vip-formas { display: inline-flex; gap: 5px; margin-right: 4px; }
+.vip-formas svg.ic { width: 17px; height: 17px; }
+.vip-formas svg.ic:first-child { width: 19px; height: 19px; fill: currentColor; stroke-width: 1.4; }
