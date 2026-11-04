@@ -149,7 +149,20 @@
             <td>${num(f.abates)}</td><td>${num(f.cabeca)}</td><td>${f.kd.toFixed(2)}</td><td>${num(f.zumbis)}</td><td>${num(f.megas)}</td><td>${tempo(f.segundos)}</td><td>${num(f.mortes)}</td></tr>`).join('')}</tbody></table></div>`
           : `<p class="fraco carregando">Nenhum jogador encontrado.</p>`;
       };
+      const torneio = async () => {
+        let t; try { t = await api('/api/torneio'); } catch { return; }
+        const el = document.getElementById('torneio'); if (!el) return;
+        const dt = s => new Date(s).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const lista = (l, un) => l.length ? `<ol class="torneio-lista">${l.map(x => `<li><span>${esc(x.nome)}</span><b>${num(x.pts)} ${un}</b></li>`).join('')}</ol>` : `<p class="fraco">Ninguém pontuou ainda.</p>`;
+        const estado = !t.tem ? 'Começa na sexta às 18h.' : t.aberto ? `Valendo até ${dt(t.fim)}.` : new Date(t.inicio) > new Date() ? `Começa ${dt(t.inicio)}.` : 'Acabou. O próximo começa na sexta às 18h.';
+        const premios = (t.premios || []).map((p, i) => `${i + 1}º $${num(+p)}`).join(' · ');
+        el.innerHTML = `<div class="grade g3">
+          <div class="painel"><h3>🧟 Torneio: zumbis</h3><p class="fraco">${estado} Mega zumbi vale 5.</p>${lista(t.zumbis || [], 'pts')}</div>
+          <div class="painel"><h3>🎣 Torneio: caça e pesca</h3><p class="fraco">Bicho ou peixe vale 1. Prêmio por categoria: ${premios || '-'}.</p>${lista(t.caca || [], 'pts')}</div>
+          <div class="painel"><h3>⚔️ Arena 1x1</h3><p class="fraco">Desafie com /arena desafiar nome valor, dentro da safe.</p>${(t.arena || []).length ? `<ol class="torneio-lista">${t.arena.map(x => `<li><span>${esc(x.nome)}</span><b>${x.vitorias}V ${x.derrotas}D</b></li>`).join('')}</ol>` : '<p class="fraco">Ninguém lutou ainda.</p>'}</div></div>`;
+      };
       setTimeout(() => {
+        torneio();
         document.querySelectorAll('.abas button').forEach(b => b.onclick = () => {
           document.querySelectorAll('.abas button').forEach(x => x.classList.remove('ativo'));
           b.classList.add('ativo'); por = b.dataset.por; desenhar();
@@ -161,7 +174,8 @@
         <div class="ferramentas"><input id="busca" placeholder="Buscar por nome ou SteamID..." autocomplete="off">
           <div class="abas">${[['abates', 'Kills'], ['kd', 'K/D'], ['xp', 'XP'], ['zumbis', 'Zumbis'], ['tempo', 'Tempo']].map(([k, t], i) =>
             `<button data-por="${k}" class="${i ? '' : 'ativo'}">${t}</button>`).join('')}</div></div>
-        <div id="tabela"><p class="carregando">Carregando...</p></div>`;
+        <div id="tabela"><p class="carregando">Carregando...</p></div>
+        <div id="torneio" style="margin-top:28px"></div>`;
     },
 
     async faccoes () {

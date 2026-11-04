@@ -1,7 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"sort"
 	"strconv"
 	"time"
@@ -221,10 +225,84 @@ func estatisticas() map[string]any {
 }
 
 func rotasEstatisticas(mux *http.ServeMux) {
+	mux.HandleFunc("/api/torneio", apiTorneio)
 	mux.HandleFunc("/api/admin/estatisticas", func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := exigirStaff(w, r); !ok {
 			return
 		}
 		jsonOK(w, estatisticas())
+	})
+}
+
+// /api/torneio (público): torneio do fim de semana (torneio.json) e top da arena (arena.json), gravados pelo plugin.
+func apiTorneio(w http.ResponseWriter, r *http.Request) {
+	type pt struct {
+		Nome string `json:"nome"`
+		Pts  int    `json:"pts"`
+	}
+	var t struct {
+		Inicio, Fim time.Time
+		Pago        bool
+		Pontos      map[string]map[string]struct {
+			Nome string
+			Pts  int
+		}
+		Vencedores []string
+		Premios    string
+	}
+	if b, err := os.ReadFile(filepath.Join(fonte.Pasta, "torneio.json")); err == nil {
+		_ = json.Unmarshal(b, &t)
+	}
+	top := func(cat string) []pt {
+		l := []pt{}
+		for _, v := range t.Pontos[cat] {
+			if v.Pts > 0 {
+				l = append(l, pt{v.Nome, v.Pts})
+			}
+		}
+		sort.Slice(l, func(i, j int) bool { return l[i].Pts > l[j].Pts })
+		if len(l) > 10 {
+			l = l[:10]
+		}
+		return l
+	}
+	agora := time.Now()
+	premios := []string{}
+	for _, p := range strings.Split(t.Premios, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			premios = append(premios, p)
+		}
+	}
+	var arena map[string]struct {
+		Nome               string
+		Vitorias, Derrotas int
+		Ganho              int64
+	}
+	if b, err := os.ReadFile(filepath.Join(fonte.Pasta, "arena.json")); err == nil {
+		_ = json.Unmarshal(b, &arena)
+	}
+	type ar struct {
+		Nome     string `json:"nome"`
+		Vitorias int    `json:"vitorias"`
+		Derrotas int    `json:"derrotas"`
+		Ganho    int64  `json:"ganho"`
+	}
+	la := []ar{}
+	for _, v := range arena {
+		la = append(la, ar{v.Nome, v.Vitorias, v.Derrotas, v.Ganho})
+	}
+	sort.Slice(la, func(i, j int) bool {
+		if la[i].Vitorias != la[j].Vitorias {
+			return la[i].Vitorias > la[j].Vitorias
+		}
+		return la[i].Ganho > la[j].Ganho
+	})
+	if len(la) > 10 {
+		la = la[:10]
+	}
+	jsonOK(w, map[string]any{
+		"tem": !t.Inicio.IsZero(), "aberto": !t.Pago && agora.After(t.Inicio) && agora.Before(t.Fim),
+		"inicio": t.Inicio, "fim": t.Fim, "premios": premios,
+		"zumbis": top("zumbis"), "caca": top("caca"), "vencedores": t.Vencedores, "arena": la,
 	})
 }

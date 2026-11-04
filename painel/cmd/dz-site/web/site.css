@@ -422,3 +422,8 @@ td.ord { color: var(--c); font-weight: 800; }
 .arte span b { color: #fff; font-size: 15px; }
 @media (max-width: 900px) { .artes { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { .artes { grid-template-columns: 1fr; } }
+
+.torneio-lista { list-style: none; padding: 0; margin: 12px 0 0; counter-reset: t; }
+.torneio-lista li { counter-increment: t; display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.torneio-lista li::before { content: counter(t) "."; color: var(--c1, #FF5A00); font-weight: 800; width: 24px; flex: none; }
+.torneio-lista li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

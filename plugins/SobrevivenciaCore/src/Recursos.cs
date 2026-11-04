@@ -404,6 +404,12 @@ namespace SobrevivenciaCore
         {
             if (stat == EPlayerStat.KILLS_ZOMBIES_NORMAL) { FichaDe(p).Zumbis++; DarXp(p, S.XpZumbi); }
             else if (stat == EPlayerStat.KILLS_ZOMBIES_MEGA) { FichaDe(p).Megas++; DarXp(p, S.XpMega, "mega zumbi"); }
+            // torneio e missões
+            if (stat == EPlayerStat.KILLS_ZOMBIES_NORMAL) ContarAcao(p, "zumbi");
+            else if (stat == EPlayerStat.KILLS_ZOMBIES_MEGA) ContarAcao(p, "mega");
+            else if (stat == EPlayerStat.KILLS_ANIMALS) ContarAcao(p, "animal");
+            else if (stat == EPlayerStat.FOUND_FISHES) ContarAcao(p, "peixe");
+            else if (stat == EPlayerStat.KILLS_PLAYERS && !NaLuta(Id(p))) ContarAcao(p, "pvp");
         }
 
         // ---------- Entrada ----------

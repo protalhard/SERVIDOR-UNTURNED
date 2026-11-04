@@ -44,6 +44,8 @@
         <Permission Cooldown="0">tutorial</Permission>
         <Permission Cooldown="0">arena</Permission>
         <Permission Cooldown="0">recompensa</Permission>
+        <Permission Cooldown="0">torneio</Permission>
+        <Permission Cooldown="0">missoes</Permission>
       </Permissions>
     </Group>
     <Group>

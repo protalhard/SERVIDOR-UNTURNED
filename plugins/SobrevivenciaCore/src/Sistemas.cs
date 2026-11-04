@@ -118,6 +118,13 @@ namespace SobrevivenciaCore
         public ushort RecompensaTagItem = 0;
         public int RecompensaMin = 500;
         public int RecompensaHorasTag = 24;
+        /// <summary>Torneio do fim de semana: de sexta (hora início) a domingo (hora fim), Brasília. Prêmios do 1o, 2o, 3o de cada categoria.</summary>
+        public bool TorneioLigado = true;
+        public int TorneioInicioHora = 18;
+        public int TorneioFimHora = 22;
+        public string TorneioPremios = "15000,8000,4000";
+        /// <summary>Missões diárias (3 por dia, fácil/média/difícil).</summary>
+        public bool MissoesLigado = true;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)
