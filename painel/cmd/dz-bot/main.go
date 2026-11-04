@@ -688,6 +688,13 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 	cat, staff := estado.Canais["cat_suporte"], estado.Cargos["staff"]
 	mu.Unlock()
 	u := i.Member.User
+	// responde na hora (o Discord só espera 3 s); criar canal e postar demora mais
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{Flags: discordgo.MessageFlagsEphemeral}})
+	responder := func(_ *discordgo.Session, _ *discordgo.InteractionCreate, e *discordgo.MessageEmbed, _ bool) {
+		_, _ = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{e}})
+	}
 	if nomesMotivo[motivo] == "" {
 		motivo = "outro"
 	}
@@ -728,7 +735,7 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 	}
 	estado.Tickets[ch.ID] = u.ID
 	salvarEstado()
-	postar(s, "logs", &discordgo.MessageSend{Content: fmt.Sprintf("🎫 **Ticket aberto** (%s) por <@%s>: <#%s>", nomesMotivo[motivo], u.ID, ch.ID),
+	postar(s, "logs", &discordgo.MessageSend{Content: fmt.Sprintf("🎫 **Ticket aberto** (%s) por <@%s>: <#%s> `#%s`", nomesMotivo[motivo], u.ID, ch.ID, ch.Name),
 		AllowedMentions: &discordgo.MessageAllowedMentions{}})
 	postar(s, "staff", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{embedFichaJogo(u.ID, ch.ID)}, AllowedMentions: &discordgo.MessageAllowedMentions{}})
 	mu.Unlock()
