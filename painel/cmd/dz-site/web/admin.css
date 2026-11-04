@@ -249,3 +249,9 @@
 .adm-economia .adm-secao { margin: 10px 0 0; }
 .adm-economia .adm-busca-local { max-width: 360px; }
 .adm-busca-log { width: 100%; max-width: 420px; margin-top: 12px; box-sizing: border-box; }
+.est-barras { display: flex; align-items: flex-end; gap: 4px; height: 190px; margin-top: 12px; overflow-x: auto; padding-bottom: 2px; }
+.est-col { flex: 1 0 18px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; min-width: 18px; }
+.est-col i { display: block; width: 100%; max-width: 26px; border-radius: 4px 4px 0 0; background: linear-gradient(#FFB020, #FF5A00); opacity: .85; }
+.est-col.marca i { opacity: 1; box-shadow: 0 0 10px rgba(255,90,0,.6); }
+.est-col small { font: 10px var(--mono); color: var(--fraco, #888); margin-top: 4px; white-space: nowrap; }
+.est-v { font: 10px var(--mono); color: var(--texto); margin-bottom: 2px; min-height: 12px; }

@@ -721,6 +721,7 @@ namespace SobrevivenciaCore
             TickEconomia();
             TickRelogio();
             try { TickAirdropAuto(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickFotoOnline(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickRecompensas(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickArena(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickEvento(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }

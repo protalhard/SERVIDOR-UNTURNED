@@ -20,7 +20,8 @@
     banir: ["Banir por Steam ID", "Funciona com o jogador online ou offline."], logs: ["Logs", "Ações da staff, anti-cheat e raids."],
     staff: ["Staff", "Quem é da staff e o que cada um pode fazer."],
     faccoes: ["Facções", "Todas as facções: membros, cofre e quando alguém entrou pela última vez."],
-    economia: ["Economia", "Todo o dinheiro do jogo e os ajustes de preço. Atualiza a cada 2 minutos."] };
+    economia: ["Economia", "Todo o dinheiro do jogo e os ajustes de preço. Atualiza a cada 2 minutos."],
+    estatisticas: ["Estatísticas", "Quantos jogam, em que horário, quanto tempo e quantos novatos voltam."] };
 
   const ICONES = {
     dinheiro: '<path d="M2 6h20v12H2zm2 2v8h16V8zm8 1.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM5 9h2v2H5zm12 4h2v2h-2z"/>',
@@ -677,6 +678,42 @@
     try { await post("/api/admin/economia", { tipo, valor, loja: loja || "" }); aviso("Enviado pro jogo. Os números aqui atualizam em até 2 minutos."); setTimeout(carregarEconomia, 5000); }
     catch (e) { aviso("Erro: " + e.message, true); }
   }
+  // ---------- Estatísticas ----------
+  async function carregarEstatisticas() {
+    const E = $("#estatisticas");
+    E.replaceChildren(vazio("Carregando..."));
+    let s;
+    try { s = await api("/api/admin/estatisticas"); } catch (e) { E.replaceChildren(vazio("Erro: " + e.message)); return; }
+    const barras = (itens, rotulo, valor, dica, marca) => {
+      const max = Math.max(1, ...itens.map(valor));
+      return el("div", { class: "est-barras" }, itens.map((x) => el("div", { class: "est-col" + (marca && marca(x) ? " marca" : ""), title: dica(x) },
+        el("span", { class: "est-v" }, valor(x) ? String(valor(x)) : ""),
+        el("i", { style: `height:${Math.max(2, valor(x) * 100 / max)}%` }),
+        el("small", {}, rotulo(x)))));
+    };
+    const partes = [el("div", { class: "adm-tiles" },
+      tile("Online agora", String(s.online || 0), s.ultimaFoto ? "foto de " + s.ultimaFoto : "sem foto ainda", "laranja"),
+      tile("Pico (30 dias)", String(s.pico30 || 0), "mais gente ao mesmo tempo"),
+      tile("Jogadores (30 dias)", String(s.unicos30 || 0), "contas diferentes que entraram"),
+      tile("Novatos que voltaram", (s.retencao || 0) + "%", `${s.voltaram30 || 0} de ${s.novatos30 || 0} novatos voltaram outro dia`))];
+    if (!s.temHistorico) partes.push(el("p", { class: "fraco" }, "O gráfico de online por hora começa a encher depois do próximo reinício do jogo (uma foto a cada 5 minutos)."));
+    const h = (s.porHora || []);
+    const agoraH = new Date(Date.now() - 3 * 3600e3).getUTCHours();
+    partes.push(el("article", { class: "adm-bloco" }, el("h2", {}, "Média de jogadores por horário (últimos 7 dias)"),
+      el("p", { class: "fraco" }, "Horário de Brasília. Passe o mouse para ver o pico de cada hora."),
+      barras(h, (x) => String(x.hora).padStart(2, "0"), (x) => x.media, (x) => `${x.hora}h: média ${x.media}, pico ${x.pico}`, (x) => x.hora === agoraH)));
+    const d = (s.porDia || []);
+    partes.push(el("article", { class: "adm-bloco" }, el("h2", {}, "Por dia (últimos 30 dias)"),
+      el("p", { class: "fraco" }, "Barra = jogadores diferentes no dia. Passe o mouse para ver pico e novatos."),
+      d.length ? barras(d, (x) => x.dia.slice(8) + "/" + x.dia.slice(5, 7), (x) => x.jogadores, (x) => `${x.dia.split("-").reverse().join("/")}: ${x.jogadores} jogadores, pico ${x.pico} juntos, ${x.novatos} novatos`) : vazio("Sem dados ainda.")));
+    const t = (s.tempo7 || []);
+    partes.push(el("article", { class: "adm-bloco" }, el("h2", {}, "Quem mais jogou (últimos 7 dias)"),
+      t.length ? el("table", { class: "adm-tabela" }, el("thead", {}, el("tr", {}, el("th", {}, "#"), el("th", {}, "Jogador"), el("th", {}, "Horas"), el("th", {}, "Entradas"))),
+        el("tbody", {}, t.map((x, i) => el("tr", {}, el("td", {}, String(i + 1)), el("td", {}, `${x.nome || "?"} `, el("small", { class: "fraco" }, x.steam)), el("td", {}, x.horas.toFixed(1) + " h"), el("td", {}, String(x.sessoes))))))
+        : vazio("Ninguém jogou nos últimos 7 dias.")));
+    E.replaceChildren(...partes);
+  }
+
   function desenharEconomia() {
     const E = $("#economia");
     const e = economia;
@@ -765,6 +802,7 @@
     if (aba === "jogadores") carregarJogadores();
     if (aba === "faccoes") carregarFaccoes();
     if (aba === "economia") carregarEconomia();
+    if (aba === "estatisticas") carregarEstatisticas();
     if (aba === "mensagens" || aba === "wipe" || aba === "dashboard") carregarPainel();
   }
   function desenhar() {

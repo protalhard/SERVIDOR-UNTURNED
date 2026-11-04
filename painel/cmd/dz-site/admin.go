@@ -118,6 +118,7 @@ func exigirStaff(w http.ResponseWriter, r *http.Request) (acessoAdmin, bool) {
 }
 
 func registrarAdmin(mux *http.ServeMux, web fs.FS) {
+	rotasEstatisticas(mux)
 	mux.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
 		b, _ := fs.ReadFile(web, "admin.html")
 		w.Header().Set("Cache-Control", "no-cache")

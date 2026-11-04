@@ -83,7 +83,7 @@ namespace SobrevivenciaCore
                     {
                         linhasDesdeCorte = 0;
                         var l = File.ReadAllLines(ArqJogadoresLog);
-                        if (l.Length > 5000) File.WriteAllLines(ArqJogadoresLog, l.Skip(l.Length - 5000));
+                        if (l.Length > 60000) File.WriteAllLines(ArqJogadoresLog, l.Skip(l.Length - 60000));
                     }
                 }
             }

@@ -8,7 +8,7 @@
 <title>Painel Admin · DAY Z BRASIL</title>
 <link rel="icon" href="/img/icon64.png" type="image/png">
 <link rel="stylesheet" href="/site.css?v=11">
-<link rel="stylesheet" href="/admin.css?v=6">
+<link rel="stylesheet" href="/admin.css?v=7">
 </head>
 <body class="adm">
 <section id="fora" class="adm-login" hidden>
@@ -39,6 +39,7 @@
       <button data-aba="economia"><i data-i="dinheiro"></i>Economia</button>
       <button data-aba="banir" data-precisa="ban"><i data-i="martelo"></i>Banir por Steam ID</button>
       <p class="adm-grupo">Servidor</p>
+      <button data-aba="estatisticas"><i data-i="log"></i>Estatísticas</button>
       <button data-aba="logs"><i data-i="log"></i>Logs</button>
       <button data-aba="entradas"><i data-i="gente"></i>Log de jogadores</button>
       <button data-aba="staff" data-precisa="dono"><i data-i="escudo"></i>Staff</button>
@@ -201,11 +202,12 @@
     </section>
 
     <section data-painel="staff" hidden><div id="staff" class="adm-lista"></div></section>
+    <section data-painel="estatisticas" hidden><div id="estatisticas" class="adm-economia"></div></section>
     <section data-painel="economia" hidden><div id="economia" class="adm-economia"></div></section>
     <section data-painel="faccoes" hidden><div id="faccoes" class="adm-lista"></div></section>
   </main>
 </div>
 <div id="zoom" class="adm-zoom" hidden><img alt=""></div>
-<script src="/admin.js?v=10"></script>
+<script src="/admin.js?v=11"></script>
 </body>
 </html>
