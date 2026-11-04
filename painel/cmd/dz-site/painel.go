@@ -326,6 +326,26 @@ func registrarPainel(mux *http.ServeMux) {
 		}
 		jsonOK(w, map[string]any{"ok": true, "segundos": q.Segundos})
 	})
+	// evento de clima com o baú (precisa de Mundo ou ser dono): o jogo avisa no chat e começa em 1 min
+	mux.HandleFunc("/api/admin/evento", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.Header.Get("X-DZ") != "1" {
+			http.Error(w, "metodo", http.StatusMethodNotAllowed)
+			return
+		}
+		a, ok := exigirStaff(w, r)
+		if !ok {
+			return
+		}
+		if !a.Mundo {
+			http.Error(w, "voce nao tem a permissao Mundo", http.StatusForbidden)
+			return
+		}
+		if err := comandoJogo("evento", "0", a.Steam, 0, ""); err != nil {
+			http.Error(w, "nao consegui falar com o jogo", http.StatusInternalServerError)
+			return
+		}
+		jsonOK(w, map[string]any{"ok": true})
+	})
 	// aba Economia: o jogo grava economia.json a cada 2 min; o POST manda o ajuste pro jogo
 	mux.HandleFunc("/api/admin/economia", func(w http.ResponseWriter, r *http.Request) {
 		a, ok := exigirStaff(w, r)

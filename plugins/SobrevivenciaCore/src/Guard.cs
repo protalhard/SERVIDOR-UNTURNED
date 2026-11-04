@@ -650,6 +650,14 @@ namespace SobrevivenciaCore
                     LogAdminNome(NomeDe(quem) + " (site)", quem, seg == 0 ? "LIMPOU ITENS DO CHAO" : $"LIMPEZA DE ITENS em {seg}s");
                     continue;
                 }
+                // evento de clima pelo painel: precisa de "Mundo" ou ser dono
+                if (c[0] == "evento")
+                {
+                    if (!EhDono(quem) && !(staff.TryGetValue(quem, out var mv) && mv.Perms.Contains("Mundo")))
+                    { LogGuard($"COMANDO NEGADO do site: evento por {quem} (sem permissao Mundo)"); continue; }
+                    LogAdminNome(NomeDe(quem) + " (site)", quem, "EVENTO: " + ComecarEvento(60));
+                    continue;
+                }
                 // economia pelo painel (aba Economia): precisa de "Precos" ou ser dono
                 if (c[0] == "economia")
                 {

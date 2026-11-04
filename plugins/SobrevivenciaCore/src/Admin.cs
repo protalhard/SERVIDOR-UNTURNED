@@ -56,6 +56,7 @@ namespace SobrevivenciaCore
             public KitAirdrop Kit;
             public float Fim;
             public HashSet<uint> JaExistiam;
+            public int Zumbis;
         }
 
         readonly Dictionary<ulong, EstadoAdmin> admins = new Dictionary<ulong, EstadoAdmin>();
@@ -656,7 +657,7 @@ namespace SobrevivenciaCore
 
         static SpawnAsset tabelaAirdrop;
 
-        bool MandarAirdrop(Vector3 onde, KitAirdrop kit, out string erro, string titulo = null)
+        bool MandarAirdrop(Vector3 onde, KitAirdrop kit, out string erro, string titulo = null, int zumbis = -1)
         {
             erro = null;
             if (kit == null) { erro = "Nenhum conteudo de airdrop configurado."; return false; }
@@ -667,7 +668,7 @@ namespace SobrevivenciaCore
                 tabelaAirdrop = todas.FirstOrDefault(t => t.name != null && t.name.IndexOf("airdrop", StringComparison.OrdinalIgnoreCase) >= 0) ?? todas.FirstOrDefault();
             }
             if (tabelaAirdrop == null) { erro = "Nao achei tabela de airdrop no servidor."; return false; }
-            airdrops.Add(new AirdropPendente { Pos = onde, Kit = kit, Fim = Time.realtimeSinceStartup + 300f, JaExistiam = new HashSet<uint>(CaixasPerto(onde).Select(d => d.instanceID)) });
+            airdrops.Add(new AirdropPendente { Pos = onde, Kit = kit, Fim = Time.realtimeSinceStartup + 300f, Zumbis = zumbis < 0 ? S.AirdropZumbis : zumbis, JaExistiam = new HashSet<uint>(CaixasPerto(onde).Select(d => d.instanceID)) });
             LevelManager.SpawnAirdrop(onde, tabelaAirdrop);
             Chat.Todos(Chat.Cor(S.CorDestaque, Chat.Forte("AIRDROP " + (titulo ?? kit.Nome).ToUpperInvariant() + " A CAMINHO!")) + Chat.Cor(S.CorApagada, " Olhe pro ceu."));
             return true;
@@ -696,6 +697,8 @@ namespace SobrevivenciaCore
                 var caixa = CaixasPerto(ad.Pos).FirstOrDefault(d => !ad.JaExistiam.Contains(d.instanceID));
                 if (caixa == null) continue;
                 airdrops.RemoveAt(i);
+                try { var nz = NascerZumbis(caixa.model.position, ad.Zumbis); if (nz > 0) Rocket.Core.Logging.Logger.Log($"[Airdrop] {nz} zumbis em volta da caixa"); }
+                catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
                 var st = (InteractableStorage)caixa.interactable;
                 st.items.clear();
                 foreach (var it in ConteudoAirdrop(ad.Kit))
@@ -718,6 +721,7 @@ namespace SobrevivenciaCore
             TickEconomia();
             TickRelogio();
             try { TickAirdropAuto(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickEvento(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             TickReinicio();
 
             // marcadores da visão de admin (efeito 51232, só o admin vê)

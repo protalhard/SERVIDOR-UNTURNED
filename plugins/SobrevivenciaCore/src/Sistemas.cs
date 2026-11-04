@@ -98,6 +98,16 @@ namespace SobrevivenciaCore
         public int AirdropAutoMinutos = 30;
         /// <summary>Chance (%) do airdrop automático vir de armas boas; o resto vem de equipamento.</summary>
         public int AirdropAutoChanceArmas = 70;
+        /// <summary>Zumbis que nascem em volta de todo airdrop quando a caixa cai. 0 = nenhum.</summary>
+        public int AirdropZumbis = 8;
+        /// <summary>Airdrop e baú do evento caem a pelo menos X metros da borda da safe mais perto, e no máximo Y.</summary>
+        public int DropMinSafe = 300;
+        public int DropMaxSafe = 1500;
+        /// <summary>Evento de clima (chuva, tempestade, neve, neblina) com o baú: a cada X minutos com gente online. 0 = desligado.</summary>
+        public int EventoMinutos = 90;
+        public int EventoAvisoMinutos = 3;
+        public int EventoDuracaoMinutos = 12;
+        public int EventoZumbis = 14;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)

@@ -248,3 +248,4 @@
 .adm-economia { display: grid; gap: 14px; }
 .adm-economia .adm-secao { margin: 10px 0 0; }
 .adm-economia .adm-busca-local { max-width: 360px; }
+.adm-busca-log { width: 100%; max-width: 420px; margin-top: 12px; box-sizing: border-box; }

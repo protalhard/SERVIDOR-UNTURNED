@@ -325,7 +325,8 @@
         el("button", { class: "botao fantasma pequeno", onclick: () => abrir("wipe") }, "🔄 Marcar wipe")));
       if (eu.mundo && resumo) filhos.push(el("div", { class: "adm-acoes-linha" },
         el("button", { class: "botao fantasma pequeno", onclick: () => limparItens(30) }, "🧹 Limpar itens do chão (30 s)"),
-        el("button", { class: "botao fantasma pequeno", onclick: () => limparItens(0) }, "Agora")));
+        el("button", { class: "botao fantasma pequeno", onclick: () => limparItens(0) }, "Agora"),
+        el("button", { class: "botao fantasma pequeno", onclick: comecarEvento }, "⛈️ Começar evento de clima")));
       const lp = linhaPausa(resumo); if (lp) filhos.push(lp);
       alvo.replaceChildren(...filhos);
       return;
@@ -808,9 +809,20 @@
     try { jogadores = await api("/api/admin/jogadores"); if (aba === "jogadores") desenharJogadores(); }
     catch (e) { aviso("Erro: " + e.message, true); }
   }
+  let linhasLog = [];
+  function desenharLog() {
+    const f = ($("#log-filtro").value || "").trim().toLowerCase();
+    const l = f ? linhasLog.filter((x) => x.toLowerCase().includes(f)) : linhasLog;
+    $("#log-texto").textContent = l.join("\n") || (f ? "Nada com esse filtro." : "Vazio.");
+  }
   async function carregarLog() {
-    try { $("#log-texto").textContent = (await api("/api/admin/log?q=" + log)).join("\n") || "Vazio."; }
-    catch (e) { $("#log-texto").textContent = "Erro: " + e.message; }
+    try { linhasLog = await api("/api/admin/log?q=" + log); desenharLog(); }
+    catch (e) { linhasLog = []; $("#log-texto").textContent = "Erro: " + e.message; }
+  }
+  async function comecarEvento() {
+    if (!confirm("Começar um evento de clima agora? O jogo avisa no chat e em 1 minuto começa o clima e cai o baú do evento com zumbis.")) return;
+    try { await post("/api/admin/evento", {}); aviso("Evento marcado. Começa em 1 minuto."); }
+    catch (e) { aviso("Erro: " + e.message, true); }
   }
 
   $$("[data-i]").forEach((i) => i.append(icone(i.dataset.i)));
@@ -829,6 +841,7 @@
     log = b.dataset.log; carregarLog();
   }));
   $("#busca").addEventListener("input", desenhar);
+  $("#log-filtro").addEventListener("input", desenharLog);
   $("#zoom").addEventListener("click", () => { $("#zoom").hidden = true; });
   $("#form-banir").addEventListener("submit", async (ev) => {
     ev.preventDefault();

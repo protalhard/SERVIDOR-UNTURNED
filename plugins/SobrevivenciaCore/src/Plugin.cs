@@ -39,6 +39,7 @@ namespace SobrevivenciaCore
             PlayerLife.OnPreDeath += RelogioAntesDeMorrer;
             U.Events.OnPlayerDisconnected += AoDesconectar;
             LigarLogJogadores();
+            LigarLogRoubos();
             UnturnedPlayerEvents.OnPlayerRevive += AoRenascer;
             ChatManager.onChatted += AoFalar;
             InvokeRepeating(nameof(ChecarZonas), 1f, 1f);
@@ -64,6 +65,7 @@ namespace SobrevivenciaCore
             PlayerLife.OnPreDeath -= RelogioAntesDeMorrer;
             U.Events.OnPlayerDisconnected -= AoDesconectar;
             DesligarLogJogadores();
+            DesligarLogRoubos();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
             ChatManager.onChatted -= AoFalar;
             Instancia = null;

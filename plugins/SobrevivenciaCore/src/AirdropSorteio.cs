@@ -34,7 +34,7 @@ namespace SobrevivenciaCore
             var todos = new List<ItemAsset>();
             Assets.find(todos);
             var p = new Dictionary<string, List<ItemAsset>>();
-            foreach (var k in new[] { "comida", "bebida", "remedio", "arma", "acessorio", "granada", "mochila", "colete", "chapeu", "ferramenta", "construcao", "construcao_forte", "bau", "bau_forte", "energia", "arma_boa" })
+            foreach (var k in new[] { "comida", "bebida", "remedio", "arma", "acessorio", "granada", "mochila", "colete", "chapeu", "ferramenta", "construcao", "construcao_forte", "bau", "bau_forte", "energia", "arma_boa", "arma_top", "equip_top", "visao", "mre" })
                 p[k] = new List<ItemAsset>();
             foreach (var a in todos)
             {
@@ -51,12 +51,16 @@ namespace SobrevivenciaCore
                         break;
                     case ItemSightAsset _: case ItemGripAsset _: case ItemBarrelAsset _: case ItemTacticalAsset _: p["acessorio"].Add(a); break;
                     case ItemThrowableAsset _: p["granada"].Add(a); break;
-                    case ItemBackpackAsset _: p["mochila"].Add(a); break;
-                    case ItemVestAsset _: p["colete"].Add(a); break;
-                    case ItemHatAsset _: p["chapeu"].Add(a); break;
+                    case ItemBackpackAsset _: p["mochila"].Add(a); if (a.rarity >= EItemRarity.RARE) p["equip_top"].Add(a); break;
+                    case ItemVestAsset _: p["colete"].Add(a); if (a.rarity >= EItemRarity.RARE) p["equip_top"].Add(a); break;
+                    case ItemHatAsset _: p["chapeu"].Add(a); if (a.rarity >= EItemRarity.RARE) p["equip_top"].Add(a); break;
+                    case ItemGlassesAsset gl when gl.vision != ELightingVision.NONE: p["visao"].Add(a); break;
                     case ItemMedicalAsset _: p["remedio"].Add(a); break;
                     case ItemWaterAsset _: p["bebida"].Add(a); break;
-                    case ItemFoodAsset _: p["comida"].Add(a); break;
+                    case ItemFoodAsset _:
+                        p["comida"].Add(a);
+                        if (System.Text.RegularExpressions.Regex.IsMatch(nome, @"\bMRE\b")) p["mre"].Add(a);
+                        break;
                     case ItemFuelAsset _: case ItemRefillAsset _: case ItemToolAsset _: case ItemFisherAsset _: case ItemOpticAsset _: p["ferramenta"].Add(a); break;
                     case ItemStorageAsset _: p["bau" + forte].Add(a); break;
                     case ItemGeneratorAsset _: p["energia"].Add(a); break;
@@ -67,6 +71,14 @@ namespace SobrevivenciaCore
                         p["construcao" + forte].Add(a); break;
                 }
             }
+            // arma top = as armas que o mercado negro vende (pedido do dono); sem mercado negro, as armas boas
+            var doNegro = new HashSet<ushort>(Configuration.Instance.Lojas.Where(l => l.Tipo == "negro")
+                .SelectMany(l => l.Itens ?? new List<ItemLoja>()).Where(i => !i.Veiculo && i.Compra > 0).Select(i => i.Id));
+            p["arma_top"].AddRange(p["arma"].Where(a => doNegro.Contains(a.id)));
+            if (p["arma_top"].Count == 0) p["arma_top"].AddRange(p["arma_boa"]);
+            if (p["equip_top"].Count == 0) { p["equip_top"].AddRange(p["mochila"]); p["equip_top"].AddRange(p["colete"]); }
+            if (p["mre"].Count == 0) p["mre"].AddRange(p["comida"]);
+            Rocket.Core.Logging.Logger.Log($"[Airdrop] pools: arma_top {p["arma_top"].Count}, equip_top {p["equip_top"].Count}, visao {p["visao"].Count}, mre {p["mre"].Count}");
             return poolsDrop = p;
         }
 
@@ -149,13 +161,17 @@ namespace SobrevivenciaCore
                     if (sorte.Next(2) == 0) Por("energia", 1, 1);
                     break;
                 case "auto_armas":
-                    // airdrop automático de armas: sempre arma boa (as raras saem menos), com pentes e um equipamento
-                    Arma(sorte.Next(3, 5), "arma_boa");
-                    if (sorte.Next(100) < 40) Arma(sorte.Next(2, 4), "arma_boa");
-                    Por("acessorio", 1, 1);
-                    if (sorte.Next(2) == 0) Por("colete", 1, 1); else Por("mochila", 1, 1);
-                    if (sorte.Next(3) == 0) Por("granada", 1, 2);
+                case "auto_evento":
+                    // pedido do dono: loot top mas pouco. 2 armas do mercado negro com carregador, 2 equipamentos bons,
+                    // comida (MRE), remédio e às vezes visão noturna. O baú do evento vem um pouco melhor.
+                    bool evento = tipo == "auto_evento";
+                    Arma(sorte.Next(2, 4), "arma_top");
+                    Arma(sorte.Next(2, 4), evento || sorte.Next(2) == 0 ? "arma_top" : "arma_boa");
+                    Por("mochila", 1, 1); Por("equip_top", 1, 1);
+                    Por("mre", 1, 2);
                     Por("remedio", 1, 2);
+                    if (sorte.Next(100) < (evento ? 50 : 20)) Por("visao", 1, 1);
+                    if (evento && sorte.Next(2) == 0) Por("acessorio", 1, 1);
                     break;
                 case "auto_equip":
                     Por("mochila", 1, 1); Por("colete", 1, 1); Por("chapeu", 1, 1);
@@ -226,13 +242,7 @@ namespace SobrevivenciaCore
             if (agora < proximoAirdropAuto) return;
             proximoAirdropAuto = agora + S.AirdropAutoMinutos * 60f;
             if (Provider.clients.Count == 0) return;
-            Vector3? onde = null;
-            for (int t = 0; t < 15 && onde == null; t++)
-            {
-                var no = LevelManager.GetRandomAirdropNode();
-                var pos = no != null ? no.transform.position : PontosAirdropCa2[sorte.Next(PontosAirdropCa2.Length)];
-                if (ZonaSeguraEm(pos) == null) onde = pos;
-            }
+            var onde = PontoDeQueda();
             if (onde == null) { Rocket.Core.Logging.Logger.Log("[Airdrop auto] mapa sem ponto de airdrop fora das safes."); return; }
             bool armas = sorte.Next(100) < S.AirdropAutoChanceArmas;
             var kit = new KitAirdrop { Nome = armas ? "auto:auto_armas" : "auto:auto_equip" };

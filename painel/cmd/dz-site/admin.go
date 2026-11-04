@@ -214,6 +214,9 @@ func registrarAdmin(mux *http.ServeMux, web fs.FS) {
 		case "entradas":
 			jsonOK(w, logEntradas(400))
 			return
+		case "roubos":
+			jsonOK(w, logRoubos(1500))
+			return
 		}
 		l := []string{}
 		linhas := lerTSV(arq, 400)
@@ -356,6 +359,33 @@ func separarAdmin(dominioAdmin string, h http.Handler) http.Handler {
 		}
 		h.ServeHTTP(w, r)
 	})
+}
+
+// logRoubos: roubos_log.tsv (baús e carros de outra pessoa, gravado pelo plugin), do mais novo pro mais velho.
+func logRoubos(max int) []string {
+	br := time.FixedZone("BRT", -3*3600)
+	l := []string{}
+	linhas := lerTSV("roubos_log.tsv", max)
+	for i := len(linhas) - 1; i >= 0; i-- {
+		c := linhas[i]
+		if len(c) < 9 {
+			continue
+		}
+		quando := c[0]
+		if t, err := time.Parse(time.RFC3339Nano, c[0]); err == nil {
+			quando = t.In(br).Format("02/01 15:04:05")
+		}
+		txt := fmt.Sprintf("[%s] %-8s %s (%s) %s", quando, strings.ToUpper(c[1]), c[3], c[2], c[6])
+		if c[4] != "0" && c[4] != "" {
+			txt += fmt.Sprintf(" | dono: %s (%s)", c[5], c[4])
+		}
+		txt += fmt.Sprintf(" | X %s Z %s", c[7], c[8])
+		l = append(l, txt)
+	}
+	if len(l) == 0 {
+		l = append(l, "Nada registrado ainda. O log de baús e carros começa depois do próximo reinício do jogo.")
+	}
+	return l
 }
 
 // logEntradas: jogadores_log.tsv (gravado pelo plugin) em texto legível, do mais novo pro mais velho, no horário de Brasília.

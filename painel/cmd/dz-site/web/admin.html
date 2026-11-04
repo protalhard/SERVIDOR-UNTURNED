@@ -8,7 +8,7 @@
 <title>Painel Admin · DAY Z BRASIL</title>
 <link rel="icon" href="/img/icon64.png" type="image/png">
 <link rel="stylesheet" href="/site.css?v=11">
-<link rel="stylesheet" href="/admin.css?v=5">
+<link rel="stylesheet" href="/admin.css?v=6">
 </head>
 <body class="adm">
 <section id="fora" class="adm-login" hidden>
@@ -194,8 +194,9 @@
 
     <section data-painel="logs" hidden>
       <div class="adm-seg" id="sub-logs">
-        <button data-log="admin" class="ativa">Ações da staff</button><button data-log="guard">DZ GUARD</button><button data-log="raid">Raids</button><button data-log="entradas">Entradas de jogadores</button>
+        <button data-log="admin" class="ativa">Ações da staff</button><button data-log="guard">DZ GUARD</button><button data-log="raid">Raids</button><button data-log="entradas">Entradas de jogadores</button><button data-log="roubos">Baús e carros</button>
       </div>
+      <input id="log-filtro" class="adm-busca-log" type="search" placeholder="Filtrar por nome, Steam ID ou palavra (ex.: gasolina)">
       <pre id="log-texto" class="adm-log"></pre>
     </section>
 
@@ -205,6 +206,6 @@
   </main>
 </div>
 <div id="zoom" class="adm-zoom" hidden><img alt=""></div>
-<script src="/admin.js?v=9"></script>
+<script src="/admin.js?v=10"></script>
 </body>
 </html>
