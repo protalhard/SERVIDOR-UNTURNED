@@ -255,3 +255,7 @@
 .est-col.marca i { opacity: 1; box-shadow: 0 0 10px rgba(255,90,0,.6); }
 .est-col small { font: 10px var(--mono); color: var(--fraco, #888); margin-top: 4px; white-space: nowrap; }
 .est-v { font: 10px var(--mono); color: var(--texto); margin-bottom: 2px; min-height: 12px; }
+.adm-config-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.adm-config-grade input, .adm-config-grade select { width: 100%; }
+.adm-config-grade small { font-size: 12px; }
+.adm-config-grade .adm-campo { align-content: start; }

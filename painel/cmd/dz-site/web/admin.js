@@ -22,7 +22,8 @@
     faccoes: ["Facções", "Todas as facções: membros, cofre e quando alguém entrou pela última vez."],
     economia: ["Economia", "Todo o dinheiro do jogo e os ajustes de preço. Atualiza a cada 2 minutos."],
     estatisticas: ["Estatísticas", "Quantos jogam, em que horário, quanto tempo e quantos novatos voltam."],
-    vendas: ["Vendas VIP (Pix)", "Token do Mercado Pago e os VIPs vendidos pelo site."] };
+    vendas: ["Vendas VIP (Pix)", "Token do Mercado Pago e os VIPs vendidos pelo site."],
+    servidor: ["Configurações do jogo", "Loot, zumbis, animais, carros e regras. Vale quando o servidor reinicia."] };
 
   const ICONES = {
     dinheiro: '<path d="M2 6h20v12H2zm2 2v8h16V8zm8 1.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM5 9h2v2H5zm12 4h2v2h-2z"/>',
@@ -35,6 +36,7 @@
     flag: '<path d="M5 21V4m0 0h12l-2 4 2 4H5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
     martelo: '<path d="M14 4l6 6-3 3-6-6zM11.5 9.5L4 17l3 3 7.5-7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
     log: '<path d="M6 3h9l4 4v14H6zM9 12h7M9 16h7M9 8h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
+    engrenagem: '<path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
     escudo: '<path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
   };
   function icone(nome) {
@@ -721,6 +723,89 @@
     E.replaceChildren(...partes);
   }
 
+  // ---------------- CONFIGURAÇÕES DO JOGO (Config.txt) ----------------
+  async function carregarConfigJogo() {
+    const E = $("#servidor");
+    E.replaceChildren(vazio("Carregando..."));
+    let s;
+    try { s = await api("/api/admin/configjogo"); } catch (e) { E.replaceChildren(vazio("Erro: " + e.message)); return; }
+    const inputs = {};
+    const original = { ...s.valores };
+    const num = (v) => Number(String(v).replace(",", "."));
+    const campoDe = (c) => {
+      let inp;
+      if (c.tipo === "bool") {
+        inp = el("select", {}, el("option", { value: "" }, "Padrão (" + c.padrao + ")"), el("option", { value: "True" }, "Sim"), el("option", { value: "False" }, "Não"));
+      } else {
+        inp = el("input", { type: "text", inputmode: "decimal", placeholder: "padrão: " + c.padrao, autocomplete: "off" });
+      }
+      inp.value = s.valores[c.chave] || "";
+      inp.addEventListener("input", marcar);
+      inputs[c.chave] = inp;
+      return el("label", { class: "adm-campo", title: c.chave }, el("span", {}, c.nome), inp, c.ajuda ? el("small", { class: "fraco" }, c.ajuda) : null);
+    };
+    const multInp = el("input", { type: "number", min: "1", max: "50", step: "0.5", value: String(s.mult || 1), style: "width:110px" });
+    const multInfo = el("p", { class: "fraco" });
+    function aplicarMult(m) {
+      m = Math.max(1, Math.min(50, num(m) || 1));
+      multInp.value = String(m);
+      const b = s.base || {};
+      const lim = (k, v) => { const c = s.campos.find((x) => x.chave === k); return Math.max(c.min, Math.min(c.max, v)); };
+      for (const k of s.chavesMult) {
+        const bv = num(b[k]);
+        if (!bv && bv !== 0) continue;
+        let v;
+        if (k === "Items.Respawn_Time") v = Math.round(lim(k, bv / m));
+        else if (k.endsWith("_Chance")) v = Math.round(lim(k, bv * m) * 1000) / 1000;
+        else v = Math.round(lim(k, bv * m));
+        inputs[k].value = String(v);
+      }
+      const cheio = num(b["Items.Spawn_Chance"]) * m >= 1;
+      multInfo.textContent = `x${m}: loot em ${Math.round(Math.min(1, num(b["Items.Spawn_Chance"]) * m) * 100)}% dos pontos do mapa, renasce a cada ${inputs["Items.Respawn_Time"].value} s, zumbi dropa de ${inputs["Zombies.Min_Drops"].value} a ${inputs["Zombies.Max_Drops"].value} itens.` +
+        (cheio && m > 1 ? " Os pontos de loot do mapa já ficam todos cheios: daqui pra cima o multiplicador acelera o renascimento e aumenta o drop dos zumbis." : "");
+      marcar();
+    }
+    multInp.addEventListener("change", () => aplicarMult(multInp.value));
+    const atalhos = [1, 2, 3, 5, 10].map((m) => el("button", { type: "button", class: "botao fantasma pequeno", onclick: () => aplicarMult(m) }, "x" + m));
+    const salvar = el("button", { class: "botao" }, "Salvar");
+    const salvarRe = el("button", { class: "botao fantasma" }, "Salvar e reiniciar em 2 min");
+    const estado = el("p", { class: "fraco" });
+    function marcar() {
+      const n = Object.keys(inputs).filter((k) => (inputs[k].value || "").trim() !== (original[k] || "")).length;
+      estado.textContent = n ? `${n} mudança(s) ainda não salva(s).` : (s.salvo ? `Última mudança em ${data(s.salvo)} por ${s.por || "?"}. Vale depois que o servidor reinicia.` : "Nada mudado pelo painel ainda.");
+    }
+    async function enviar(reiniciarDepois) {
+      const valores = {};
+      for (const [k, i] of Object.entries(inputs)) valores[k] = i.value;
+      try {
+        const r = await post("/api/admin/configjogo", { Valores: valores, Mult: num(multInp.value) });
+        if (reiniciarDepois) {
+          try { await post("/api/admin/servidor", { acao: "reiniciar", quando: Math.floor(Date.now() / 1000) + 120 }); aviso(`Salvo (${r.mudou} mudança(s)). O servidor reinicia em 2 min com aviso no chat.`); }
+          catch (e) { aviso(`Salvo, mas não consegui marcar o reinício: ${e.message}`, true); }
+        } else aviso(r.mudou ? `Salvo (${r.mudou} mudança(s)). Vale no próximo reinício do servidor.` : "Nada mudou.");
+        carregarConfigJogo();
+      } catch (e) { aviso(e.message, true); }
+    }
+    salvar.onclick = () => enviar(false);
+    salvarRe.onclick = () => { if (confirm("Salvar e reiniciar o servidor em 2 minutos? Os jogadores recebem aviso no chat.")) enviar(true); };
+    const grupos = {};
+    for (const c of s.campos) (grupos[c.grupo] = grupos[c.grupo] || []).push(c);
+    const partes = [
+      el("article", { class: "adm-bloco destaque" }, el("h2", {}, "Multiplicador de loot"),
+        el("p", { class: "fraco" }, "Ajusta de uma vez a quantidade de loot, o tempo pra renascer e o drop dos zumbis. x1 = como o servidor era antes (20% dos pontos, 180 s). Depois dá pra mexer em cada campo abaixo."),
+        el("div", { style: "display:flex;flex-wrap:wrap;gap:8px;align-items:center" }, multInp, ...atalhos), multInfo),
+      ...Object.entries(grupos).map(([g, cs]) => el("article", { class: "adm-bloco" }, el("h2", {}, g),
+        el("div", { class: "adm-config-grade" }, cs.map(campoDe)))),
+      el("article", { class: "adm-bloco" }, el("p", { class: "fraco" }, "Campo vazio = usa o valor do mapa California2 ou o padrão do jogo. Antes de cada mudança o painel guarda uma cópia do arquivo de configuração."),
+        el("div", { style: "display:flex;flex-wrap:wrap;gap:10px" }, salvar, salvarRe), estado),
+    ];
+    E.replaceChildren(...partes);
+    const b = s.base || {};
+    const m = num(multInp.value) || 1;
+    multInfo.textContent = `Agora: x${m}. Loot em ${Math.round(Math.min(1, num(s.valores["Items.Spawn_Chance"] || 0)) * 100)}% dos pontos, renasce a cada ${s.valores["Items.Respawn_Time"] || "?"} s.` + (b ? "" : "");
+    marcar();
+  }
+
   async function carregarVendas() {
     const E = $("#vendas");
     E.replaceChildren(vazio("Carregando..."));
@@ -843,6 +928,7 @@
     if (aba === "economia") carregarEconomia();
     if (aba === "estatisticas") carregarEstatisticas();
     if (aba === "vendas") carregarVendas();
+    if (aba === "servidor") carregarConfigJogo();
     if (aba === "mensagens" || aba === "wipe" || aba === "dashboard") carregarPainel();
   }
   function desenhar() {

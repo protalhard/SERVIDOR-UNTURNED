@@ -93,6 +93,7 @@ func main() {
 		http.ServeFile(w, r, arq)
 	})
 	rotasMinimapa(mux, *pastaIcones)
+	rotasConfigJogo(mux)
 	mux.HandleFunc("/api/status", apiStatus)
 	mux.HandleFunc("/api/ranking", apiRanking)
 	mux.HandleFunc("/api/kits", apiKits)
