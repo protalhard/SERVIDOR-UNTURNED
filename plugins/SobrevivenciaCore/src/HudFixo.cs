@@ -8,7 +8,7 @@ namespace SobrevivenciaCore
 {
     /// <summary>Relógio fixo (modelo A) e minimapa, sempre na tela. Somem com o inventário, menus do servidor ou morto.
     /// Relógio (S.RelogioFixoEfeito): os mesmos elementos do relógio de tecla (Rel_Hora, Rel_E_Txt, Rel_E_1..10) e Rel_Dia (MANHÃ, TARDE...).
-    /// Minimapa (S.MiniMapaEfeito): Mini_Mapa (RawImage com a imagem do site), Mini_Seta_0..7 (seta pra onde o
+    /// Minimapa (S.MiniMapaEfeito): Mini_Mapa (Image, não RawImage: o cliente só aplica URL em UI.Image), Mini_Seta_0..7 (seta pra onde o
     /// jogador olha: 0 = norte, 2 = leste, 4 = sul, 6 = oeste) e Mini_Local (nome do lugar).</summary>
     public partial class Plugin
     {
