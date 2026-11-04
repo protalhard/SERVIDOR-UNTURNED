@@ -158,9 +158,17 @@ namespace SobrevivenciaCore
             if (!alertaDono.TryGetValue(chave, out var prox) || Time.realtimeSinceStartup > prox)
             {
                 alertaDono[chave] = Time.realtimeSinceStartup + 120f;
+                // alarme de base: dono, grupo e toda a facção dele (mesmo quem está em outro grupo) recebem aviso na tela e no chat
+                var facDono = FaccaoPorGrupo(grupo) ?? FaccaoDe(dono);
                 foreach (var c in Provider.clients)
-                    if (c.player != null && (c.playerID.steamID.m_SteamID == dono || (grupo != 0 && c.player.quests.groupID.m_SteamID == grupo)))
-                        c.player.ServerShowHint($"<color=#FF4040><b>SUA BASE ESTA SENDO ATACADA!</b></color>\nPerto de {pos.x:0} {pos.z:0}", 8f);
+                {
+                    if (c.player == null) continue;
+                    var cid = c.playerID.steamID.m_SteamID;
+                    bool avisa = cid == dono || (grupo != 0 && c.player.quests.groupID.m_SteamID == grupo) || (facDono != null && FaccaoDe(cid) == facDono);
+                    if (!avisa || cid == quem.m_SteamID) continue;
+                    c.player.ServerShowHint($"<color=#FF4040><b>ALARME: SUA BASE ESTA SENDO ATACADA!</b></color>\n{sp.playerID.characterName} perto de X {pos.x:0} Z {pos.z:0}", 10f);
+                    Chat.Para(UnturnedPlayer.FromSteamPlayer(c), Chat.Cor("#FF4040", Chat.Forte("ALARME DE BASE: ")) + Chat.Cor("#FFFFFF", $"{Chat.Limpar(sp.playerID.characterName)} esta atacando sua base perto de X {pos.x:0} Z {pos.z:0}."));
+                }
                 try
                 {
                     File.AppendAllText(ArqRaidLog, $"{AgoraBrasil:dd/MM HH:mm} RAID: {sp.playerID.characterName} ({quem.m_SteamID}) atacando base de {NomeJogador(dono)} ({dono}) em {pos.x:0} {pos.z:0}{(FaccaoPorGrupo(grupo) != null ? $" faccao {grupo}" : "")}{Environment.NewLine}");

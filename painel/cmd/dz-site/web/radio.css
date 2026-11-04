@@ -11,7 +11,9 @@
 @keyframes carga-anda { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
 @keyframes carga-pulso { 50% { transform: scale(1.05); } }
 
-.radio-horizonte { position: absolute; left: 0; right: 0; bottom: 0; height: 58%; width: 100%; z-index: -1; pointer-events: none; mix-blend-mode: screen; opacity: .8; }
+.radio-horizonte { position: absolute; left: 0; right: 0; bottom: 0; height: 58%; width: 100%; z-index: -1; pointer-events: none; mix-blend-mode: screen; opacity: .8;
+  /* o brilho do grave passava da borda de cima do canvas e fazia uma linha reta no fundo: some aos poucos */
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent); mask-image: linear-gradient(to top, #000 55%, transparent); }
 
 .radio { position: fixed; left: 16px; bottom: 16px; z-index: 60; font-family: var(--sans); color: var(--texto); }
 .radio button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
