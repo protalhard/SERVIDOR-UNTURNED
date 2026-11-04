@@ -152,6 +152,7 @@ namespace SobrevivenciaCore
             BarrarNaPausa(p);
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);
+            OuvirTeleporte(p.Player);
             bool novo = !Stats.Existe(id);
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
