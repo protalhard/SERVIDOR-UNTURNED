@@ -27,6 +27,7 @@ namespace SobrevivenciaCore
         {
             public string Aba = "Inicio";
             public int PaginaKit;
+            public List<Kit> Kits = new List<Kit>();
             public int PaginaGuia = 1;
             public EstadoFac Fac = new EstadoFac();
         }
@@ -177,27 +178,40 @@ namespace SobrevivenciaCore
             return C(Verde, "PEGAR");
         }
 
-        int PaginasKit => Math.Max(1, (S.Kits.Count + KitsPorPagina - 1) / KitsPorPagina);
+        static bool KitVip(Kit k) => (k.Permissao ?? "").Contains("vip.");
+
+        /// <summary>Ordem dos kits no menu: primeiro os VIP que a pessoa tem, depois os liberados, depois os VIP
+        /// que ela pode comprar. Kit trancado que nenhum VIP libera (kits antigos) não aparece; o admin vê todos.</summary>
+        List<Kit> KitsDoMenu(UnturnedPlayer p)
+        {
+            if (Pode(p, "Kits")) return S.Kits.Where(KitVip).Concat(S.Kits.Where(k => !KitVip(k))).ToList();
+            var tem = S.Kits.Where(k => TemPermissao(p, k.Permissao)).ToList();
+            return tem.Where(KitVip).Concat(tem.Where(k => !KitVip(k)))
+                .Concat(S.Kits.Where(k => KitVip(k) && !tem.Contains(k))).ToList();
+        }
+
+        int PaginasKit(EstadoMenu e) => Math.Max(1, (e.Kits.Count + KitsPorPagina - 1) / KitsPorPagina);
 
         void PreencherKits(UnturnedPlayer p, EstadoMenu e)
         {
             var f = FichaDe(p);
-            e.PaginaKit = Mathf.Clamp(e.PaginaKit, 0, PaginasKit - 1);
+            e.Kits = KitsDoMenu(p);
+            e.PaginaKit = Mathf.Clamp(e.PaginaKit, 0, PaginasKit(e) - 1);
             for (int i = 0; i < KitsPorPagina; i++)
             {
                 int idx = e.PaginaKit * KitsPorPagina + i;
                 string n = "Kit_" + (i + 1);
-                if (idx >= S.Kits.Count) { V(p, n, false); continue; }
-                var k = S.Kits[idx];
+                if (idx >= e.Kits.Count) { V(p, n, false); continue; }
+                var k = e.Kits[idx];
                 V(p, n, true);
                 T(p, n + "_Nome", Chat.Limpar(k.Nome).ToUpperInvariant());
                 T(p, n + "_Status", StatusKit(p, f, k));
                 var ic = IconeKit(k.Itens);
                 if (ic != null) Img(p, n + "_Icone", ic);
             }
-            T(p, "Kits_Pagina", $"{e.PaginaKit + 1}/{PaginasKit}");
-            V(p, "Kits_Anterior", PaginasKit > 1);
-            V(p, "Kits_Proximo", PaginasKit > 1);
+            T(p, "Kits_Pagina", $"{e.PaginaKit + 1}/{PaginasKit(e)}");
+            V(p, "Kits_Anterior", PaginasKit(e) > 1);
+            V(p, "Kits_Proximo", PaginasKit(e) > 1);
             T(p, "Kits_Legenda", $"Voce tem {C(Laranja, f.Abates.ToString())} abates");
         }
 
@@ -208,8 +222,8 @@ namespace SobrevivenciaCore
             for (int i = 0; i < KitsPorPagina; i++)
             {
                 int idx = e.PaginaKit * KitsPorPagina + i;
-                if (idx >= S.Kits.Count) break;
-                var k = S.Kits[idx];
+                if (idx >= e.Kits.Count) break;
+                var k = e.Kits[idx];
                 var resta = Stats.UltimoUsoKit(f.Id, k.Nome) + k.Espera - Estatisticas.Agora;
                 if (resta >= 0 && resta <= k.Espera && !Pode(p, "Kits") && TemPermissao(p, k.Permissao) && f.Abates >= k.Abates)
                     T(p, "Kit_" + (i + 1) + "_Status", StatusKit(p, f, k));
@@ -355,8 +369,8 @@ namespace SobrevivenciaCore
                 switch (botao)
                 {
                     case "Menu_Fechar": FecharMenu(p); break;
-                    case "Kits_Anterior": e.PaginaKit = (e.PaginaKit + PaginasKit - 1) % PaginasKit; PreencherKits(p, e); break;
-                    case "Kits_Proximo": e.PaginaKit = (e.PaginaKit + 1) % PaginasKit; PreencherKits(p, e); break;
+                    case "Kits_Anterior": e.PaginaKit = (e.PaginaKit + PaginasKit(e) - 1) % PaginasKit(e); PreencherKits(p, e); break;
+                    case "Kits_Proximo": e.PaginaKit = (e.PaginaKit + 1) % PaginasKit(e); PreencherKits(p, e); break;
                     case "Inicio_Discord": case "Info_Discord": case "Perfil_Discord": AbrirDiscord(p); break;
                     case "Inicio_Site": case "Info_Site": AbrirSite(p); break;
                     case "Info_Ranking": case "Perfil_Ranking": AbrirSite(p, "/ranking"); break;
@@ -372,8 +386,8 @@ namespace SobrevivenciaCore
         void CliqueKit(UnturnedPlayer p, EstadoMenu e, int n)
         {
             int idx = e.PaginaKit * KitsPorPagina + n - 1;
-            if (n < 1 || n > KitsPorPagina || idx >= S.Kits.Count) return;
-            var k = S.Kits[idx];
+            if (n < 1 || n > KitsPorPagina || idx >= e.Kits.Count) return;
+            var k = e.Kits[idx];
             bool ok = CmdKit.Pegar(this, p, k, out var msg);
             Aviso(p, msg, ok);
             if (ok) Chat.Ok(p, msg);

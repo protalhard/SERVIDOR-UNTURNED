@@ -319,6 +319,9 @@ namespace SobrevivenciaCore
                 foreach (var v in Vaults)
                     if (v.Preco == 0 && v.Largura * v.Altura > 25) v.Preco = v.Largura * v.Altura >= 150 ? 40000 : v.Largura * v.Altura >= 90 ? 15000 : 5000;
             }
+            // o DZ Supremo libera os cofres maiores (config antiga não tinha vip.supremo)
+            foreach (var v in Vaults)
+                if (!string.IsNullOrEmpty(v.Permissao) && v.Permissao.StartsWith("vault.") && !v.Permissao.Contains("vip.supremo")) { v.Permissao += ",vip.supremo"; mudou = true; }
             // v4: combate de 2 minutos (era 20s)
             if (VersaoPadroes < 4)
             {
