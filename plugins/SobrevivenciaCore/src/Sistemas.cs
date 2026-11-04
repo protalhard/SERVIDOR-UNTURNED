@@ -144,10 +144,10 @@ namespace SobrevivenciaCore
         public int ComboioSegundosArrombar = 45;
         public ushort ComboioVeiculo = 0;
         /// <summary>Relógio fixo no canto (efeito do mod, 0 = desligado). Ligado, some a tecla do relógio e as barras do jogo.</summary>
-        public ushort RelogioFixoEfeito = 51299;
+        public ushort RelogioFixoEfeito = 0; // desligado a pedido do dono (era 51299)
         /// <summary>Minimapa no canto de cima à direita (efeito do mod, 0 = desligado). A imagem vem do site:
         /// {x} e {y} = pixel do mapa (Chart, MiniMapaLargura x MiniMapaAltura) onde o jogador está.</summary>
-        public ushort MiniMapaEfeito = 51300;
+        public ushort MiniMapaEfeito = 0; // desligado a pedido do dono (era 51300)
         public string MiniMapaUrl = "http://54.94.93.87/mini/{x}_{y}.jpg";
         public int MiniMapaLargura = 3905;
         public int MiniMapaAltura = 5441;

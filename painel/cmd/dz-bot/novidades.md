@@ -15,3 +15,6 @@
 ## 04/11 · Relógio sem ícones por baixo
 ⌚ Com o relógio na tela, os ícones de fome, sede, safe e lua não aparecem mais por baixo dele.
 🩸 Sangrando ou com a perna quebrada? Aparece um aviso na tela até você se tratar (bandagem ou tala).
+
+## 04/11 · HUD original de volta
+🖥️ Voltou a tela original do jogo: barras de vida, fome, sede e stamina e todos os ícones de status. O relógio e o minimapa saíram.
