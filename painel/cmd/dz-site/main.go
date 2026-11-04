@@ -92,6 +92,7 @@ func main() {
 		w.Header().Set("Content-Type", "image/png")
 		http.ServeFile(w, r, arq)
 	})
+	rotasMinimapa(mux, *pastaIcones)
 	mux.HandleFunc("/api/status", apiStatus)
 	mux.HandleFunc("/api/ranking", apiRanking)
 	mux.HandleFunc("/api/kits", apiKits)

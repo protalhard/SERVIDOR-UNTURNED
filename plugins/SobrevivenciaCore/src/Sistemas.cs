@@ -125,6 +125,8 @@ namespace SobrevivenciaCore
         public string TorneioPremios = "15000,8000,4000";
         /// <summary>Missões diárias (3 por dia, fácil/média/difícil).</summary>
         public bool MissoesLigado = true;
+        /// <summary>Tela de missões do mod (0 = só no chat). O NPC de missão é a barricada 51302.</summary>
+        public ushort MissoesEfeito = 51301;
         /// <summary>Leilão: taxa (%) que sai do vendedor e quantos itens cada um pode ter no leilão ao mesmo tempo.</summary>
         public bool LeilaoLigado = true;
         public int LeilaoTaxa = 5;
@@ -138,6 +140,16 @@ namespace SobrevivenciaCore
         public int ComboioZumbis = 15;
         public int ComboioSegundosArrombar = 45;
         public ushort ComboioVeiculo = 0;
+        /// <summary>Relógio fixo no canto (efeito do mod, 0 = desligado). Ligado, some a tecla do relógio e as barras do jogo.</summary>
+        public ushort RelogioFixoEfeito = 51299;
+        /// <summary>Minimapa no canto de cima à direita (efeito do mod, 0 = desligado). A imagem vem do site:
+        /// {x} e {y} = pixel do mapa (Chart, MiniMapaLargura x MiniMapaAltura) onde o jogador está.</summary>
+        public ushort MiniMapaEfeito = 51300;
+        public string MiniMapaUrl = "http://54.94.93.87/mini/{x}_{y}.jpg";
+        public int MiniMapaLargura = 3905;
+        public int MiniMapaAltura = 5441;
+        /// <summary>Só mostra o minimapa pra quem tem GPS (item de mapa com Enables_Map) no inventário.</summary>
+        public bool MiniMapaPrecisaGps = false;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)

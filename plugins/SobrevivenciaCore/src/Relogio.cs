@@ -61,7 +61,7 @@ namespace SobrevivenciaCore
         {
             TirarRelogioDoInventario(p.Player); // sobra de queda do servidor no meio da consulta
             p.Player.inventory.onDropItemRequested += RelogioNaoLarga;
-            if (RelogioEfeitoAsset != null && !JaUsou.Contains(p.CSteamID.m_SteamID))
+            if (Efeito(S.RelogioFixoEfeito) == null && RelogioEfeitoAsset != null && !JaUsou.Contains(p.CSteamID.m_SteamID))
                 relogioDica[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup + 20f;
             if (Configuration.Instance.RelogioEsconderHudNativo && RelogioEfeitoAsset != null)
                 EsconderHudNativo(p.Player, true);
@@ -96,6 +96,7 @@ namespace SobrevivenciaCore
             try
             {
                 var cfg = Configuration.Instance;
+                if (Efeito(S.RelogioFixoEfeito) != null) return; // com o relógio fixo na tela, a tecla não faz nada
                 if (cfg.RelogioTecla < 1 || cfg.RelogioTecla > 5 || key != cfg.RelogioTecla - 1 || player == null) return;
                 var e = Rel(player.channel.owner.playerID.steamID.m_SteamID);
                 if (state == e.Segurando) return;

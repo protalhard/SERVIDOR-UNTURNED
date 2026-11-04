@@ -18,6 +18,9 @@ namespace SobrevivenciaCore
     /// - Só dá pra cancelar enquanto ninguém matou o alvo.</summary>
     public partial class Plugin
     {
+        /// <summary>Item da tag: o da config, ou a TAG do mod (51303) assim que ela existir no servidor.</summary>
+        ushort TagItem => S.RecompensaTagItem != 0 ? S.RecompensaTagItem : (Assets.find(EAssetType.ITEM, (ushort)51303) != null ? (ushort)51303 : (ushort)0);
+
         public class Recompensa
         {
             public int Id;
@@ -64,7 +67,7 @@ namespace SobrevivenciaCore
 
         internal void RecompensaColocar(UnturnedPlayer p, string nome, string valorTxt)
         {
-            if (S.RecompensaTagItem == 0) { Chat.Erro(p, "A recompensa ainda nao esta liberada."); return; }
+            if (TagItem == 0) { Chat.Erro(p, "A recompensa ainda nao esta liberada."); return; }
             if (!long.TryParse((valorTxt ?? "").Replace(".", "").Replace("$", ""), out var valor) || valor < S.RecompensaMin)
             { Chat.Erro(p, $"Valor minimo: ${S.RecompensaMin:N0}. Use: /recompensa colocar nome valor"); return; }
             var alvo = UnturnedPlayer.FromName(nome);
@@ -123,7 +126,7 @@ namespace SobrevivenciaCore
                 var estado = new byte[8];
                 Array.Copy(MarcaTag, estado, 4);
                 Array.Copy(BitConverter.GetBytes(tag), 0, estado, 4, 4);
-                ItemManager.dropItem(new Item(S.RecompensaTagItem, 1, 100, estado), vitima.Position + Vector3.up, false, true, false);
+                ItemManager.dropItem(new Item(TagItem, 1, 100, estado), vitima.Position + Vector3.up, false, true, false);
                 var total = ativas.Sum(r => r.Valor);
                 var matador = PlayerTool.getPlayer(assassino);
                 Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("RECOMPENSA: ")) + Chat.Cor("#FFFFFF", $"{Chat.Limpar(matador.channel.owner.playerID.characterName)} matou {Chat.Limpar(vitima.CharacterName)}! A TAG de ")
@@ -144,7 +147,7 @@ namespace SobrevivenciaCore
         /// <summary>A cada 2 s: quem está na safe com tag recebe; tags vencidas devolvem o dinheiro.</summary>
         void TickRecompensas()
         {
-            if (S.RecompensaTagItem == 0 || Time.realtimeSinceStartup < proximaChecagemTag) return;
+            if (TagItem == 0 || Time.realtimeSinceStartup < proximaChecagemTag) return;
             proximaChecagemTag = Time.realtimeSinceStartup + 2f;
             var st = Recompensas();
             bool mudou = false;
@@ -168,7 +171,7 @@ namespace SobrevivenciaCore
                     for (int i = items.getItemCount() - 1; i >= 0; i--)
                     {
                         var it = items.getItem((byte)i).item;
-                        if (it.id != S.RecompensaTagItem) continue;
+                        if (it.id != TagItem) continue;
                         int tag = NumeroTag(it);
                         if (tag == 0) continue;
                         var dela = st.Lista.Where(r => r.Tag == tag).ToList();

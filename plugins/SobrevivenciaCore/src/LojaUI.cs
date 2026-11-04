@@ -35,7 +35,7 @@ namespace SobrevivenciaCore
         };
         static readonly string[] NegroArmas = { "Snipers", "Rifles fortes", "Metralhadoras", "Pistolas e escopetas", "Municao rara" };
 
-        public static bool EhNpc(ushort id) => (id >= 51240 && id <= 51252) || id == 51254 || id == TerminalId;
+        public static bool EhNpc(ushort id) => (id >= 51240 && id <= 51252) || id == 51254 || id == TerminalId || id == NpcMissoes;
 
         class EstadoLoja
         {
@@ -223,6 +223,7 @@ namespace SobrevivenciaCore
                 ushort id = drop.asset.id;
                 if (id == TerminalId) { AbrirGaragem(p, pos); return; }
                 if (id == NpcVault) { AbrirVaultNpc(p); return; }
+                if (id == NpcMissoes) { if (!AbrirMissoes(p)) MissoesMostrar(p); return; }
                 if (id == NpcBanco && AbrirAtm(p, pos)) return;
                 if (id == NpcBanco)
                 {

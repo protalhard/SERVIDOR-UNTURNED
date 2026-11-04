@@ -70,6 +70,7 @@ namespace SobrevivenciaCore
             DesligarLogRoubos();
             DesligarArena();
             try { AcabarComboio(); } catch { }
+            try { DesligarHudFixo(); } catch { }
             DesligarRecompensas();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
             ChatManager.onChatted -= AoFalar;
@@ -169,6 +170,7 @@ namespace SobrevivenciaCore
             try { LogSaiu(p); } catch { }
             GuardarBolsoAoSair(p);
             RelogioSaiu(p);
+            missoesAbertas.Remove(p.CSteamID.m_SteamID);
             zonaAtual.Remove(p.CSteamID.m_SteamID);
             saiuSafeEm.Remove(p.CSteamID.m_SteamID);
             guard.Remove(p.CSteamID.m_SteamID);

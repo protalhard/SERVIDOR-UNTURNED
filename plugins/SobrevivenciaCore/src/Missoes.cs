@@ -135,24 +135,29 @@ namespace SobrevivenciaCore
             }
         }
 
-        internal void MissoesReceber(UnturnedPlayer p)
+        internal void MissoesReceber(UnturnedPlayer p) => MissoesReceber(p, -1);
+
+        /// <summary>qual = 0..2 recebe só aquela; -1 recebe todas as prontas. Devolve a mensagem (ou null se deu certo).</summary>
+        internal string MissoesReceber(UnturnedPlayer p, int qual)
         {
-            if (!S.MissoesLigado) { Chat.Erro(p, "Missoes desligadas."); return; }
-            if (ZonaSeguraEm(p.Position) == null) { Chat.Erro(p, "Receba as missoes dentro da safe."); return; }
+            if (!S.MissoesLigado) { Chat.Erro(p, "Missoes desligadas."); return "Missoes desligadas."; }
+            if (ZonaSeguraEm(p.Position) == null) { Chat.Erro(p, "Receba as missoes dentro da safe."); return "Receba dentro da safe."; }
             var hoje = MissoesDeHoje(); var pr = ProgressoDe(p);
             long din = 0; int xp = 0, n = 0;
             for (int i = 0; i < hoje.Count; i++)
             {
                 var m = hoje[i];
+                if (qual >= 0 && i != qual) continue;
                 if (m == null || pr.Recebeu[i] || pr.Feito[i] < m.Meta) continue;
                 pr.Recebeu[i] = true; din += m.Dinheiro; xp += m.Xp; n++;
             }
-            if (n == 0) { Chat.Erro(p, "Nenhuma missao pronta pra receber. Veja com /missoes."); return; }
+            if (n == 0) { Chat.Erro(p, "Nenhuma missao pronta pra receber. Veja com /missoes."); return "Nenhuma missao pronta."; }
             Banco.Somar(Id(p), din);
             DarXp(p, xp, "missao");
             SalvarMissoes();
             Chat.Info(p, $"Recebeu {n} missao(oes): ${din:N0} no banco + {xp} XP.");
             Rocket.Core.Logging.Logger.Log($"[Missoes] {p.CharacterName} ({Id(p)}) recebeu {n}: {din} + {xp} XP");
+            return null;
         }
     }
 
@@ -164,7 +169,7 @@ namespace SobrevivenciaCore
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
             if (a.Length > 0 && a[0].ToLowerInvariant().StartsWith("rec")) P.MissoesReceber(p);
-            else P.MissoesMostrar(p);
+            else if (!P.AbrirMissoes(p)) P.MissoesMostrar(p);
         }
     }
 }
