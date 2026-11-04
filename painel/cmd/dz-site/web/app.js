@@ -355,9 +355,9 @@
             <section class="caixa-passo">
               <h2 class="titulo-passo"><span class="num">1</span>Sua conta</h2>
               <p class="sub-passo">O VIP é ativado na conta Steam que estiver logada. O e-mail é para o recibo do pagamento.</p>
-              ${eu && eu.logado ? `<div class="conta-ok"><span class="conta-avatar">${icone('check')}</span><div><b>${esc(eu.ficha ? eu.ficha.nome : 'Steam conectada')}</b><span>Steam ${esc(eu.id)}</span></div><a class="botao fantasma pequeno" href="/sair">Trocar</a></div>
-              <label class="campo" style="margin-top:12px"><span class="rot">E-mail</span><input id="c-email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="seuemail@exemplo.com"></label>`
-              : `<div class="linha-botoes" style="justify-content:flex-start;margin-top:16px"><a class="botao" href="/entrar?volta=${encodeURIComponent('/comprar?pacote=' + ini.id)}">${icone('steam')}Entrar com a Steam</a></div>`}
+              ${eu && eu.logado ? `<div class="conta-ok"><span class="conta-avatar">${icone('check')}</span><div><b>${esc(eu.ficha ? eu.ficha.nome : 'Steam conectada')}</b><span>Steam ${esc(eu.id)}</span></div><a class="botao fantasma pequeno" href="/sair">Trocar</a></div>`
+              : `<div class="linha-botoes" style="justify-content:flex-start;margin-top:16px"><a class="botao" id="c-entrar" href="/entrar?volta=${encodeURIComponent('/comprar?pacote=' + ini.id)}">${icone('steam')}Entrar com a Steam</a></div>`}
+              <label class="campo" style="margin-top:12px"><span class="rot">E-mail</span><input id="c-email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="seuemail@exemplo.com"></label>
             </section>
             <section class="caixa-passo">
               <h2 class="titulo-passo"><span class="num">2</span>Pacote</h2>
@@ -421,7 +421,7 @@
             <div class="r-total"><span>Total</span><b id="r-total"></b></div>
             ${pix.ativo ? '' : '<p class="aviso">O pagamento pelo site abre em breve.</p>'}
             <p class="erro" id="c-erro" hidden></p>
-            <button type="button" class="botao pagar" id="c-pagar"${pix.ativo && eu && eu.logado ? '' : ' disabled'}>${icone('cadeado')}<span id="c-pagar-txt">Pagar</span></button>
+            <button type="button" class="botao pagar" id="c-pagar"${pix.ativo ? '' : ' disabled'}>${icone('cadeado')}<span id="c-pagar-txt">Pagar</span></button>
             <p class="r-nota">Ativação automática no jogo e cargo VIP no Discord (com a Steam vinculada).</p>
             <div class="r-recursos"><b>Incluso no pacote</b><ul id="r-itens"></ul></div>
           </aside>
@@ -700,7 +700,7 @@
         (p.id === 'supremo' ? `<div class="r-economia"><span>Economize ${Math.round(100 - 100 * p.preco / separado)}%</span><s>${real(separado)}</s></div>` : '') +
         `<div><span>Forma de pagamento</span><b>${metodo === 'pix' ? 'Pix' : 'Cartão'}</b></div>`;
       $('r-total').textContent = real(p.preco);
-      $('c-pagar-txt').textContent = 'Pagar ' + real(p.preco);
+      $('c-pagar-txt').textContent = (eu && eu.logado ? 'Pagar ' : 'Entrar e pagar ') + real(p.preco);
       $('r-itens').innerHTML = p.itens.map(x => `<li><svg class="ic" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg><span>${esc(x)}</span></li>`).join('');
       document.querySelectorAll('#c-pacotes .opcao').forEach(b => b.classList.toggle('marcada', b.dataset.p === pacote));
       const ce = $('c-escolha');
@@ -713,6 +713,7 @@
     document.querySelectorAll('#c-pacotes .opcao').forEach(b => b.onclick = () => {
       pacote = b.dataset.p; escolha = ''; erro('');
       history.replaceState(null, '', '/comprar?pacote=' + pacote);
+      if ($('c-entrar')) $('c-entrar').href = '/entrar?volta=' + encodeURIComponent('/comprar?pacote=' + pacote);
       resumo(); if (metodo === 'cartao') montarCartao();
     });
     document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
@@ -729,7 +730,6 @@
       if (!forcar && brick && brickChave === chave) return;
       desmontar(); brickChave = chave;
       const msg = $('c-cartao-msg');
-      if (!eu || !eu.logado) { msg.hidden = false; msg.textContent = 'Entre com a Steam no passo 1 para abrir o formulário do cartão.'; return; }
       if (!pix.ativo) { msg.hidden = false; msg.textContent = 'O pagamento pelo site abre em breve.'; return; }
       msg.hidden = false; msg.innerHTML = '<span class="girando"></span>Carregando o formulário seguro do Mercado Pago…';
       carregarMP(pix.chave).then(mp => {
@@ -791,6 +791,10 @@
     $('c-pagar').onclick = async () => {
       erro('');
       const p = atual(), em = email();
+      if (!eu || !eu.logado) {
+        try { if (em) localStorage.setItem('dz-email', em); } catch { }
+        location.href = '/entrar?volta=' + encodeURIComponent('/comprar?pacote=' + p.id); return;
+      }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { erro('Digite o seu e-mail no passo 1 (vai o recibo).'); $('c-email') && $('c-email').focus(); return; }
       if (ESCOLHAS[p.id] && !escolha) { erro('Escolha o kit do pacote no passo 2.'); return; }
       try { localStorage.setItem('dz-email', em); } catch { }
