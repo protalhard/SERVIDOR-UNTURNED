@@ -694,7 +694,23 @@
     if (ativo && ativo.offsetWidth) { barra.style.width = ativo.offsetWidth + 'px'; barra.style.transform = 'translateX(' + ativo.offsetLeft + 'px)'; barra.classList.add('on'); }
     else barra.classList.remove('on');
   }
-  addEventListener('resize', marcarMenu);
+  // menu cheio (tela estreita ou conta logada larga): vira o botão ☰
+  function ajustarMenu() {
+    const b = document.body, env = document.querySelector('.topo .envolve'), m = document.getElementById('menu');
+    if (!env || !m) return;
+    const cheio = () => {
+      const mr = m.getBoundingClientRect(), mk = document.querySelector('.marca').getBoundingClientRect(), d = document.querySelector('.topo-dir').getBoundingClientRect();
+      return env.scrollWidth > env.clientWidth + 1 || mr.left < mk.right + 8 || mr.right > d.left - 8;
+    };
+    b.classList.remove('menu-compacto', 'menu-apertado');
+    if (getComputedStyle(m).display !== 'none') {
+      if (cheio()) b.classList.add('menu-apertado'); // primeiro esconde o botão do Discord e encurta o nome
+      if (cheio()) b.classList.add('menu-compacto');
+    }
+    marcarMenu();
+  }
+  window.ajustarMenu = ajustarMenu;
+  addEventListener('resize', ajustarMenu);
 
   // ---------- checkout da Loja VIP (Pix e cartão, tudo no nosso site) ----------
   const ESCOLHAS = {
@@ -872,7 +888,7 @@
 
   // ---------- roteador ----------
   async function abrir(caminho, empilhar) {
-    const partes = caminho.split('?')[0].replace(/^\/+|\/+$/g, '').split('/');
+    const partes = caminho.split(/[?#]/)[0].replace(/^\/+|\/+$/g, '').split('/');
     let nome = partes[0], arg = partes[1];
     if (empilhar) history.pushState({}, '', caminho);
     document.querySelectorAll('.menu a').forEach(a => a.classList.toggle('ativo', a.getAttribute('href') === '/' + nome));
@@ -903,6 +919,8 @@
       const st = await api('/api/status');
       if (st.discord) { const d = document.getElementById('link-discord'); d.href = st.discord; d.hidden = false; }
     } catch (e) {}
+    ajustarMenu();
+    if (document.fonts) document.fonts.ready.then(ajustarMenu);
     abrir(location.pathname + location.search, false);
   })();
 
