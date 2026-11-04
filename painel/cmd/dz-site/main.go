@@ -112,7 +112,7 @@ func main() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := strings.Trim(r.URL.Path, "/")
 		switch p {
-		case "", "servidores", "ranking", "faccoes", "kits", "regras", "loja", "sobre", "perfil", "leilao":
+		case "", "servidores", "ranking", "faccoes", "kits", "regras", "loja", "sobre", "perfil", "leilao", "comprar":
 			w.Header().Set("Cache-Control", "no-cache")
 			b, _ := fs.ReadFile(web, "index.html")
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -257,7 +257,14 @@ func base(r *http.Request) string {
 	return esquema + "://" + r.Host
 }
 
-func entrar(w http.ResponseWriter, r *http.Request) { redirSteam(w, r, "/entrar/retorno") }
+// entrar: /entrar?volta=/comprar?pacote=x volta pra essa página depois do login
+func entrar(w http.ResponseWriter, r *http.Request) {
+	if v := r.URL.Query().Get("volta"); strings.HasPrefix(v, "/") && !strings.HasPrefix(v, "//") && !strings.Contains(v, "\\") && len(v) < 200 {
+		http.SetCookie(w, &http.Cookie{Name: "dzvolta", Value: url.QueryEscape(v), Path: "/entrar", HttpOnly: true,
+			SameSite: http.SameSiteLaxMode, MaxAge: 900, Secure: r.TLS != nil})
+	}
+	redirSteam(w, r, "/entrar/retorno")
+}
 
 // steamDoRetorno confere a resposta da Steam (OpenID) e devolve o SteamID64 ("" se inválida).
 func steamDoRetorno(r *http.Request, caminho string) string {
@@ -321,7 +328,14 @@ func retorno(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logar(w, r, id)
-	http.Redirect(w, r, "/perfil", http.StatusFound)
+	destino := "/perfil"
+	if c, err := r.Cookie("dzvolta"); err == nil {
+		if v, err := url.QueryUnescape(c.Value); err == nil && strings.HasPrefix(v, "/") && !strings.HasPrefix(v, "//") {
+			destino = v
+		}
+		http.SetCookie(w, &http.Cookie{Name: "dzvolta", Path: "/entrar", MaxAge: -1})
+	}
+	http.Redirect(w, r, destino, http.StatusFound)
 }
 
 // /vincular?d=<discord>&e=<expira>&s=<assinatura>: link que o bot manda no #vincular.

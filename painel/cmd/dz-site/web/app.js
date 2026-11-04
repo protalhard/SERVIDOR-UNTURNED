@@ -40,6 +40,38 @@
   const fotoRecurso = {"Safe Zone": "safe", "ATM e dinheiro físico": "atm", "Mercado Negro": "negro", "Caça e pesca": "caca", "Airdrops": "airdrop", "Rank Kits": "rankkits", "Patentes e XP": "patentes", "Home e TPA": "home", "Vault": "vault"};
 
   // ---------- páginas ----------
+  // pacotes VIP do DAY Z BRASIL (nomes, kits e preços nossos)
+  const P = [
+    { id: 'iniciante', aba: 'kits', nome: 'Kit Iniciante', selo: 'ENTRADA', cor: '#c9cdd3', foto: 'vila', preco: 6.40, dias: 30,
+      desc: 'Escolha 1 dos 3 kits de iniciante.', itens: ['Escolha 1: Andarilho, Batedor ou Saqueador', 'Espera de 30 min', 'Tag do kit no chat', 'Cargo VIP no Discord'],
+      kits: ['andarilho', 'batedor', 'saqueador'] },
+    { id: 'bandido', aba: 'kits', nome: 'Bandido', selo: 'NÍVEL 1', cor: '#ffb020', foto: 'mercado', preco: 19.40, dias: 30,
+      desc: 'Libera +5 kits.', itens: ['Kits Bandido 1 e 2 (30 min)', 'Inclui os 3 kits de iniciante', 'Tag [BANDIDO] no chat', 'Cargo VIP no Discord'],
+      kits: ['bandido1', 'bandido2'] },
+    { id: 'mercenario', aba: 'kits', nome: 'Mercenário', selo: 'NÍVEL 2', cor: '#ff5a00', foto: 'bunker', preco: 30.90, dias: 30,
+      desc: 'Libera +8 kits.', itens: ['Kits Mercenário 1 e 2 (30 min)', 'Kit Base (12 h)', 'Inclui todos os kits do Bandido', 'Tag [MERCENÁRIO] no chat', 'Cargo VIP no Discord'],
+      kits: ['mercenario1', 'mercenario2', 'base'] },
+    { id: 'comandante', aba: 'kits', nome: 'Comandante', selo: 'NÍVEL 3', cor: '#ff3d00', foto: 'torre-noite', preco: 45.30, dias: 30,
+      desc: 'Libera +11 kits.', itens: ['Kits Comandante 1 e 2 (30 min)', 'Kit Zona Quente (1 h)', 'Inclui todos os kits do Mercenário', 'Tag [COMANDANTE] no chat', 'Cargo VIP no Discord'],
+      kits: ['comandante1', 'comandante2', 'zonaquente'] },
+    { id: 'especial', aba: 'especiais', nome: 'Kit Especial', selo: 'ESPECIAL', cor: '#ffb020', foto: 'deserto', preco: 21.60, dias: 30,
+      desc: 'Escolha 1 dos 3 kits especiais.', itens: ['Escolha 1: Zona Quente, Base ou Raid', 'Esperas diferentes (1 h, 12 h, 24 h)', 'Tag do kit no chat', 'Cargo VIP no Discord'],
+      kits: ['zonaquente', 'base', 'raid'] },
+    { id: 'cofre-mochila', slots: [8, 7], aba: 'cofres', nome: 'Cofre Mochila', selo: '8×7', cor: '#ffd08a', foto: 'neblina', preco: 13.60, dias: 30,
+      desc: 'Seu /vault vira 8×7.', itens: ['Cofre 8×7 (56 espaços)', 'Tag [COFRE] no chat', 'Cargo VIP no Discord'] },
+    { id: 'cofre-bunker', slots: [12, 9], aba: 'cofres', nome: 'Cofre Bunker', selo: '12×9', cor: '#ff8a3d', foto: 'colinas', preco: 22.90, dias: 30,
+      desc: 'Libera o Cofre Mochila e o Bunker.', itens: ['Cofre 8×7 e 12×9 (108 espaços)', 'Tag [BUNKER] no chat', 'Cargo VIP no Discord'] },
+    { id: 'cofre-fortaleza', slots: [15, 14], aba: 'cofres', nome: 'Cofre Fortaleza', selo: '15×14', cor: '#ffb020', foto: 'farol', preco: 42.90, dias: 30,
+      desc: 'Os 3 cofres, o maior do servidor.', itens: ['Cofres 8×7, 12×9 e 15×14 (210 espaços)', 'Tag [FORTALEZA] no chat', 'Cargo VIP no Discord'] },
+  ];
+  const separado = P.reduce((t, p) => t + p.preco, 0);
+  const S = [
+    { id: 'supremo', nome: 'DZ Supremo', selo: 'TUDO INCLUSO', preco: 77.70, per: '35 dias', foto: 'ponte-por-do-sol',
+      desc: 'Tudo que o servidor tem, por 30 dias + 5 de bônus.', itens: ['Libera +12 kits', 'Libera os 3 cofres', '30 dias + 5 dias de bônus', `Economize ${Math.round(100 - 100 * 77.70 / separado)}% comprando tudo junto`] },
+    { id: 'supremo-vitalicio', nome: 'DZ Supremo Vitalício', selo: 'PRA SEMPRE', preco: 255.90, per: 'vitalício', foto: 'palmeiras',
+      desc: 'Paga uma vez, é seu pra sempre.', itens: ['Libera +12 kits', 'Libera os 3 cofres', 'Vitalício', 'Tag [SUPREMO] dourada no chat'] },
+  ];
+
   const paginas = {
     async '' () {
       const [st, rk] = await Promise.all([api('/api/status'), api('/api/ranking')]);
@@ -256,37 +288,6 @@
         <div class="vip-kit"><div class="vip-kit-topo"><b>${esc(k.titulo || k.nome)}</b><span class="mono fraco">/kit ${esc(k.nome)} · ${espera(k.espera)}</span></div>
           <p class="fraco">${esc(k.descricao)}</p>
           <div class="vip-itens">${(k.itens || []).map(i => `<span class="vip-item" title="ID ${i.id}"><img src="/icones/${i.id}.png?f=0" alt="" loading="lazy" onerror="this.parentNode.remove()">${i.quantidade > 1 ? `<small>x${i.quantidade}</small>` : ''}</span>`).join('')}</div></div>`).join('');
-      // pacotes VIP do DAY Z BRASIL (nomes, kits e preços nossos)
-      const P = [
-        { id: 'iniciante', aba: 'kits', nome: 'Kit Iniciante', selo: 'ENTRADA', cor: '#c9cdd3', foto: 'vila', preco: 6.40, dias: 30,
-          desc: 'Escolha 1 dos 3 kits de iniciante.', itens: ['Escolha 1: Andarilho, Batedor ou Saqueador', 'Espera de 30 min', 'Tag do kit no chat', 'Cargo VIP no Discord'],
-          kits: ['andarilho', 'batedor', 'saqueador'] },
-        { id: 'bandido', aba: 'kits', nome: 'Bandido', selo: 'NÍVEL 1', cor: '#ffb020', foto: 'mercado', preco: 19.40, dias: 30,
-          desc: 'Libera +5 kits.', itens: ['Kits Bandido 1 e 2 (30 min)', 'Inclui os 3 kits de iniciante', 'Tag [BANDIDO] no chat', 'Cargo VIP no Discord'],
-          kits: ['bandido1', 'bandido2'] },
-        { id: 'mercenario', aba: 'kits', nome: 'Mercenário', selo: 'NÍVEL 2', cor: '#ff5a00', foto: 'bunker', preco: 30.90, dias: 30,
-          desc: 'Libera +8 kits.', itens: ['Kits Mercenário 1 e 2 (30 min)', 'Kit Base (12 h)', 'Inclui todos os kits do Bandido', 'Tag [MERCENÁRIO] no chat', 'Cargo VIP no Discord'],
-          kits: ['mercenario1', 'mercenario2', 'base'] },
-        { id: 'comandante', aba: 'kits', nome: 'Comandante', selo: 'NÍVEL 3', cor: '#ff3d00', foto: 'torre-noite', preco: 45.30, dias: 30,
-          desc: 'Libera +11 kits.', itens: ['Kits Comandante 1 e 2 (30 min)', 'Kit Zona Quente (1 h)', 'Inclui todos os kits do Mercenário', 'Tag [COMANDANTE] no chat', 'Cargo VIP no Discord'],
-          kits: ['comandante1', 'comandante2', 'zonaquente'] },
-        { id: 'especial', aba: 'especiais', nome: 'Kit Especial', selo: 'ESPECIAL', cor: '#ffb020', foto: 'deserto', preco: 21.60, dias: 30,
-          desc: 'Escolha 1 dos 3 kits especiais.', itens: ['Escolha 1: Zona Quente, Base ou Raid', 'Esperas diferentes (1 h, 12 h, 24 h)', 'Tag do kit no chat', 'Cargo VIP no Discord'],
-          kits: ['zonaquente', 'base', 'raid'] },
-        { id: 'cofre-mochila', slots: [8, 7], aba: 'cofres', nome: 'Cofre Mochila', selo: '8×7', cor: '#ffd08a', foto: 'neblina', preco: 13.60, dias: 30,
-          desc: 'Seu /vault vira 8×7.', itens: ['Cofre 8×7 (56 espaços)', 'Tag [COFRE] no chat', 'Cargo VIP no Discord'] },
-        { id: 'cofre-bunker', slots: [12, 9], aba: 'cofres', nome: 'Cofre Bunker', selo: '12×9', cor: '#ff8a3d', foto: 'colinas', preco: 22.90, dias: 30,
-          desc: 'Libera o Cofre Mochila e o Bunker.', itens: ['Cofre 8×7 e 12×9 (108 espaços)', 'Tag [BUNKER] no chat', 'Cargo VIP no Discord'] },
-        { id: 'cofre-fortaleza', slots: [15, 14], aba: 'cofres', nome: 'Cofre Fortaleza', selo: '15×14', cor: '#ffb020', foto: 'farol', preco: 42.90, dias: 30,
-          desc: 'Os 3 cofres, o maior do servidor.', itens: ['Cofres 8×7, 12×9 e 15×14 (210 espaços)', 'Tag [FORTALEZA] no chat', 'Cargo VIP no Discord'] },
-      ];
-      const separado = P.reduce((t, p) => t + p.preco, 0);
-      const S = [
-        { id: 'supremo', nome: 'DZ Supremo', selo: 'TUDO INCLUSO', preco: 77.70, per: '35 dias', foto: 'ponte-por-do-sol',
-          desc: 'Tudo que o servidor tem, por 30 dias + 5 de bônus.', itens: ['Libera +12 kits', 'Libera os 3 cofres', '30 dias + 5 dias de bônus', `Economize ${Math.round(100 - 100 * 77.70 / separado)}% comprando tudo junto`] },
-        { id: 'supremo-vitalicio', nome: 'DZ Supremo Vitalício', selo: 'PRA SEMPRE', preco: 255.90, per: 'vitalício', foto: 'palmeiras',
-          desc: 'Paga uma vez, é seu pra sempre.', itens: ['Libera +12 kits', 'Libera os 3 cofres', 'Vitalício', 'Tag [SUPREMO] dourada no chat'] },
-      ];
       const todosKits = P.flatMap(p => p.kits || []);
       const idsDe = nomes => [...new Set(nomes.map(n => kits.find(k => k.nome === n)).filter(Boolean).flatMap(k => (k.itens || []).map(i => i.id)))];
       // foto: render do pacote (img/vip/<id>.webp) quando existir; enquanto isso, as fotos dos itens dos kits
@@ -299,7 +300,7 @@
       };
       let pix = { ativo: false };
       try { pix = await fetch('/api/pix/status', { credentials: 'same-origin' }).then(r => r.json()); } catch { }
-      const botaoDe = p => pix.ativo ? `<button class="botao vip-comprar" data-pacote="${esc(p.id)}">💳 COMPRAR COM PIX</button>`
+      const botaoDe = p => pix.ativo ? `<a class="botao vip-comprar" href="/comprar?pacote=${esc(p.id)}" data-link>💳 COMPRAR</a>`
         : `<button class="botao vip-comprar" disabled title="O pagamento abre em breve">🔒 EM BREVE</button>`;
       const cartao = p => `<div class="painel vip-card" data-aba="${p.aba}" style="--vc:${p.cor}">
           ${fotoVip(p)}
@@ -318,18 +319,114 @@
             <div class="vip-preco grande">${real(p.preco)}<small> / ${p.per}</small></div>${botaoDe(p)}</div>
         </div>`;
       setTimeout(() => {
-        document.querySelectorAll('.vip-comprar[data-pacote]').forEach(b => b.onclick = () => comprarPix([...P, ...S].find(x => x.id === b.dataset.pacote), pix.logado));
         document.querySelectorAll('.vip-abas button').forEach(b => b.onclick = () => {
           document.querySelectorAll('.vip-abas button').forEach(x => x.classList.toggle('ativo', x === b));
           document.querySelectorAll('[data-aba]').forEach(c => { c.style.display = b.dataset.f === 'todos' || c.dataset.aba === b.dataset.f ? '' : 'none'; });
         });
       });
-      return cabeca('Loja VIP', 'Apoie & <em>sobreviva</em>', 'Kits VIP, kits especiais, cofres maiores e o DZ Supremo. Pague com PIX e o VIP é ativado sozinho no jogo, na hora.') +
+      return cabeca('Loja VIP', 'Apoie & <em>sobreviva</em>', 'Kits VIP, kits especiais, cofres maiores e o DZ Supremo. Pague com Pix ou cartão e o VIP é ativado sozinho no jogo, na hora.') +
         `<div class="vip-abas">${[['todos', 'Todos'], ['kits', 'Kits VIP'], ['especiais', 'Kits especiais'], ['cofres', 'Cofres'], ['supremo', 'Supremo']]
           .map(([f, t], i) => `<button data-f="${f}"${i ? '' : ' class="ativo"'}>${t}</button>`).join('')}</div>
          ${S.map(supremo).join('')}
          <div class="grade g4" style="margin-top:20px">${P.map(cartao).join('')}</div>
          <p class="fraco" style="text-align:center;margin-top:24px">As fotos dos itens aparecem conforme forem adicionadas. Dúvidas? Abra um ticket no nosso Discord.</p>`;
+    },
+
+    async comprar () {
+      let pix = { ativo: false, chave: '' };
+      try { pix = await api('/api/pix/status'); } catch { }
+      const q = new URLSearchParams(location.search);
+      const todos = [...S, ...P];
+      const ini = todos.find(x => x.id === q.get('pacote')) || S[0];
+      setTimeout(() => ligarCompra(pix, ini.id, q.get('pg')));
+      const icone = n => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${({
+        cadeado: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+        pix: '<path d="M12 3l4 4-4 4-4-4zM12 13l4 4-4 4-4-4zM3 12l4-4 4 4-4 4zM13 12l4-4 4 4-4 4z"/>',
+        cartao: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
+        voltar: '<path d="M9 14l-5-5 5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+        check: '<path d="M5 12l5 5L20 7"/>', copiar: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
+        steam: '<circle cx="12" cy="12" r="9"/><circle cx="15" cy="9" r="2.5"/><path d="M4 14l5 2"/>',
+      })[n]}</svg>`;
+      return `<div class="compra">
+        <a class="voltar-planos" href="/loja" data-link>${icone('voltar')}Voltar à Loja VIP</a>
+        <div class="seguro"><span class="seguro-icone">${icone('cadeado')}</span><b>Checkout seguro</b><span>Os dados do cartão vão direto para o Mercado Pago, criptografados. O DAY Z BRASIL não vê nem guarda o número do seu cartão.</span></div>
+        <div class="compra-grade">
+          <div class="compra-esq" id="c-passos">
+            <section class="caixa-passo">
+              <h2 class="titulo-passo"><span class="num">1</span>Sua conta</h2>
+              <p class="sub-passo">O VIP é ativado na conta Steam que estiver logada. O e-mail é para o recibo do pagamento.</p>
+              ${eu && eu.logado ? `<div class="conta-ok"><span class="conta-avatar">${icone('check')}</span><div><b>${esc(eu.ficha ? eu.ficha.nome : 'Steam conectada')}</b><span>Steam ${esc(eu.id)}</span></div><a class="botao fantasma pequeno" href="/sair">Trocar</a></div>
+              <label class="campo" style="margin-top:12px"><span class="rot">E-mail</span><input id="c-email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="seuemail@exemplo.com"></label>`
+              : `<div class="linha-botoes" style="justify-content:flex-start;margin-top:16px"><a class="botao" href="/entrar?volta=${encodeURIComponent('/comprar?pacote=' + ini.id)}">${icone('steam')}Entrar com a Steam</a></div>`}
+            </section>
+            <section class="caixa-passo">
+              <h2 class="titulo-passo"><span class="num">2</span>Pacote</h2>
+              <div class="opcoes-plano" id="c-pacotes">${todos.map(p => `<button type="button" class="opcao plano-opcao" data-p="${p.id}">${p.id.startsWith('supremo') ? `<em class="po-tag">${p.id === 'supremo' ? 'MELHOR PREÇO' : 'PRA SEMPRE'}</em>` : ''}<span><b>${esc(p.nome)}</b><small>${esc(p.per || p.dias + ' dias')}</small></span><span class="po-preco"><small>R$</small>${p.preco.toFixed(2).replace('.', ',')}</span></button>`).join('')}</div>
+              <div id="c-escolha" class="c-escolha" hidden></div>
+            </section>
+            <section class="caixa-passo">
+              <h2 class="titulo-passo"><span class="num">3</span>Pagamento</h2>
+              <div class="opcoes-pagamento">
+                <button type="button" class="opcao marcada" data-m="pix">${icone('pix')}<span><b>Pix</b><small>Aprovação imediata</small></span></button>
+                <button type="button" class="opcao" data-m="cartao">${icone('cartao')}<span><b>Cartão de crédito ou débito</b><small>Visa, Master, Elo, Amex, Hiper</small></span></button>
+              </div>
+              <div class="cartao-area" id="c-cartao" hidden>
+                <div class="cartao-carregando" id="c-cartao-msg"><span class="girando"></span>Carregando o formulário seguro do Mercado Pago…</div>
+                <div id="cartao-brick"></div>
+                <p class="selo-seguro">${icone('cadeado')}Formulário do Mercado Pago, com criptografia. Os dados do cartão não passam pelo nosso servidor.</p>
+              </div>
+            </section>
+            <p class="aceite">Pagamento único, sem renovação automática. Comprando de novo o mesmo pacote, os dias somam.</p>
+          </div>
+          <div class="compra-esq" id="c-pix" hidden>
+            <section class="caixa-passo">
+              <h2 class="titulo-passo"><span class="num">${icone('pix')}</span>Pague com Pix</h2>
+              <p class="sub-passo">Abra o app do seu banco e escaneie o código, ou use o Pix copia e cola.</p>
+              <div class="pix-corpo">
+                <div class="qr"><img id="c-qr" alt="QR code do Pix"></div>
+                <div class="pix-lado">
+                  <span class="rotulo">Pix copia e cola</span>
+                  <div class="copia"><input id="c-copia" readonly><button type="button" class="botao pequeno" id="c-copiar">${icone('copiar')}<span>Copiar</span></button></div>
+                  <div class="esperando"><i></i>Aguardando o pagamento…</div>
+                  <p class="fraco" id="c-expira"></p>
+                  <p class="fraco">Assim que o Pix cair, o VIP entra na sua conta sozinho, no jogo e no Discord. Pode deixar esta página aberta.</p>
+                </div>
+              </div>
+              <button type="button" class="botao fantasma pequeno" id="c-pix-voltar">${icone('voltar')}Trocar o pacote ou a forma de pagamento</button>
+            </section>
+          </div>
+          <div class="compra-esq" id="c-pago" hidden>
+            <section class="caixa-passo centro-passo">
+              <span class="grande-icone ok">${icone('check')}</span>
+              <h2>Pagamento aprovado!</h2>
+              <p class="sub-passo" id="c-pago-txt">Seu VIP já está ativo.</p>
+              <p class="fraco">Se você está no servidor, aparece no chat agora. Se não, ele já vai estar lá quando você entrar.</p>
+              <div class="linha-botoes"><a class="botao" href="steam://connect/54.94.93.87:27015">⚡ Jogar agora</a><a class="botao fantasma" href="/perfil" data-link>Meu perfil</a></div>
+            </section>
+          </div>
+          <div class="compra-esq" id="c-cancelado" hidden>
+            <section class="caixa-passo centro-passo">
+              <span class="grande-icone ruim">${icone('cartao')}</span>
+              <h2>Esse pagamento não foi concluído</h2>
+              <p class="sub-passo">Ele expirou ou foi cancelado, e nada foi cobrado. Você pode tentar de novo.</p>
+              <div class="linha-botoes"><button type="button" class="botao" id="c-de-novo">Tentar de novo</button></div>
+            </section>
+          </div>
+          <aside class="resumo-pedido" id="c-resumo">
+            <span class="rotulo laranja">— Resumo do pedido —</span>
+            <h2 id="r-nome"></h2>
+            <p class="fraco" id="r-sub"></p>
+            <div class="r-mes"><small>R$</small><b id="r-int"></b><span id="r-dec"></span><em id="r-per"></em></div>
+            <div class="r-linhas" id="r-linhas"></div>
+            <div class="r-total"><span>Total</span><b id="r-total"></b></div>
+            ${pix.ativo ? '' : '<p class="aviso">O pagamento pelo site abre em breve.</p>'}
+            <p class="erro" id="c-erro" hidden></p>
+            <button type="button" class="botao pagar" id="c-pagar"${pix.ativo && eu && eu.logado ? '' : ' disabled'}>${icone('cadeado')}<span id="c-pagar-txt">Pagar</span></button>
+            <p class="r-nota">Ativação automática no jogo e cargo VIP no Discord (com a Steam vinculada).</p>
+            <div class="r-recursos"><b>Incluso no pacote</b><ul id="r-itens"></ul></div>
+          </aside>
+        </div>
+      </div>`;
     },
 
     async sobre () {
@@ -558,9 +655,179 @@
   }
   addEventListener('resize', marcarMenu);
 
+  // ---------- checkout da Loja VIP (Pix e cartão, tudo no nosso site) ----------
+  const ESCOLHAS = {
+    iniciante: [['andarilho', 'Andarilho'], ['batedor', 'Batedor'], ['saqueador', 'Saqueador']],
+    especial: [['zonaquente', 'Zona Quente'], ['base', 'Base'], ['raid', 'Raid']],
+  };
+  let mpPronto = null;
+  function script(src, attrs) {
+    return new Promise((ok, falha) => {
+      const s = document.createElement('script'); s.src = src; s.async = true;
+      Object.keys(attrs || {}).forEach(k => s.setAttribute(k, attrs[k]));
+      s.onload = ok; s.onerror = () => falha(new Error('não carregou'));
+      document.head.appendChild(s);
+    });
+  }
+  function carregarMP(chave) {
+    if (!mpPronto) {
+      script('https://www.mercadopago.com/v2/security.js', { view: 'checkout' }).catch(() => { });
+      mpPronto = Promise.race([script('https://sdk.mercadopago.com/js/v2'), new Promise((_, f) => setTimeout(() => f(new Error('demorou')), 15000))])
+        .then(() => { if (!window.MercadoPago) throw new Error('sem MercadoPago'); return new window.MercadoPago(chave, { locale: 'pt-BR' }); });
+      mpPronto.catch(() => { mpPronto = null; });
+    }
+    return mpPronto;
+  }
+  function ligarCompra(pix, pacoteIni, pgIni) {
+    const $ = id => document.getElementById(id);
+    if (!$('c-pagar')) return;
+    const todos = [...S, ...P];
+    let pacote = pacoteIni, escolha = '', metodo = 'pix', brick = null, brickChave = '', pag = null, timer = 0, relogio = 0;
+    const atual = () => todos.find(x => x.id === pacote);
+    const real = v => 'R$ ' + v.toFixed(2).replace('.', ',');
+    try { const e = localStorage.getItem('dz-email'); if (e && $('c-email')) $('c-email').value = e; } catch { }
+    const email = () => ($('c-email') ? $('c-email').value.trim() : '');
+    const erro = t => { $('c-erro').textContent = t || ''; $('c-erro').hidden = !t; };
+
+    function resumo() {
+      const p = atual();
+      $('r-nome').textContent = p.nome;
+      $('r-sub').textContent = p.desc;
+      const [i, d] = p.preco.toFixed(2).split('.');
+      $('r-int').textContent = i; $('r-dec').textContent = ',' + d; $('r-per').textContent = '/ ' + (p.per || p.dias + ' dias');
+      const op = ESCOLHAS[p.id], nomeEsc = op && escolha ? op.find(x => x[0] === escolha)[1] : '';
+      $('r-linhas').innerHTML = `<div><span>${esc(p.nome)}${nomeEsc ? ' · ' + esc(nomeEsc) : ''}</span><b>${real(p.preco)}</b></div>` +
+        (p.id === 'supremo' ? `<div class="r-economia"><span>Economize ${Math.round(100 - 100 * p.preco / separado)}%</span><s>${real(separado)}</s></div>` : '') +
+        `<div><span>Forma de pagamento</span><b>${metodo === 'pix' ? 'Pix' : 'Cartão'}</b></div>`;
+      $('r-total').textContent = real(p.preco);
+      $('c-pagar-txt').textContent = 'Pagar ' + real(p.preco);
+      $('r-itens').innerHTML = p.itens.map(x => `<li><svg class="ic" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg><span>${esc(x)}</span></li>`).join('');
+      document.querySelectorAll('#c-pacotes .opcao').forEach(b => b.classList.toggle('marcada', b.dataset.p === pacote));
+      const ce = $('c-escolha');
+      if (op) {
+        ce.hidden = false;
+        ce.innerHTML = `<span class="rotulo">Escolha o kit</span><div class="c-escolhas">${op.map(([v, t]) => `<button type="button" class="opcao${v === escolha ? ' marcada' : ''}" data-e="${v}"><b>${t}</b></button>`).join('')}</div>`;
+        ce.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { escolha = b.dataset.e; resumo(); });
+      } else { ce.hidden = true; ce.innerHTML = ''; }
+    }
+    document.querySelectorAll('#c-pacotes .opcao').forEach(b => b.onclick = () => {
+      pacote = b.dataset.p; escolha = ''; erro('');
+      history.replaceState(null, '', '/comprar?pacote=' + pacote);
+      resumo(); if (metodo === 'cartao') montarCartao();
+    });
+    document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+      metodo = b.dataset.m; erro('');
+      document.querySelectorAll('[data-m]').forEach(x => x.classList.toggle('marcada', x === b));
+      $('c-cartao').hidden = metodo !== 'cartao';
+      resumo();
+      if (metodo === 'cartao') montarCartao(); else desmontar();
+    });
+
+    function desmontar() { if (brick) { try { brick.unmount(); } catch { } } brick = null; brickChave = ''; if ($('cartao-brick')) $('cartao-brick').innerHTML = ''; }
+    function montarCartao(forcar) {
+      const p = atual(), chave = p.id + '|' + email();
+      if (!forcar && brick && brickChave === chave) return;
+      desmontar(); brickChave = chave;
+      const msg = $('c-cartao-msg');
+      if (!eu || !eu.logado) { msg.hidden = false; msg.textContent = 'Entre com a Steam no passo 1 para abrir o formulário do cartão.'; return; }
+      if (!pix.ativo) { msg.hidden = false; msg.textContent = 'O pagamento pelo site abre em breve.'; return; }
+      msg.hidden = false; msg.innerHTML = '<span class="girando"></span>Carregando o formulário seguro do Mercado Pago…';
+      carregarMP(pix.chave).then(mp => {
+        if (brickChave !== chave || metodo !== 'cartao') return null;
+        return mp.bricks().create('cardPayment', 'cartao-brick', {
+          initialization: { amount: p.preco, payer: { email: email() || undefined } },
+          customization: {
+            visual: { hidePaymentButton: true, hideFormTitle: true, style: { theme: 'dark', customVariables: {
+              baseColor: '#FF5A00', baseColorFirstVariant: '#FF7A2E', baseColorSecondVariant: '#FFB020', formBackgroundColor: '#121316',
+              inputBackgroundColor: '#0A0B0D', textPrimaryColor: '#F5F6F7', textSecondaryColor: '#8A9099', outlinePrimaryColor: '#33363C',
+              borderRadiusSmall: '8px', borderRadiusMedium: '12px', borderRadiusLarge: '16px', errorColor: '#FF6B6B' } } },
+            paymentMethods: { maxInstallments: 12 }
+          },
+          callbacks: {
+            onReady: () => { msg.hidden = true; },
+            onSubmit: () => Promise.resolve(),
+            onError: e => { if (e && e.type === 'critical') { msg.hidden = false; msg.textContent = 'Não consegui abrir o formulário do cartão. Use o Pix ou recarregue a página.'; } }
+          }
+        });
+      }).then(ctrl => {
+        if (!ctrl) return;
+        if (brickChave !== chave) { try { ctrl.unmount(); } catch { } return; }
+        brick = ctrl;
+      }).catch(() => { msg.hidden = false; msg.textContent = 'Não consegui abrir o formulário do cartão. Use o Pix ou recarregue a página.'; });
+    }
+
+    function vista(id) {
+      ['c-passos', 'c-pix', 'c-pago', 'c-cancelado'].forEach(v => { $(v).hidden = v !== id; });
+      $('c-resumo').classList.toggle('travado', id !== 'c-passos');
+      if (id !== 'c-pix') { clearInterval(timer); clearInterval(relogio); timer = relogio = 0; }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function mostrar() {
+      if (!pag) return;
+      if (pag.estado === 'aprovado') {
+        $('c-pago-txt').textContent = `Seu VIP ${(todos.find(x => x.id === pag.pacote) || {}).nome || ''} já está ativo na sua conta.`;
+        vista('c-pago'); return;
+      }
+      if (pag.estado === 'cancelado') { vista('c-cancelado'); return; }
+      if (pag.metodo !== 'pix') { vista('c-passos'); return; }
+      $('c-qr').src = pag.qr64 ? 'data:image/png;base64,' + pag.qr64 : '';
+      $('c-copia').value = pag.qr || '';
+      vista('c-pix');
+      const conta = () => {
+        const s = Math.max(0, Math.round((new Date(pag.expira) - Date.now()) / 1000));
+        $('c-expira').textContent = s > 0 ? 'O código vale por mais ' + Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2) : 'O código expirou. Volte e gere outro.';
+      };
+      conta(); clearInterval(relogio); relogio = setInterval(conta, 1000);
+      clearInterval(timer);
+      timer = setInterval(async () => {
+        if (!document.body.contains($('c-pix') || document.createElement('i'))) { clearInterval(timer); clearInterval(relogio); return; }
+        try { const r = await fetch('/api/vip/pagar?id=' + encodeURIComponent(pag.id), { credentials: 'same-origin' }); if (r.ok) { pag = await r.json(); if (pag.estado !== 'pendente') mostrar(); } } catch { }
+      }, 5000);
+    }
+    $('c-copiar').onclick = () => { navigator.clipboard.writeText($('c-copia').value); $('c-copiar').querySelector('span').textContent = 'Copiado!'; };
+    $('c-pix-voltar').onclick = () => { pag = null; history.replaceState(null, '', '/comprar?pacote=' + pacote); vista('c-passos'); };
+    $('c-de-novo').onclick = $('c-pix-voltar').onclick;
+
+    $('c-pagar').onclick = async () => {
+      erro('');
+      const p = atual(), em = email();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { erro('Digite o seu e-mail no passo 1 (vai o recibo).'); $('c-email') && $('c-email').focus(); return; }
+      if (ESCOLHAS[p.id] && !escolha) { erro('Escolha o kit do pacote no passo 2.'); return; }
+      try { localStorage.setItem('dz-email', em); } catch { }
+      const corpo = { pacote: p.id, escolha, email: em, metodo };
+      if (metodo === 'cartao') {
+        if (!brick) { erro('O formulário do cartão ainda está carregando. Espere um instante.'); return; }
+        let d = null;
+        try { d = await brick.getFormData(); } catch { d = null; }
+        if (!d || !d.token) { erro('Confira os dados do cartão: número, validade, código de segurança, nome e CPF.'); return; }
+        const pr = d.payer || {}, doc = pr.identification || {};
+        corpo.cartao = { token: d.token, payment_method_id: d.payment_method_id || '', issuer_id: d.issuer_id ? String(d.issuer_id) : '',
+          installments: Number(d.installments) || 1, tipoDocumento: doc.type || '', documento: doc.number || '', aparelho: window.MP_DEVICE_SESSION_ID || '' };
+      }
+      const b = $('c-pagar'); b.disabled = true; $('c-pagar-txt').textContent = metodo === 'cartao' ? 'Pagando…' : 'Gerando o Pix…';
+      try {
+        const r = await fetch('/api/vip/pagar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-DZ': '1' }, body: JSON.stringify(corpo) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.erro || 'Não deu certo agora. Tente de novo.');
+        pag = j;
+        history.replaceState(null, '', '/comprar?pacote=' + pacote + '&pg=' + encodeURIComponent(j.id));
+        mostrar();
+      } catch (e) {
+        erro(e.message);
+        if (metodo === 'cartao') montarCartao(true); // o token do cartão só vale uma vez
+      } finally { b.disabled = false; resumo(); }
+    };
+
+    if ($('c-email')) $('c-email').addEventListener('change', () => { if (metodo === 'cartao') montarCartao(); });
+    resumo();
+    if (pgIni && eu && eu.logado) {
+      fetch('/api/vip/pagar?id=' + encodeURIComponent(pgIni), { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).then(j => { if (j) { pag = j; mostrar(); } }).catch(() => { });
+    }
+  }
+
   // ---------- roteador ----------
   async function abrir(caminho, empilhar) {
-    const partes = caminho.replace(/^\/+|\/+$/g, '').split('/');
+    const partes = caminho.split('?')[0].replace(/^\/+|\/+$/g, '').split('/');
     let nome = partes[0], arg = partes[1];
     if (empilhar) history.pushState({}, '', caminho);
     document.querySelectorAll('.menu a').forEach(a => a.classList.toggle('ativo', a.getAttribute('href') === '/' + nome));
@@ -580,7 +847,7 @@
     if (!a || e.ctrlKey || e.metaKey) return;
     e.preventDefault(); abrir(a.getAttribute('href'), true);
   });
-  window.addEventListener('popstate', () => abrir(location.pathname, false));
+  window.addEventListener('popstate', () => abrir(location.pathname + location.search, false));
   document.getElementById('hamburguer').onclick = () => document.getElementById('menu').classList.toggle('aberto');
 
   (async () => {
@@ -591,61 +858,7 @@
       const st = await api('/api/status');
       if (st.discord) { const d = document.getElementById('link-discord'); d.href = st.discord; d.hidden = false; }
     } catch (e) {}
-    abrir(location.pathname, false);
+    abrir(location.pathname + location.search, false);
   })();
 
-// ---------- compra de VIP por Pix ----------
-const ESCOLHAS_PIX = {
-  iniciante: [['andarilho', 'Andarilho'], ['batedor', 'Batedor'], ['saqueador', 'Saqueador']],
-  especial: [['zonaquente', 'Zona Quente'], ['base', 'Base'], ['raid', 'Raid']],
-};
-function comprarPix (p, logado) {
-  if (!p) return;
-  const fundo = document.createElement('div');
-  fundo.className = 'pix-fundo';
-  fundo.innerHTML = `<div class="pix-caixa painel" role="dialog" aria-modal="true"><button class="pix-fechar" aria-label="Fechar">✕</button><div class="pix-corpo"></div></div>`;
-  document.body.appendChild(fundo);
-  const corpo = fundo.querySelector('.pix-corpo');
-  let parar = false;
-  const fechar = () => { parar = true; fundo.remove(); };
-  fundo.querySelector('.pix-fechar').onclick = fechar;
-  fundo.onclick = e => { if (e.target === fundo) fechar(); };
-  const titulo = `<span class="vip-selo">[${esc(p.selo)}]</span><h3>${esc(p.nome)}</h3><div class="vip-preco">R$ ${p.preco.toFixed(2).replace('.', ',')}</div>`;
-  if (!logado) {
-    corpo.innerHTML = titulo + `<p>Entre com a Steam pra comprar. O VIP é ativado na conta que estiver logada.</p><a class="botao" href="/entrar">Entrar com a Steam</a>`;
-    return;
-  }
-  const gerar = async escolha => {
-    corpo.innerHTML = titulo + `<p class="fraco">Gerando o Pix...</p>`;
-    try {
-      const r = await fetch('/api/pix/comprar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-DZ': '1' }, body: JSON.stringify({ pacote: p.id, escolha: escolha || '' }) });
-      if (!r.ok) throw new Error((await r.text()).trim() || 'erro');
-      const d = await r.json();
-      corpo.innerHTML = titulo + `<p>Abra o app do seu banco, escolha <b>Pix &gt; Ler QR Code</b> ou <b>Pix Copia e Cola</b>.</p>
-        <img class="pix-qr" alt="QR Code do Pix" src="data:image/png;base64,${d.qrImg}">
-        <div class="pix-copia"><input readonly value="${esc(d.qr)}" aria-label="Pix copia e cola"><button class="botao pequeno">Copiar</button></div>
-        <p class="pix-status fraco">⏳ Esperando o pagamento. Pode deixar esta janela aberta.</p>`;
-      const btn = corpo.querySelector('.pix-copia button');
-      btn.onclick = () => { navigator.clipboard.writeText(d.qr); btn.textContent = 'Copiado!'; };
-      const st = corpo.querySelector('.pix-status');
-      let n = 0;
-      while (!parar) {
-        await new Promise(ok => setTimeout(ok, 5000));
-        if (parar) break;
-        n++;
-        try {
-          const s = await fetch(`/api/pix/pedido?id=${encodeURIComponent(d.id)}${n % 2 ? '&conferir=1' : ''}`, { credentials: 'same-origin' }).then(x => x.json());
-          if (s.entregue) { st.className = 'pix-status ok'; st.innerHTML = '✅ <b>Pagamento aprovado! Seu VIP já está ativo no jogo.</b> Se estiver online, aparece no chat.'; break; }
-          if (s.status === 'processed') st.textContent = '✅ Pagamento aprovado, ativando no jogo...';
-          if (s.status === 'canceled' || s.status === 'failed') { st.textContent = 'Esse Pix expirou. Feche e gere outro.'; break; }
-        } catch { }
-      }
-    } catch (e) { corpo.innerHTML = titulo + `<p class="pix-status">${esc(e.message)}</p>`; }
-  };
-  const op = ESCOLHAS_PIX[p.id];
-  if (op) {
-    corpo.innerHTML = titulo + `<p>Escolha o kit:</p><div class="pix-escolhas">${op.map(([v, t]) => `<button class="botao fantasma" data-v="${v}">${t}</button>`).join('')}</div>`;
-    corpo.querySelectorAll('.pix-escolhas button').forEach(b => b.onclick = () => gerar(b.dataset.v));
-  } else gerar('');
-}
 })();

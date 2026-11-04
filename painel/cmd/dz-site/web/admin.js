@@ -692,6 +692,12 @@
         el("i", { style: `height:${Math.max(2, valor(x) * 100 / max)}%` }),
         el("small", {}, rotulo(x)))));
     };
+    const chave = el("input", { type: "text", placeholder: "APP_USR-...", autocomplete: "off", style: "width:100%;max-width:520px" });
+    const salvarChave = el("button", { class: "adm-botao" }, "Salvar Public Key");
+    salvarChave.onclick = async () => {
+      try { await post("/api/admin/pix", { Chave: chave.value }); aviso("Public Key salva."); carregarVendas(); }
+      catch (e) { aviso(e.message, true); }
+    };
     const partes = [el("div", { class: "adm-tiles" },
       tile("Online agora", String(s.online || 0), s.ultimaFoto ? "foto de " + s.ultimaFoto : "sem foto ainda", "laranja"),
       tile("Pico (30 dias)", String(s.pico30 || 0), "mais gente ao mesmo tempo"),
@@ -728,18 +734,21 @@
       catch (e) { aviso(e.message, true); }
     };
     const partes = [el("div", { class: "adm-tiles" },
-      tile("Pix", s.configurado ? "LIGADO" : "DESLIGADO", s.configurado ? "o site já vende VIP por Pix" : "cole o token abaixo", s.configurado ? "laranja" : ""),
+      tile("Pagamentos", s.configurado ? "LIGADO" : "DESLIGADO", s.configurado ? (s.chave ? "Pix e cartão ligados" : "Pix ligado, falta a Public Key pro cartão") : "cole o token abaixo", s.configurado ? "laranja" : ""),
       tile("Vendido este mês", real(s.mes || 0), "VIPs entregues"),
       tile("Vendido no total", real(s.total || 0), "desde que ligou o Pix")),
     el("article", { class: "adm-bloco" }, el("h2", {}, "Access Token do Mercado Pago"),
       el("p", { class: "fraco" }, "Mercado Pago > Suas integrações > sua aplicação > Credenciais de produção > Access Token. Ele fica guardado só no servidor e não aparece de novo aqui."),
-      campo, el("div", { style: "margin-top:10px" }, salvar))];
+      campo, el("div", { style: "margin-top:10px" }, salvar)),
+    el("article", { class: "adm-bloco" }, el("h2", {}, "Public Key (cartão)"),
+      el("p", { class: "fraco" }, "Mesma tela das credenciais. Ela é pública e serve pro formulário de cartão. Atual: " + (s.chave || "nenhuma")),
+      chave, el("div", { style: "margin-top:10px" }, salvarChave))];
     const v = s.vendas || [];
     partes.push(el("article", { class: "adm-bloco" }, el("h2", {}, "Últimos pedidos"),
-      v.length ? el("table", { class: "adm-tabela" }, el("thead", {}, el("tr", {}, el("th", {}, "Quando"), el("th", {}, "Steam"), el("th", {}, "Pacote"), el("th", {}, "Valor"), el("th", {}, "Situação"))),
+      v.length ? el("table", { class: "adm-tabela" }, el("thead", {}, el("tr", {}, el("th", {}, "Quando"), el("th", {}, "Steam"), el("th", {}, "Pacote"), el("th", {}, "Forma"), el("th", {}, "Valor"), el("th", {}, "Situação"))),
         el("tbody", {}, v.map((x) => el("tr", {}, el("td", {}, new Date(x.criado).toLocaleString("pt-BR")), el("td", {}, x.steam),
-          el("td", {}, x.pacote + (x.escolha ? " (" + x.escolha + ")" : "")), el("td", {}, real(x.valor)),
-          el("td", {}, x.entregue ? "✅ pago e entregue" : x.status === "action_required" ? "esperando pagamento" : x.status === "processed" ? "pago, entregando" : (x.status || "?"))))))
+          el("td", {}, x.pacote + (x.escolha ? " (" + x.escolha + ")" : "")), el("td", {}, x.metodo === "cartao" ? "Cartão" : "Pix"), el("td", {}, real(x.valor)),
+          el("td", {}, x.entregue ? "✅ pago e entregue" : x.estado === "aprovado" ? "pago, entregando" : x.estado === "cancelado" ? "❌ não pago / cancelado" : "esperando pagamento")))))
         : vazio("Nenhum pedido ainda.")));
     E.replaceChildren(...partes);
   }
