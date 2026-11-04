@@ -113,7 +113,7 @@ func main() {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := strings.Trim(r.URL.Path, "/")
 		switch p {
-		case "", "servidores", "ranking", "faccoes", "kits", "regras", "loja", "sobre", "perfil", "leilao", "comprar":
+		case "", "servidores", "ranking", "faccoes", "kits", "regras", "loja", "sobre", "perfil", "leilao", "comprar", "eventos":
 			w.Header().Set("Cache-Control", "no-cache")
 			b, _ := fs.ReadFile(web, "index.html")
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")

@@ -72,6 +72,34 @@
       desc: 'Paga uma vez, é seu pra sempre.', itens: ['Libera +12 kits', 'Libera os 3 cofres', 'Vitalício', 'Tag [SUPREMO] dourada no chat'] },
   ];
 
+  // Eventos automáticos e missões (o que o plugin faz; mudar aqui se mudar a config do jogo)
+  const EVENTOS = [
+    { id: 'airdrop', nome: 'Airdrop', quando: 'A cada 30 min', resumo: 'Caixa de armas ou equipamento cai longe da safe, com zumbis em volta.',
+      itens: ['Cai num ponto de airdrop do mapa, entre 300 m e 1,5 km da safe mais perto, sempre com alguém online.',
+        '70% das vezes é de <b>armas</b>: 2 armas boas com pentes, mochila, equipamento bom, MRE, remédio e chance de visão noturna.',
+        '30% das vezes é de <b>equipamento</b>: mochila, colete, capacete, ferramenta, remédios e chance de uma arma.',
+        '8 zumbis nascem em volta quando a caixa cai. Quem chegar primeiro leva.'] },
+    { id: 'clima', nome: 'Evento de clima', quando: 'A cada 1h30', resumo: 'Tempestade, chuva ou neblina. Cai o BAÚ DO EVENTO com o melhor loot.',
+      itens: ['O chat avisa 3 minutos antes: <b>"EVENTO: TEMPESTADE CHEGANDO"</b>.',
+        'O clima é sorteado (tempestade, chuva, neblina, neve...) e dura 12 minutos.',
+        'Quando começa, cai o <b>BAÚ DO EVENTO</b> longe da safe, com 14 zumbis em volta.',
+        'É o melhor loot dos eventos: 2 armas do mercado negro, mochila, equipamento top e chance de visão noturna e acessório.',
+        'O baú some em 10 minutos.'] },
+    { id: 'comboio', nome: 'Comboio emboscado', quando: 'A cada 2h30', resumo: 'Caminhão militar quebrado na estrada. Arrombe as caixas antes de explodir.',
+      itens: ['Precisa de pelo menos 2 jogadores online. O chat avisa a região.',
+        'Um caminhão militar aparece quebrado numa estrada, longe das safes, com 2 caixas trancadas de loot militar.',
+        'Pra abrir, fique <b>45 segundos</b> do lado das caixas, arrombando.',
+        '15 zumbis em volta, e eles continuam nascendo enquanto tem gente perto.',
+        'Em 15 minutos o caminhão <b>explode</b> e as caixas somem.'] },
+    { id: 'missoes', nome: 'Missões diárias', quando: 'Todo dia', resumo: 'Fácil, média e difícil. Dinheiro e XP pra quem cumprir.',
+      itens: ['Todo dia à meia-noite saem 3 missões iguais pra todo mundo: uma <b>fácil</b>, uma <b>média</b> e uma <b>difícil</b>.',
+        'Exemplos: matar zumbis, caçar animais, pescar, matar mega zumbi, matar jogadores.',
+        'Prêmio de $600 a $3.500 no banco, mais XP.',
+        'Veja no NPC de missões da safe (aperte F) ou com <b class="mono">/missoes</b>.',
+        'O progresso conta sozinho. Pra receber, vá na safe e aperte RECEBER (ou <b class="mono">/missoes receber</b>).'] },
+  ];
+  const cartaoEvento = e => `<a class="painel evento-cartao" href="/eventos#${e.id}" data-link><img src="/img/eventos/${e.id}.jpg" alt="${e.nome}" loading="lazy"><div><span class="evento-quando">${e.quando}</span><h3>${e.nome}</h3><p>${e.resumo}</p></div></a>`;
+
   const paginas = {
     async '' () {
       const [st, rk] = await Promise.all([api('/api/status'), api('/api/ranking')]);
@@ -125,6 +153,11 @@
       <section class="secao"><h2>O que tem no <span>servidor</span></h2>
         <div class="grade g3">${recursos.map(([f, i, t, d]) => `<div class="painel recurso-foto" style="--foto:url(/img/recursos/rec-${fotoRecurso[t]}.webp), url(/img/mapa/${f}.webp)">
           <div class="ic">${i}</div><h3>${t}</h3><p>${d}</p></div>`).join('')}</div>
+      </section>
+
+      <section class="secao"><h2>Eventos e <span>missões</span></h2>
+        <p class="fraco" style="margin:-8px 0 16px">Coisas acontecendo o tempo todo no mapa. <a href="/eventos" data-link>Veja como funciona cada um →</a></p>
+        <div class="grade g4">${EVENTOS.map(cartaoEvento).join('')}</div>
       </section>
 
       <section class="secao"><h2>O mapa: <span>California 2</span></h2>
@@ -427,6 +460,14 @@
           </aside>
         </div>
       </div>`;
+    },
+
+    async eventos () {
+      setTimeout(() => { const h = location.hash.slice(1); if (h && document.getElementById('ev-' + h)) document.getElementById('ev-' + h).scrollIntoView({ behavior: 'smooth' }); }, 50);
+      return cabeca('Eventos', 'Eventos e <em>missões</em>', 'Airdrop, clima, comboio e missões diárias: o que acontece no mapa e como pegar o loot.') +
+        EVENTOS.map(e => `<section class="secao evento-detalhe" id="ev-${e.id}"><img src="/img/eventos/${e.id}.jpg" alt="${e.nome}" loading="lazy">
+          <div><span class="evento-quando">${e.quando}</span><h2>${e.nome}</h2><ul>${e.itens.map(i => `<li>${i}</li>`).join('')}</ul></div></section>`).join('') +
+        `<p class="fraco" style="text-align:center;margin-top:20px">A staff também pode começar um evento ou comboio a qualquer hora. Fique de olho no chat do jogo e no Discord.</p>`;
     },
 
     async sobre () {

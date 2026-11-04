@@ -199,6 +199,7 @@ var estrutura = []categoriaDef{
 		{"top", "🏆│top-jogadores", "Ranking atualizado a cada 10 minutos.", discordgo.ChannelTypeGuildText, true, false},
 		{"stats", "📊│stats", "Suas estatísticas PvP e PvE.", discordgo.ChannelTypeGuildText, true, false},
 		{"raid", "🚨│raid-alert", "Alerta de raid na sua DM.", discordgo.ChannelTypeGuildText, true, false},
+		{"eventos", "🎯│eventos-e-missões", "Como funcionam airdrop, clima, comboio e missões.", discordgo.ChannelTypeGuildText, true, false},
 		{"lojavip", "💎│loja-vip", "Kits VIP, cofres e o DZ Supremo.", discordgo.ChannelTypeGuildText, true, false},
 		{"banimentos", "🔨│banimentos", "Jogadores banidos.", discordgo.ChannelTypeGuildText, true, false},
 	}},

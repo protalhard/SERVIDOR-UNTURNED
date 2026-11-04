@@ -135,12 +135,51 @@ func garantirPaineis(s *discordgo.Session) {
 			"💣 **Kit Especial** (Zona Quente, Base ou Raid) · R$ 21,60\n" +
 			"🧰 **Cofres** Mochila 8×7 · Bunker 12×9 · Fortaleza 15×14 · a partir de R$ 13,60\n" +
 			"👑 **DZ Supremo** (tudo, 35 dias) · R$ 77,70  |  **Vitalício** · R$ 255,90\n\n" +
-			"Todos por 30 dias, com tag no chat e cargo VIP aqui no Discord.\n**O pagamento abre em breve.**",
+			"Todos por 30 dias, com tag no chat e cargo VIP aqui no Discord.\n**Pague com Pix ou cartão direto no site.** O VIP é liberado sozinho quando o pagamento é aprovado.",
 		Image: &discordgo.MessageEmbedImage{URL: capaURL}, Footer: &discordgo.MessageEmbedFooter{Text: rodape},
 	}}, []discordgo.MessageComponent{linha(
 		discordgo.Button{Label: "Ver a Loja VIP", Style: discordgo.LinkButton, URL: siteURL + "/loja", Emoji: &discordgo.ComponentEmoji{Name: "💎"}},
 	)})
+	garantirPainel(s, "eventos", "🎯 Eventos e missões", embedsEventos(), []discordgo.MessageComponent{linha(
+		discordgo.Button{Label: "Ver no site", Style: discordgo.LinkButton, URL: siteURL + "/eventos", Emoji: &discordgo.ComponentEmoji{Name: "🎯"}},
+	)})
 	log.Println("painéis conferidos")
+}
+
+// embedsEventos explica cada evento automático do plugin (mesmos números do site /eventos).
+func embedsEventos() []*discordgo.MessageEmbed {
+	ev := func(id, titulo, texto string) *discordgo.MessageEmbed {
+		return &discordgo.MessageEmbed{Title: titulo, Color: corLaranja, URL: siteURL + "/eventos#" + id, Description: texto,
+			Image: &discordgo.MessageEmbedImage{URL: siteURL + "/img/eventos/" + id + ".jpg"}}
+	}
+	return []*discordgo.MessageEmbed{
+		{Title: "🎯 Eventos e missões", Color: corLaranja, URL: siteURL + "/eventos",
+			Description: "O mapa não fica parado. Tem evento rolando o tempo todo, e o chat do jogo avisa quando começa.\n" +
+				"Veja abaixo como funciona cada um e o que dá pra ganhar."},
+		ev("airdrop", "📦 Airdrop · a cada 30 min",
+			"• Cai num ponto de airdrop entre 300 m e 1,5 km da safe mais perto (precisa ter alguém online).\n"+
+				"• **70%** das vezes é de **armas**: 2 armas boas com pentes, mochila, equipamento, MRE, remédio e chance de visão noturna.\n"+
+				"• **30%** das vezes é de **equipamento**: mochila, colete, capacete, ferramenta, remédios e chance de arma.\n"+
+				"• 8 zumbis nascem em volta. Quem chegar primeiro leva."),
+		ev("clima", "⛈️ Evento de clima · a cada 1h30",
+			"• O chat avisa 3 minutos antes: **EVENTO: TEMPESTADE CHEGANDO**.\n"+
+				"• Clima sorteado (tempestade, chuva, neblina, neve...) por 12 minutos.\n"+
+				"• Cai o **BAÚ DO EVENTO** longe da safe, com 14 zumbis em volta.\n"+
+				"• Melhor loot dos eventos: 2 armas do mercado negro, mochila, equipamento top, chance de visão noturna.\n"+
+				"• O baú some em 10 minutos."),
+		ev("comboio", "🚚 Comboio emboscado · a cada 2h30",
+			"• Precisa de 2 jogadores online. O chat avisa a região.\n"+
+				"• Caminhão militar quebrado numa estrada, longe das safes, com 2 caixas trancadas de loot militar.\n"+
+				"• Fique **45 segundos** do lado das caixas pra arrombar.\n"+
+				"• 15 zumbis em volta, e continuam nascendo enquanto tem gente perto.\n"+
+				"• Em 15 minutos o caminhão **explode** e as caixas somem."),
+		ev("missoes", "📋 Missões diárias · todo dia",
+			"• À meia-noite saem 3 missões iguais pra todos: **fácil**, **média** e **difícil**.\n"+
+				"• Ex.: matar zumbis, caçar, pescar, matar mega zumbi, matar jogadores.\n"+
+				"• Prêmio de **$600 a $3.500** no banco, mais XP.\n"+
+				"• Veja no NPC de missões da safe (aperte F) ou com `/missoes`.\n"+
+				"• Pra receber, vá na safe e aperte RECEBER (ou `/missoes receber`)."),
+	}
 }
 
 func embedRegrasRaid() *discordgo.MessageEmbed {
