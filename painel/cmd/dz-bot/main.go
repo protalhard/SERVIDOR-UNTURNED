@@ -627,6 +627,8 @@ func aoInteragir(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			fecharTicket(s, i)
 		case "assumir_ticket":
 			assumirTicket(s, i)
+		case "ficha_ticket":
+			fichaNoTicket(s, i)
 		}
 	}
 }
@@ -711,6 +713,7 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 			Description: "Conte o que aconteceu com o máximo de detalhes. Mande prints ou vídeo se tiver.\nA staff responde aqui." + steamDoTicket(u.ID)}},
 		Components: []discordgo.MessageComponent{linha(
 			botao("Assumir", "assumir_ticket", "🙋", discordgo.PrimaryButton),
+			botao("Ficha do jogo (staff)", "ficha_ticket", "📋", discordgo.SecondaryButton),
 			botao("Fechar ticket", "fechar_ticket", "🔒", discordgo.DangerButton),
 		)},
 	})
@@ -722,6 +725,7 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 	salvarEstado()
 	postar(s, "logs", &discordgo.MessageSend{Content: fmt.Sprintf("🎫 **Ticket aberto** (%s) por <@%s>: <#%s>", nomesMotivo[motivo], u.ID, ch.ID),
 		AllowedMentions: &discordgo.MessageAllowedMentions{}})
+	postar(s, "staff", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{embedFichaJogo(u.ID, ch.ID)}, AllowedMentions: &discordgo.MessageAllowedMentions{}})
 	mu.Unlock()
 	responder(s, i, &discordgo.MessageEmbed{Description: fmt.Sprintf("Ticket aberto: <#%s>", ch.ID), Color: corVerde}, true)
 }
