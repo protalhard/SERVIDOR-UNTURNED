@@ -119,26 +119,17 @@ for u in dz-painel.service dz-painel.timer; do
 done
 if [ "$pn" = 1 ]; then systemctl daemon-reload; systemctl enable --now dz-painel.timer; echo "executor do painel ligado"; fi
 
-# 7) Reinício: só com o servidor vazio. Com gente online, fica pendente e o
-#    sincronizador tenta de novo a cada 5 min (no máximo 6 h esperando).
+# 7) Reinício do jogo: NUNCA automático (pedido do dono). Os arquivos novos já ficam no lugar e entram
+#    no reinício diário da madrugada (ReinicioDiario do plugin) ou quando o dono mandar reiniciar.
+#    O arquivo "reiniciar-pendente" só avisa que tem novidade esperando; some quando o jogo reinicia.
 PENDENTE="$ESTADO/reiniciar-pendente"
 [ "$reiniciar" = 1 ] && [ ! -f "$PENDENTE" ] && touch "$PENDENTE"
 if [ -f "$PENDENTE" ]; then
-  online=$(python3 - "$INST/Rocket/Plugins/SobrevivenciaCore/status.json" <<'PY'
-import json, sys, time
-try:
-    s = json.load(open(sys.argv[1]))
-    print(len(s.get("jogadores") or []) if time.time() - s.get("atualizado", 0) < 90 else 0)
-except Exception:
-    print(0)
-PY
-)
-  idade=$(( $(date +%s) - $(stat -c %Y "$PENDENTE") ))
-  if [ "$online" -gt 0 ] && [ "$idade" -lt 21600 ]; then
-    echo "reinicio adiado: $online jogador(es) online"
-  else
+  inicio=$(systemctl show unturned -p ActiveEnterTimestamp --value 2>/dev/null)
+  ini_s=$(date -d "$inicio" +%s 2>/dev/null || echo 0)
+  if [ "$ini_s" -gt "$(stat -c %Y "$PENDENTE")" ]; then
     rm -f "$PENDENTE"
-    echo "reiniciando o servidor"
-    systemctl restart unturned
+  elif [ "$reiniciar" = 1 ]; then
+    echo "jogo atualizado: entra no proximo reinicio da madrugada"
   fi
 fi
