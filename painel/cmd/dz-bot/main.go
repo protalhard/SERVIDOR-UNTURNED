@@ -37,6 +37,7 @@ type Estado struct {
 	Convite      string            `json:"convite"`
 	LogAdminPos  *int64            `json:"logAdminPos,omitempty"`
 	LogRaidPos   *int64            `json:"logRaidPos,omitempty"`
+	VipDado      map[string]bool   `json:"vipDado,omitempty"` // discord que ganhou o cargo VIP pelo Pix
 	LogUpkeepPos *int64            `json:"logUpkeepPos,omitempty"`
 	LogGuardPos  *int64            `json:"logGuardPos,omitempty"`
 	// discord -> steam já avisado do vínculo; alertas de raid desligados
@@ -94,6 +95,7 @@ func main() {
 	go laco(dg, 20*time.Second, enviarLogsAdmin)
 	go laco(dg, 15*time.Second, enviarLogsRaid)
 	go laco(dg, 60*time.Second, enviarLogsUpkeep)
+	go laco(dg, 2*time.Minute, sincronizarVipDiscord)
 	go laco(dg, 10*time.Second, enviarLogsGuard)
 	go laco(dg, 20*time.Second, conferirVinculos)
 	go laco(dg, 2*time.Minute, limparSalas)

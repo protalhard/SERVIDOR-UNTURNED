@@ -612,6 +612,15 @@ namespace SobrevivenciaCore
             {
                 var c = l.Split('\t');
                 if (c.Length < 3 || !ulong.TryParse(c[1], out var alvo) || !ulong.TryParse(c[2], out var quem)) continue;
+                // VIP pago no site (Pix aprovado): quem = 0, texto = pacote|escolha|pagamento
+                if (c[0] == "vip")
+                {
+                    if (quem != 0) { LogGuard($"COMANDO NEGADO do site: vip por {quem}"); continue; }
+                    var pv = (c.Length > 4 ? c[4] : "").Split('|');
+                    try { Rocket.Core.Logging.Logger.Log("[VIP] " + DarVip(alvo, pv[0], pv.Length > 1 ? pv[1] : "", pv.Length > 2 ? pv[2] : "")); }
+                    catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+                    continue;
+                }
                 // staff: só o dono (perm = campo 4, ligar = campo 3 "1")
                 if (c[0] == "perm" || c[0] == "staff_remover")
                 {

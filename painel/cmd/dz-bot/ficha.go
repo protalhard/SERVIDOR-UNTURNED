@@ -196,3 +196,61 @@ func fichaNoTicket(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	responder(s, i, embedFichaJogo(dono, ""), true)
 }
+
+// sincronizarVipDiscord: quem tem VIP ativo (vips.json do plugin, comprado pelo Pix) ganha o cargo VIP;
+// quando vence, o bot tira o cargo (só de quem ganhou por aqui).
+func sincronizarVipDiscord(s *discordgo.Session) {
+	b, err := os.ReadFile(filepath.Join(fonte.Pasta, "vips.json"))
+	if err != nil {
+		return
+	}
+	var st struct {
+		Jogadores map[string][]struct{ Expira *time.Time }
+	}
+	if json.Unmarshal(b, &st) != nil {
+		return
+	}
+	ativos := map[string]bool{}
+	for steam, l := range st.Jogadores {
+		for _, v := range l {
+			if v.Expira == nil || v.Expira.After(time.Now()) {
+				ativos[steam] = true
+			}
+		}
+	}
+	mu.Lock()
+	guild, cargo := estado.Guild, estado.Cargos["vip"]
+	if estado.VipDado == nil {
+		estado.VipDado = map[string]bool{}
+	}
+	dado := map[string]bool{}
+	for k, v := range estado.VipDado {
+		dado[k] = v
+	}
+	mu.Unlock()
+	if guild == "" || cargo == "" {
+		return
+	}
+	mudou := false
+	for _, v := range fonte.LerVinculos() {
+		if ativos[v.Steam] && !dado[v.Discord] {
+			if s.GuildMemberRoleAdd(guild, v.Discord, cargo) == nil {
+				dado[v.Discord], mudou = true, true
+				dm(s, v.Discord, &discordgo.MessageEmbed{Title: "⭐ VIP ativado!", Color: corAmbar,
+					Description: "Obrigado por apoiar o DAY Z BRASIL! Seu VIP já está ativo no jogo e você ganhou o cargo VIP aqui no Discord.",
+					Footer:      &discordgo.MessageEmbedFooter{Text: rodape}})
+			}
+		} else if !ativos[v.Steam] && dado[v.Discord] {
+			if s.GuildMemberRoleRemove(guild, v.Discord, cargo) == nil {
+				delete(dado, v.Discord)
+				mudou = true
+			}
+		}
+	}
+	if mudou {
+		mu.Lock()
+		estado.VipDado = dado
+		salvarEstado()
+		mu.Unlock()
+	}
+}

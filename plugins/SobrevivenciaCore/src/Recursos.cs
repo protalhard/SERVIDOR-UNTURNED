@@ -115,7 +115,7 @@ namespace SobrevivenciaCore
             {
                 var t = x.Trim();
                 if (t == "") continue;
-                if (t == "discord" ? VinculadoDiscord(Id(p)) : p.HasPermission(t)) return true;
+                if (t == "discord" ? VinculadoDiscord(Id(p)) : p.HasPermission(t) || VipTem(Id(p), t)) return true;
             }
             return false;
         }
@@ -355,7 +355,7 @@ namespace SobrevivenciaCore
                 var pat = PatenteDe(f.Xp);
                 string nome = Chat.Limpar(sp.playerID.characterName);
                 var fc = FaccaoDe(Id(p));
-                string tag = (fc != null ? fc.TagCor + " " : "") + Chat.Cor(pat.Cor, "[" + pat.Nome + "]") + " " +
+                string tag = (fc != null ? fc.TagCor + " " : "") + Chat.Cor(pat.Cor, "[" + pat.Nome + "]") + " " + TagVip(Id(p)) +
                              Chat.Cor(sp.isAdmin ? S.CorPrincipal : S.CorTexto, nome) + " " + Chat.Cor(S.CorApagada, "Lv." + f.Nivel);
                 visivel = false;
                 ChatManager.serverSendMessage(tag + Chat.Cor(S.CorApagada, ": ") + Chat.Cor("#FFFFFF", Chat.Limpar(texto)),

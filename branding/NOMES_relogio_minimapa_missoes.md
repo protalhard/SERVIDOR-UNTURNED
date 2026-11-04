@@ -11,6 +11,8 @@ baixar o mod com esses IDs, cada coisa liga sozinha. Até lá nada muda no jogo.
 | 51302 | `DZ_NpcMissoes` (barricada) | boneco de missão: aperta F e abre a tela |
 | 51303 | `DZ_Tag` (item) | TAG da recompensa na cabeça |
 
+**O relógio de braço (de segurar a tecla, efeito 51297 e item 51298) saiu.** Fica o relógio fixo no canto (51299), que não precisa de item nem de tecla.
+
 Cada um precisa de GUID novo. Os nomes abaixo têm que ser **iguais** (maiúsculas e minúsculas contam).
 
 ---

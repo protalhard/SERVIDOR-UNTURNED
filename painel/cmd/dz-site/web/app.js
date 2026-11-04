@@ -297,7 +297,10 @@
         else fundo = `<div class="vip-grade">${ids.map(id => `<span><img src="/icones/${id}.png?f=0" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>`).join('')}</div>`;
         return `<div class="vip-foto itens${grande ? ' grande' : ''}">${fundo}<img class="vip-render" src="/img/vip/vip-${p.id}.webp" alt="" onerror="this.remove()"></div>`;
       };
-      const botao = `<button class="botao vip-comprar" disabled title="O pagamento abre em breve">🔒 EM BREVE</button>`;
+      let pix = { ativo: false };
+      try { pix = await fetch('/api/pix/status', { credentials: 'same-origin' }).then(r => r.json()); } catch { }
+      const botaoDe = p => pix.ativo ? `<button class="botao vip-comprar" data-pacote="${esc(p.id)}">💳 COMPRAR COM PIX</button>`
+        : `<button class="botao vip-comprar" disabled title="O pagamento abre em breve">🔒 EM BREVE</button>`;
       const cartao = p => `<div class="painel vip-card" data-aba="${p.aba}" style="--vc:${p.cor}">
           ${fotoVip(p)}
           <span class="vip-selo">[${esc(p.selo)}]</span>
@@ -305,22 +308,23 @@
           <div class="vip-preco">${real(p.preco)}<small> / ${p.dias} dias</small></div>
           <ul class="vip-lista">${p.itens.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
           ${p.kits ? `<details class="vip-detalhes"><summary>DETALHES</summary>${conteudo(p.kits)}</details>` : ''}
-          ${botao}
+          ${botaoDe(p)}
         </div>`;
       const supremo = p => `<div class="painel vip-supremo" data-aba="supremo">
           ${fotoVip(p, true)}
           <div class="vip-meio"><span class="vip-selo">[${esc(p.selo)}]</span><h3>${esc(p.nome)}</h3><p class="fraco">${esc(p.desc)}</p>
             <ul class="vip-lista duas">${p.itens.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
           <div class="vip-dir">${p.id === 'supremo' ? `<div class="fraco mono" style="font-size:11px">COMPRANDO TUDO SEPARADO</div><s class="fraco">${real(separado)}</s>` : ''}
-            <div class="vip-preco grande">${real(p.preco)}<small> / ${p.per}</small></div>${botao}</div>
+            <div class="vip-preco grande">${real(p.preco)}<small> / ${p.per}</small></div>${botaoDe(p)}</div>
         </div>`;
       setTimeout(() => {
+        document.querySelectorAll('.vip-comprar[data-pacote]').forEach(b => b.onclick = () => comprarPix([...P, ...S].find(x => x.id === b.dataset.pacote), pix.logado));
         document.querySelectorAll('.vip-abas button').forEach(b => b.onclick = () => {
           document.querySelectorAll('.vip-abas button').forEach(x => x.classList.toggle('ativo', x === b));
           document.querySelectorAll('[data-aba]').forEach(c => { c.style.display = b.dataset.f === 'todos' || c.dataset.aba === b.dataset.f ? '' : 'none'; });
         });
       });
-      return cabeca('Loja VIP', 'Apoie & <em>sobreviva</em>', 'Kits VIP, kits especiais, cofres maiores e o DZ Supremo. O pagamento (PIX / Mercado Pago) abre em breve, com ativação automática no jogo.') +
+      return cabeca('Loja VIP', 'Apoie & <em>sobreviva</em>', 'Kits VIP, kits especiais, cofres maiores e o DZ Supremo. Pague com PIX e o VIP é ativado sozinho no jogo, na hora.') +
         `<div class="vip-abas">${[['todos', 'Todos'], ['kits', 'Kits VIP'], ['especiais', 'Kits especiais'], ['cofres', 'Cofres'], ['supremo', 'Supremo']]
           .map(([f, t], i) => `<button data-f="${f}"${i ? '' : ' class="ativo"'}>${t}</button>`).join('')}</div>
          ${S.map(supremo).join('')}
@@ -589,4 +593,59 @@
     } catch (e) {}
     abrir(location.pathname, false);
   })();
+
+// ---------- compra de VIP por Pix ----------
+const ESCOLHAS_PIX = {
+  iniciante: [['andarilho', 'Andarilho'], ['batedor', 'Batedor'], ['saqueador', 'Saqueador']],
+  especial: [['zonaquente', 'Zona Quente'], ['base', 'Base'], ['raid', 'Raid']],
+};
+function comprarPix (p, logado) {
+  if (!p) return;
+  const fundo = document.createElement('div');
+  fundo.className = 'pix-fundo';
+  fundo.innerHTML = `<div class="pix-caixa painel" role="dialog" aria-modal="true"><button class="pix-fechar" aria-label="Fechar">✕</button><div class="pix-corpo"></div></div>`;
+  document.body.appendChild(fundo);
+  const corpo = fundo.querySelector('.pix-corpo');
+  let parar = false;
+  const fechar = () => { parar = true; fundo.remove(); };
+  fundo.querySelector('.pix-fechar').onclick = fechar;
+  fundo.onclick = e => { if (e.target === fundo) fechar(); };
+  const titulo = `<span class="vip-selo">[${esc(p.selo)}]</span><h3>${esc(p.nome)}</h3><div class="vip-preco">R$ ${p.preco.toFixed(2).replace('.', ',')}</div>`;
+  if (!logado) {
+    corpo.innerHTML = titulo + `<p>Entre com a Steam pra comprar. O VIP é ativado na conta que estiver logada.</p><a class="botao" href="/entrar">Entrar com a Steam</a>`;
+    return;
+  }
+  const gerar = async escolha => {
+    corpo.innerHTML = titulo + `<p class="fraco">Gerando o Pix...</p>`;
+    try {
+      const r = await fetch('/api/pix/comprar', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-DZ': '1' }, body: JSON.stringify({ pacote: p.id, escolha: escolha || '' }) });
+      if (!r.ok) throw new Error((await r.text()).trim() || 'erro');
+      const d = await r.json();
+      corpo.innerHTML = titulo + `<p>Abra o app do seu banco, escolha <b>Pix &gt; Ler QR Code</b> ou <b>Pix Copia e Cola</b>.</p>
+        <img class="pix-qr" alt="QR Code do Pix" src="data:image/png;base64,${d.qrImg}">
+        <div class="pix-copia"><input readonly value="${esc(d.qr)}" aria-label="Pix copia e cola"><button class="botao pequeno">Copiar</button></div>
+        <p class="pix-status fraco">⏳ Esperando o pagamento. Pode deixar esta janela aberta.</p>`;
+      const btn = corpo.querySelector('.pix-copia button');
+      btn.onclick = () => { navigator.clipboard.writeText(d.qr); btn.textContent = 'Copiado!'; };
+      const st = corpo.querySelector('.pix-status');
+      let n = 0;
+      while (!parar) {
+        await new Promise(ok => setTimeout(ok, 5000));
+        if (parar) break;
+        n++;
+        try {
+          const s = await fetch(`/api/pix/pedido?id=${encodeURIComponent(d.id)}${n % 2 ? '&conferir=1' : ''}`, { credentials: 'same-origin' }).then(x => x.json());
+          if (s.entregue) { st.className = 'pix-status ok'; st.innerHTML = '✅ <b>Pagamento aprovado! Seu VIP já está ativo no jogo.</b> Se estiver online, aparece no chat.'; break; }
+          if (s.status === 'processed') st.textContent = '✅ Pagamento aprovado, ativando no jogo...';
+          if (s.status === 'canceled' || s.status === 'failed') { st.textContent = 'Esse Pix expirou. Feche e gere outro.'; break; }
+        } catch { }
+      }
+    } catch (e) { corpo.innerHTML = titulo + `<p class="pix-status">${esc(e.message)}</p>`; }
+  };
+  const op = ESCOLHAS_PIX[p.id];
+  if (op) {
+    corpo.innerHTML = titulo + `<p>Escolha o kit:</p><div class="pix-escolhas">${op.map(([v, t]) => `<button class="botao fantasma" data-v="${v}">${t}</button>`).join('')}</div>`;
+    corpo.querySelectorAll('.pix-escolhas button').forEach(b => b.onclick = () => gerar(b.dataset.v));
+  } else gerar('');
+}
 })();

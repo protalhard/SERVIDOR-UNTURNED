@@ -21,7 +21,8 @@
     staff: ["Staff", "Quem é da staff e o que cada um pode fazer."],
     faccoes: ["Facções", "Todas as facções: membros, cofre e quando alguém entrou pela última vez."],
     economia: ["Economia", "Todo o dinheiro do jogo e os ajustes de preço. Atualiza a cada 2 minutos."],
-    estatisticas: ["Estatísticas", "Quantos jogam, em que horário, quanto tempo e quantos novatos voltam."] };
+    estatisticas: ["Estatísticas", "Quantos jogam, em que horário, quanto tempo e quantos novatos voltam."],
+    vendas: ["Vendas VIP (Pix)", "Token do Mercado Pago e os VIPs vendidos pelo site."] };
 
   const ICONES = {
     dinheiro: '<path d="M2 6h20v12H2zm2 2v8h16V8zm8 1.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM5 9h2v2H5zm12 4h2v2h-2z"/>',
@@ -714,6 +715,35 @@
     E.replaceChildren(...partes);
   }
 
+  async function carregarVendas() {
+    const E = $("#vendas");
+    E.replaceChildren(vazio("Carregando..."));
+    let s;
+    try { s = await api("/api/admin/pix"); } catch (e) { E.replaceChildren(vazio("Erro: " + e.message)); return; }
+    const real = (c) => "R$ " + (c / 100).toFixed(2).replace(".", ",");
+    const campo = el("input", { type: "password", placeholder: "APP_USR-...", autocomplete: "off", style: "width:100%;max-width:520px" });
+    const salvar = el("button", { class: "adm-botao" }, s.configurado ? "Trocar token" : "Salvar token");
+    salvar.onclick = async () => {
+      try { const r = await post("/api/admin/pix", { Token: campo.value }); campo.value = ""; aviso(r.conta ? "Token salvo. Conta: " + r.conta : "Token salvo."); carregarVendas(); }
+      catch (e) { aviso(e.message, true); }
+    };
+    const partes = [el("div", { class: "adm-tiles" },
+      tile("Pix", s.configurado ? "LIGADO" : "DESLIGADO", s.configurado ? "o site já vende VIP por Pix" : "cole o token abaixo", s.configurado ? "laranja" : ""),
+      tile("Vendido este mês", real(s.mes || 0), "VIPs entregues"),
+      tile("Vendido no total", real(s.total || 0), "desde que ligou o Pix")),
+    el("article", { class: "adm-bloco" }, el("h2", {}, "Access Token do Mercado Pago"),
+      el("p", { class: "fraco" }, "Mercado Pago > Suas integrações > sua aplicação > Credenciais de produção > Access Token. Ele fica guardado só no servidor e não aparece de novo aqui."),
+      campo, el("div", { style: "margin-top:10px" }, salvar))];
+    const v = s.vendas || [];
+    partes.push(el("article", { class: "adm-bloco" }, el("h2", {}, "Últimos pedidos"),
+      v.length ? el("table", { class: "adm-tabela" }, el("thead", {}, el("tr", {}, el("th", {}, "Quando"), el("th", {}, "Steam"), el("th", {}, "Pacote"), el("th", {}, "Valor"), el("th", {}, "Situação"))),
+        el("tbody", {}, v.map((x) => el("tr", {}, el("td", {}, new Date(x.criado).toLocaleString("pt-BR")), el("td", {}, x.steam),
+          el("td", {}, x.pacote + (x.escolha ? " (" + x.escolha + ")" : "")), el("td", {}, real(x.valor)),
+          el("td", {}, x.entregue ? "✅ pago e entregue" : x.status === "action_required" ? "esperando pagamento" : x.status === "processed" ? "pago, entregando" : (x.status || "?"))))))
+        : vazio("Nenhum pedido ainda.")));
+    E.replaceChildren(...partes);
+  }
+
   function desenharEconomia() {
     const E = $("#economia");
     const e = economia;
@@ -803,6 +833,7 @@
     if (aba === "faccoes") carregarFaccoes();
     if (aba === "economia") carregarEconomia();
     if (aba === "estatisticas") carregarEstatisticas();
+    if (aba === "vendas") carregarVendas();
     if (aba === "mensagens" || aba === "wipe" || aba === "dashboard") carregarPainel();
   }
   function desenhar() {

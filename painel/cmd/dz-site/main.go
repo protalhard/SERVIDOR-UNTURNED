@@ -107,6 +107,8 @@ func main() {
 	registrarAdmin(mux, web)
 	registrarPainel(mux)
 	rotasLeilao(mux)
+	dominioPix, pastaPix = *dominio, filepath.Dir(*arqSegredo)
+	rotasPix(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := strings.Trim(r.URL.Path, "/")
 		switch p {
