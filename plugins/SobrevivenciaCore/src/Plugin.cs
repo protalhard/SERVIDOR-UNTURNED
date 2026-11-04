@@ -144,6 +144,7 @@ namespace SobrevivenciaCore
             entrouEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
             try { LogEntrou(p); } catch { }
             RelogioEntrou(p);
+            try { AvisarLeilaoAoEntrar(p); } catch { }
             BarrarNaPausa(p);
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);

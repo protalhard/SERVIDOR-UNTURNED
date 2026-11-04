@@ -46,6 +46,7 @@
         <Permission Cooldown="0">recompensa</Permission>
         <Permission Cooldown="0">torneio</Permission>
         <Permission Cooldown="0">missoes</Permission>
+        <Permission Cooldown="0">leilao</Permission>
       </Permissions>
     </Group>
     <Group>

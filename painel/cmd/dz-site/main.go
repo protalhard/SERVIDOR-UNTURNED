@@ -101,10 +101,11 @@ func main() {
 	mux.HandleFunc("/vincular/retorno", vincularRetorno)
 	registrarAdmin(mux, web)
 	registrarPainel(mux)
+	rotasLeilao(mux)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		p := strings.Trim(r.URL.Path, "/")
 		switch p {
-		case "", "servidores", "ranking", "faccoes", "kits", "regras", "loja", "sobre", "perfil":
+		case "", "servidores", "ranking", "faccoes", "kits", "regras", "loja", "sobre", "perfil", "leilao":
 			w.Header().Set("Cache-Control", "no-cache")
 			b, _ := fs.ReadFile(web, "index.html")
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")

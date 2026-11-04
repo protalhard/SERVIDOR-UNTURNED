@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,11 +15,11 @@ import (
 // e jogadores_log.tsv (entrou/saiu). Tudo no horário de Brasília.
 
 type diaStat struct {
-	Dia      string `json:"dia"`
-	Pico     int    `json:"pico"`
-	Media    float64 `json:"media"`
-	Jogadores int   `json:"jogadores"`
-	Novatos  int    `json:"novatos"`
+	Dia       string  `json:"dia"`
+	Pico      int     `json:"pico"`
+	Media     float64 `json:"media"`
+	Jogadores int     `json:"jogadores"`
+	Novatos   int     `json:"novatos"`
 }
 
 type tempoStat struct {

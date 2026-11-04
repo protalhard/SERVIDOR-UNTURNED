@@ -427,3 +427,11 @@ td.ord { color: var(--c); font-weight: 800; }
 .torneio-lista li { counter-increment: t; display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
 .torneio-lista li::before { content: counter(t) "."; color: var(--c1, #FF5A00); font-weight: 800; width: 24px; flex: none; }
 .torneio-lista li span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lote-topo { display: flex; gap: 12px; align-items: center; }
+.lote-topo img { width: 64px; height: 64px; object-fit: contain; background: rgba(255,255,255,.04); border-radius: 10px; flex: none; }
+.lote-topo h3 { margin: 0; font-size: 17px; }
+.lote-preco { font: 800 24px var(--mono, monospace); color: var(--c2, #FFB020); margin: 14px 0 10px; }
+.lote-preco small { display: block; font: 12px var(--sans, sans-serif); color: var(--fraco, #999); }
+.lote-lance { display: flex; gap: 8px; }
+.lote-lance input { flex: 1; min-width: 0; }

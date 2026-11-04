@@ -125,6 +125,10 @@ namespace SobrevivenciaCore
         public string TorneioPremios = "15000,8000,4000";
         /// <summary>Missões diárias (3 por dia, fácil/média/difícil).</summary>
         public bool MissoesLigado = true;
+        /// <summary>Leilão: taxa (%) que sai do vendedor e quantos itens cada um pode ter no leilão ao mesmo tempo.</summary>
+        public bool LeilaoLigado = true;
+        public int LeilaoTaxa = 5;
+        public int LeilaoMaxPorJogador = 3;
         // segundos pra escolher a safe depois de entrar ou renascer
         public int EscolherSafeSegundos = 120;
         // mochila que o /itens dá pro dono (Mercenary Alicepack)

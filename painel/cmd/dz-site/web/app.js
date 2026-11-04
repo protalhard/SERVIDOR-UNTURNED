@@ -178,6 +178,35 @@
         <div id="torneio" style="margin-top:28px"></div>`;
     },
 
+    async leilao () {
+      const desenhar = async () => {
+        let d; try { d = await api('/api/leilao'); } catch { return; }
+        const alvo = document.getElementById('lotes'); if (!alvo) return;
+        const ativos = (d.lotes || []).filter(x => !x.encerrado).sort((a, b) => new Date(a.fim) - new Date(b.fim));
+        const fim = (d.lotes || []).filter(x => x.encerrado);
+        const resta = f => { const m = Math.max(0, (new Date(f) - Date.now()) / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${Math.round(m % 60)}min` : `${Math.ceil(m)} min`; };
+        const resp = (d.respostas || []).length ? `<div class="painel" style="margin-bottom:16px"><b>Resposta do jogo:</b> ${d.respostas.map(esc).join('<br>')}</div>` : '';
+        alvo.innerHTML = resp + (ativos.length ? `<div class="grade g3">${ativos.map(x => `<div class="painel lote">
+            <div class="lote-topo"><img src="/icones/${x.item}.png?f=0" alt="" loading="lazy" onerror="this.style.visibility='hidden'"><div><h3>${esc(x.nome)}${x.qtd > 1 ? ` <small>x${x.qtd}</small>` : ''}</h3><p class="fraco">#${x.id} · de ${esc(x.vendedor)} · acaba em ${resta(x.fim)}</p></div></div>
+            <p class="lote-preco">${x.lance ? `$${num(x.lance)} <small>${x.lances} lance(s) · ${x.souLider ? '<b class="laranja">você está ganhando</b>' : 'líder: ' + esc(x.lider)}</small>` : `<small>sem lance · mínimo</small> $${num(x.proximo)}`}</p>
+            ${d.logado ? `<form class="lote-lance" data-id="${x.id}"><input type="number" min="${x.proximo}" step="1" value="${x.proximo}" aria-label="Valor do lance"><button class="botao">Dar lance</button></form>` : `<a class="botao fantasma" href="/entrar">Entre com a Steam para dar lance</a>`}
+          </div>`).join('')}</div>` : `<p class="fraco">Nenhum item no leilão agora. No jogo, segure o item na mão dentro da safe e use <b>/leilao vender preço</b>.</p>`)
+          + (fim.length ? `<h2 style="margin-top:32px">Acabaram há pouco</h2><div class="tabela-envolve"><table><thead><tr><th>#</th><th>Item</th><th>Vendido para</th><th>Valor</th></tr></thead><tbody>${fim.map(x => `<tr><td>${x.id}</td><td>${esc(x.nome)}</td><td>${x.lider ? esc(x.lider) : '<span class="fraco">sem lance</span>'}</td><td>${x.lance ? '$' + num(x.lance) : '-'}</td></tr>`).join('')}</tbody></table></div>` : '');
+        alvo.querySelectorAll('.lote-lance').forEach(f => f.onsubmit = async e => {
+          e.preventDefault();
+          const valor = Number(f.querySelector('input').value), id = Number(f.dataset.id);
+          const b = f.querySelector('button'); b.disabled = true; b.textContent = 'Enviando...';
+          try {
+            const r = await fetch('/api/leilao/lance', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-DZ': '1' }, body: JSON.stringify({ id, valor }) });
+            if (!r.ok) throw new Error(await r.text());
+            b.textContent = 'Lance enviado!'; setTimeout(desenhar, 3500);
+          } catch (err) { b.disabled = false; b.textContent = 'Dar lance'; alert('Não deu: ' + err.message); }
+        });
+      };
+      setTimeout(desenhar);
+      return cabeca('Mercado entre jogadores', 'Leilão <em>DAY Z</em>', 'Lances com o dinheiro do seu banco no jogo. O lance fica preso até alguém cobrir ou acabar. Quem ganha retira o item na safe com /leilao retirar. Taxa de 5% pro vendedor.') + `<div id="lotes"><p class="carregando">Carregando...</p></div>`;
+    },
+
     async faccoes () {
       const d = await api('/api/faccoes');
       const l = d.faccoes || [];
