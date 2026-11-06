@@ -145,14 +145,14 @@ namespace SobrevivenciaCore
         public ushort ComboioVeiculo = 0;
         /// <summary>Heli Crash: a cada X minutos com pelo menos N online (0 = desligado). Aviso no chat Y s antes do heli sair.
         /// O heli voa HeliCrashDistanciaVoo metros a HeliCrashVelocidade m/s e HeliCrashAltura m do chão. Os destroços ficam HeliCrashMinutos.
-        /// HeliCrashVeiculo 0 = acha um helicóptero militar pelo nome. HeliCrashFumacaEfeito = coluna de fumaça do mod DZ (DZ_Fumaca).</summary>
+        /// HeliCrashVeiculo: 4031 = Chopper do California 2 (o heli militar do mapa); 0 = acha um helicóptero pelo nome. HeliCrashFumacaEfeito = coluna de fumaça do mod DZ (DZ_Fumaca).</summary>
         public int HeliCrashIntervaloMinutos = 120;
         public int HeliCrashMinJogadores = 1;
         public int HeliCrashAvisoSegundos = 60;
         public int HeliCrashMinutos = 15;
         public int HeliCrashCaixas = 3;
         public int HeliCrashZumbis = 12;
-        public ushort HeliCrashVeiculo = 0;
+        public ushort HeliCrashVeiculo = 4031;
         public float HeliCrashDistanciaVoo = 900f;
         public float HeliCrashVelocidade = 40f;
         public float HeliCrashAltura = 110f;

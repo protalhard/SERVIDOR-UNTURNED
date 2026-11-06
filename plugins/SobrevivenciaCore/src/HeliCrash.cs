@@ -40,9 +40,11 @@ namespace SobrevivenciaCore
             if (S.HeliCrashVeiculo != 0 && Assets.find(EAssetType.VEHICLE, S.HeliCrashVeiculo) is VehicleAsset v) return v;
             var helis = new List<VehicleAsset>();
             Assets.find(helis);
-            helis = helis.Where(x => x != null && x.engine == EEngine.HELICOPTER).ToList();
+            // o Chopper do California 2 é motor "PLANE" no .dat, então também vale pelo nome
+            helis = helis.Where(x => x != null && (x.engine == EEngine.HELICOPTER
+                || (x.vehicleName ?? "").IndexOf("chopper", StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
             if (helis.Count == 0) return null;
-            string[] nomes = { "military", "army", "black", "hawk", "huey", "transport", "police" };
+            string[] nomes = { "chopper", "military", "army", "black", "hawk", "huey", "transport", "police" };
             foreach (var n in nomes)
             {
                 var a = helis.FirstOrDefault(x => (x.vehicleName ?? "").IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0);
