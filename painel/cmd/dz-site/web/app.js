@@ -91,6 +91,13 @@
         'Pra abrir, fique <b>45 segundos</b> do lado das caixas, arrombando.',
         '15 zumbis em volta, e eles continuam nascendo enquanto tem gente perto.',
         'Em 15 minutos o caminhão <b>explode</b> e as caixas somem.'] },
+    { id: 'helicrash', nome: 'Heli Crash', quando: 'A cada 30 min', resumo: 'Helicóptero cai pegando fogo. Siga a fumaça: caixas com item raro nos destroços.',
+      itens: ['O chat avisa 1 minuto antes: <b>"HELI CRASH: um helicóptero militar está com pane e vai cair"</b>.',
+        'O <b>Chopper</b> militar do California 2 atravessa o céu soltando fogo e fumaça, perde o controle, gira e <b>cai com um estrondo</b> longe das safes.',
+        'Os destroços ficam queimando e a <b>fumaça</b> mostra o lugar de longe. No HUD aparece a distância até o crash.',
+        '3 caixas em volta dos destroços, todas com 2 armas do mercado negro e equipamento top. Uma é a do <b>ITEM RARO</b>: até 3 armas top, 2 equipamentos top, acessório, granada e quase sempre visão noturna.',
+        '12 zumbis militares (com um chefe) e mais horda enquanto tem gente perto. Cuidado com a explosão: quem estiver embaixo morre.',
+        'Os destroços e as caixas somem em 15 minutos.'] },
     { id: 'missoes', nome: 'Missões diárias', quando: 'Todo dia', resumo: 'Fácil, média e difícil. Dinheiro e XP pra quem cumprir.',
       itens: ['Todo dia à meia-noite saem 3 missões iguais pra todo mundo: uma <b>fácil</b>, uma <b>média</b> e uma <b>difícil</b>.',
         'Exemplos: matar zumbis, caçar animais, pescar, matar mega zumbi, matar jogadores.',
@@ -157,7 +164,7 @@
 
       <section class="secao"><h2>Eventos e <span>missões</span></h2>
         <p class="fraco" style="margin:-8px 0 16px">Coisas acontecendo o tempo todo no mapa. <a href="/eventos" data-link>Veja como funciona cada um →</a></p>
-        <div class="grade g4">${EVENTOS.map(cartaoEvento).join('')}</div>
+        <div class="grade g5">${EVENTOS.map(cartaoEvento).join('')}</div>
       </section>
 
       <section class="secao"><h2>O mapa: <span>California 2</span></h2>
@@ -464,7 +471,7 @@
 
     async eventos () {
       setTimeout(() => { const h = location.hash.slice(1); if (h && document.getElementById('ev-' + h)) document.getElementById('ev-' + h).scrollIntoView({ behavior: 'smooth' }); }, 50);
-      return cabeca('Eventos', 'Eventos e <em>missões</em>', 'Airdrop, clima, comboio e missões diárias: o que acontece no mapa e como pegar o loot.') +
+      return cabeca('Eventos', 'Eventos e <em>missões</em>', 'Airdrop, clima, comboio, heli crash e missões diárias: o que acontece no mapa e como pegar o loot.') +
         EVENTOS.map(e => `<section class="secao evento-detalhe" id="ev-${e.id}"><img src="/img/eventos/${e.id}.jpg" alt="${e.nome}" loading="lazy">
           <div><span class="evento-quando">${e.quando}</span><h2>${e.nome}</h2><ul>${e.itens.map(i => `<li>${i}</li>`).join('')}</ul></div></section>`).join('') +
         `<p class="fraco" style="text-align:center;margin-top:20px">A staff também pode começar um evento ou comboio a qualquer hora. Fique de olho no chat do jogo e no Discord.</p>`;

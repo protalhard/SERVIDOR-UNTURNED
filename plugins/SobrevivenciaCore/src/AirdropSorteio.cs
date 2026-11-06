@@ -173,6 +173,27 @@ namespace SobrevivenciaCore
                     if (sorte.Next(100) < (evento ? 50 : 20)) Por("visao", 1, 1);
                     if (evento && sorte.Next(2) == 0) Por("acessorio", 1, 1);
                     break;
+                case "auto_helicrash":
+                    // a caixa do ITEM RARO do heli crash: 2 armas do mercado negro, equipamento top e quase sempre visão noturna
+                    Arma(sorte.Next(3, 5), "arma_top");
+                    Arma(sorte.Next(2, 4), "arma_top");
+                    Por("equip_top", 1, 1); Por("equip_top", 1, 1);
+                    Por("acessorio", 1, 1);
+                    if (sorte.Next(2) == 0) Arma(sorte.Next(2, 4), "arma_top"); // às vezes uma terceira arma top
+                    if (sorte.Next(100) < 70) Por("visao", 1, 1);
+                    Por("granada", 1, 2);
+                    Por("remedio", 1, 2); Por("mre", 1, 1);
+                    break;
+                case "auto_helicrash2":
+                    // as outras caixas do heli crash: melhores que o baú do evento
+                    Arma(sorte.Next(3, 5), "arma_top");
+                    Arma(sorte.Next(2, 4), sorte.Next(3) == 0 ? "arma_boa" : "arma_top");
+                    Por("equip_top", 1, 1); Por("mochila", 1, 1);
+                    Por("acessorio", 1, 1);
+                    if (sorte.Next(100) < 40) Por("visao", 1, 1);
+                    if (sorte.Next(2) == 0) Por("granada", 1, 2);
+                    Por("remedio", 1, 3); Por("mre", 1, 2);
+                    break;
                 case "auto_equip":
                     Por("mochila", 1, 1); Por("colete", 1, 1); Por("chapeu", 1, 1);
                     Por("ferramenta", 1, 1); Por("remedio", 1, 3); Por("remedio", 1, 2);

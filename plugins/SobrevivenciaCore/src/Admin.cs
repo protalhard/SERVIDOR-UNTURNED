@@ -732,6 +732,9 @@ namespace SobrevivenciaCore
             try { TickRecompensas(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickArena(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickEvento(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickHeliCrash(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickAvisos(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickTelaMorte(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             TickReinicio();
 
             // marcadores da visão de admin (efeito 51232, só o admin vê)

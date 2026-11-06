@@ -18,3 +18,9 @@
 
 ## 04/11 · HUD original de volta
 🖥️ Voltou a tela original do jogo: barras de vida, fome, sede e stamina e todos os ícones de status. O relógio e o minimapa saíram.
+
+## 06/11 · Heli Crash, relógio de volta e tela de morte nova
+🚁 **Evento novo: HELI CRASH, a cada 30 minutos.** O chat avisa, um helicóptero militar atravessa o céu pegando fogo e cai com um estrondo. Siga a fumaça: 3 caixas nos destroços, uma com **item raro**. Cuidado com os zumbis militares. Como funciona: https://dayz.snaplag.com.br/eventos#helicrash
+⌚ **Relógio de volta** no canto, com vida, fome, sede, imunidade, stamina e oxigênio, e ícones de **sangramento**, **osso quebrado** e **radiação** que piscam.
+🔔 **Avisos no HUD** com contagem: pedido de TPA, teleporte (/home, /warp, /safe), em combate, modo raid, horda do evento e distância do heli crash.
+💀 **Tela de morte nova**: quem te matou, com que arma, de que distância e onde acertou, quanto dano você deu e levou, tempo vivo e botão de renascer.

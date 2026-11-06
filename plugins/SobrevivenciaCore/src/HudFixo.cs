@@ -127,13 +127,17 @@ namespace SobrevivenciaCore
             foreach (var id in new List<ulong>(hudFixo.Keys)) if (!vistos.Contains(id)) hudFixo.Remove(id);
         }
 
-        // os ícones nativos ficam escondidos com o relógio; sangramento e perna quebrada viram aviso na tela
+        /// <summary>Na radiação (deadzone) ou com a imunidade baixa: a vida começa a cair.</summary>
+        static bool MorrendoRadiacao(Player pl) => pl.movement.isRadiated || pl.life.virus <= 25;
+
+        // os ícones nativos ficam escondidos com o relógio; os ícones do relógio mostram, e o aviso na tela diz o que fazer
         static void AvisoSaude(Player pl, EstadoHudFixo e, float agora)
         {
             var l = pl.life;
             string aviso = l.isBleeding && l.isBroken ? "SANGRANDO E PERNA QUEBRADA: use bandagem e tala"
                 : l.isBleeding ? "SANGRANDO: use bandagem ou curativo"
-                : l.isBroken ? "PERNA QUEBRADA: use uma tala" : "";
+                : l.isBroken ? "PERNA QUEBRADA: use uma tala"
+                : l.virus == 0 ? "RADIACAO: saia da zona e tome anti-radiacao" : "";
             if (l.isDead) aviso = "";
             if (aviso.Length > 0 && (aviso != e.Aviso || agora >= e.ProximoAviso))
             {
@@ -170,7 +174,13 @@ namespace SobrevivenciaCore
                 T($"Rel_{RelEstados[i]}_Txt", v + "%");
                 int seg = Mathf.CeilToInt(v / 10f);
                 for (int s = 1; s <= 10; s++) V($"Rel_{RelEstados[i]}_{s}", s <= seg);
+                // pedaço do anel piscando quando está baixo (stamina e oxigênio só quando zeram)
+                V($"Rel_{RelEstados[i]}_Baixo", i >= 4 ? v <= 5 : v <= 25);
             }
+            // ícones de status (o mod faz eles piscarem): sangrando, osso quebrado e radiação
+            V("Rel_Sangrando", l.isBleeding);
+            V("Rel_Quebrado", l.isBroken);
+            V("Rel_Radiacao", MorrendoRadiacao(pl));
         }
 
         void AtualizarMinimapa(Player pl, EstadoHudFixo e)

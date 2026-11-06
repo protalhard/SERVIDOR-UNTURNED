@@ -143,8 +143,27 @@ namespace SobrevivenciaCore
         public int ComboioZumbis = 15;
         public int ComboioSegundosArrombar = 45;
         public ushort ComboioVeiculo = 0;
+        /// <summary>Heli Crash: a cada X minutos com pelo menos N online (0 = desligado). Aviso no chat Y s antes do heli sair.
+        /// O heli voa HeliCrashDistanciaVoo metros a HeliCrashVelocidade m/s e HeliCrashAltura m do chão. Os destroços ficam HeliCrashMinutos.
+        /// HeliCrashVeiculo: 4031 = Chopper do California 2 (o heli militar do mapa); 0 = acha um helicóptero pelo nome. HeliCrashFumacaEfeito = coluna de fumaça do mod DZ (DZ_Fumaca).</summary>
+        public int HeliCrashIntervaloMinutos = 30;
+        public int HeliCrashMinJogadores = 1;
+        public int HeliCrashAvisoSegundos = 60;
+        public int HeliCrashMinutos = 15;
+        public int HeliCrashCaixas = 3;
+        public int HeliCrashZumbis = 12;
+        public ushort HeliCrashVeiculo = 4031;
+        public float HeliCrashDistanciaVoo = 900f;
+        public float HeliCrashVelocidade = 40f;
+        public float HeliCrashAltura = 110f;
+        public ushort HeliCrashFumacaEfeito = 51307;
+        public float HeliCrashFumacaSegundos = 8f;
+        /// <summary>Avisos no HUD (efeito DZ_Avisos do mod): pedido de TPA, teleporte, combate, raid, heli crash. 0 = desligado.</summary>
+        public ushort AvisosEfeito = 51305;
+        /// <summary>Tela de morte (efeito DZ_Morte do mod): quem matou, arma, distância, dano e botão renascer. 0 = tela do jogo.</summary>
+        public ushort MorteEfeito = 51306;
         /// <summary>Relógio fixo no canto (efeito do mod, 0 = desligado). Ligado, some a tecla do relógio e as barras do jogo.</summary>
-        public ushort RelogioFixoEfeito = 0; // desligado a pedido do dono (era 51299)
+        public ushort RelogioFixoEfeito = 51299;
         /// <summary>Minimapa no canto de cima à direita (efeito do mod, 0 = desligado). A imagem vem do site:
         /// {x} e {y} = pixel do mapa (Chart, MiniMapaLargura x MiniMapaAltura) onde o jogador está.</summary>
         public ushort MiniMapaEfeito = 0; // desligado a pedido do dono (era 51300)
@@ -439,6 +458,13 @@ namespace SobrevivenciaCore
             {
                 if (MontarDesnivelMax < 10f) MontarDesnivelMax = 10f;
                 VersaoPadroes = 16;
+                mudou = true;
+            }
+            // v18: relógio fixo de volta (pedido do dono em 06/11, agora com sangramento, osso quebrado e radiação)
+            if (VersaoPadroes < 18)
+            {
+                if (RelogioFixoEfeito == 0) RelogioFixoEfeito = 51299;
+                VersaoPadroes = 18;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão
