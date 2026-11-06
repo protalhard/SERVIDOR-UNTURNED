@@ -214,7 +214,7 @@ namespace SobrevivenciaCore
                     {
                         st.items.clear();
                         // a primeira caixa é a do ITEM RARO
-                        foreach (var it in ConteudoAirdrop(new KitAirdrop { Nome = i == 0 ? "auto:auto_helicrash" : "auto:auto_evento" }))
+                        foreach (var it in ConteudoAirdrop(new KitAirdrop { Nome = i == 0 ? "auto:auto_helicrash" : "auto:auto_helicrash2" }))
                         {
                             if (!Itens.Existe(it.Id)) continue;
                             for (int q = 0; q < it.Quantidade; q++) st.items.tryAddItem(new Item(it.Id, true));

@@ -95,7 +95,7 @@
       itens: ['O chat avisa 1 minuto antes: <b>"HELI CRASH: um helicóptero militar está com pane e vai cair"</b>.',
         'O <b>Chopper</b> militar do California 2 atravessa o céu soltando fogo e fumaça, perde o controle, gira e <b>cai com um estrondo</b> longe das safes.',
         'Os destroços ficam queimando e a <b>fumaça</b> mostra o lugar de longe. No HUD aparece a distância até o crash.',
-        '3 caixas em volta dos destroços. Uma é a do <b>ITEM RARO</b>: 2 armas do mercado negro com pentes, equipamento top, acessório e quase sempre visão noturna.',
+        '3 caixas em volta dos destroços, todas com 2 armas do mercado negro e equipamento top. Uma é a do <b>ITEM RARO</b>: até 3 armas top, 2 equipamentos top, acessório, granada e quase sempre visão noturna.',
         '12 zumbis militares (com um chefe) e mais horda enquanto tem gente perto. Cuidado com a explosão: quem estiver embaixo morre.',
         'Os destroços e as caixas somem em 15 minutos.'] },
     { id: 'missoes', nome: 'Missões diárias', quando: 'Todo dia', resumo: 'Fácil, média e difícil. Dinheiro e XP pra quem cumprir.',
