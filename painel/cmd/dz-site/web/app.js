@@ -91,7 +91,7 @@
         'Pra abrir, fique <b>45 segundos</b> do lado das caixas, arrombando.',
         '15 zumbis em volta, e eles continuam nascendo enquanto tem gente perto.',
         'Em 15 minutos o caminhão <b>explode</b> e as caixas somem.'] },
-    { id: 'helicrash', nome: 'Heli Crash', quando: 'A cada 2h', resumo: 'Helicóptero cai pegando fogo. Siga a fumaça: caixas com item raro nos destroços.',
+    { id: 'helicrash', nome: 'Heli Crash', quando: 'A cada 30 min', resumo: 'Helicóptero cai pegando fogo. Siga a fumaça: caixas com item raro nos destroços.',
       itens: ['O chat avisa 1 minuto antes: <b>"HELI CRASH: um helicóptero militar está com pane e vai cair"</b>.',
         'O <b>Chopper</b> militar do California 2 atravessa o céu soltando fogo e fumaça, perde o controle, gira e <b>cai com um estrondo</b> longe das safes.',
         'Os destroços ficam queimando e a <b>fumaça</b> mostra o lugar de longe. No HUD aparece a distância até o crash.',

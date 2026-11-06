@@ -77,12 +77,12 @@ namespace SobrevivenciaCore
         }
 
         /// <summary>Marca o heli crash (aviso no chat agora, o heli sai depois de avisoSegundos). Devolve o que aconteceu.</summary>
-        internal string ComecarHeliCrash(int avisoSegundos)
+        internal string ComecarHeliCrash(int avisoSegundos, Vector3? aqui = null)
         {
             if (!Level.isLoaded) return "mapa carregando";
             if (HeliCrashAtivo) return "ja tem um heli crash acontecendo";
             if (HeliMilitar() == null) return "nenhum helicoptero carregado no servidor";
-            var ponto = PontoDeQueda();
+            var ponto = aqui ?? PontoDeQueda();
             if (ponto == null) return "sem ponto de queda fora das safes";
             heliPontoMarcado = ponto.Value;
             avisoSegundos = Math.Max(5, avisoSegundos);
@@ -285,7 +285,8 @@ namespace SobrevivenciaCore
         }
     }
 
-    /// <summary>/helicrash: staff com permissão Mundo começa o heli crash (o heli sai em 30 s). /helicrash parar encerra.</summary>
+    /// <summary>/helicrash: staff com permissão Mundo começa o heli crash (o heli sai em 30 s).
+    /// /helicrash aqui = cai 30 m na sua frente em 10 s (pra testar). /helicrash parar encerra.</summary>
     public class CmdHeliCrash : ComandoSistema
     {
         public override string Name => "helicrash";
@@ -299,6 +300,16 @@ namespace SobrevivenciaCore
                 P.PararHeliCrash();
                 P.LogAdmin(p, "HELI CRASH: parado");
                 Chat.Info(p, "Heli crash encerrado.");
+                return;
+            }
+            if (a.Length > 0 && a[0].Equals("aqui", StringComparison.OrdinalIgnoreCase))
+            {
+                // teste do dono: cai 30 m na frente de quem digitou (longe o bastante pra explosão não matar)
+                var frente = p.Player.transform.forward; frente.y = 0;
+                if (frente.sqrMagnitude < 0.01f) frente = Vector3.forward;
+                var r2 = P.ComecarHeliCrash(10, p.Position + frente.normalized * 30f);
+                P.LogAdmin(p, "HELI CRASH AQUI: " + r2);
+                Chat.Info(p, "Heli crash: " + r2 + ". Olhe pro ceu!");
                 return;
             }
             var r = P.ComecarHeliCrash(30);

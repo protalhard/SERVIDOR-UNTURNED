@@ -253,7 +253,7 @@ namespace SobrevivenciaCore
                 "Airdrop a cada 30 min: caixa de armas ou equipamento longe da safe, com 8 zumbis.",
                 "Clima a cada 1h30: avisa 3 min antes e cai o BAU DO EVENTO (melhor loot), some em 10 min.",
                 "Comboio a cada 2h30 (2+ online): fique 45s nas caixas pra arrombar. Explode em 15 min.",
-                "Heli Crash a cada 2h: o heli cai pegando fogo, siga a fumaca. 3 caixas, uma com item raro. Some em 15 min.",
+                "Heli Crash a cada 30 min: o heli cai pegando fogo, siga a fumaca. 3 caixas, uma com item raro. Some em 15 min.",
                 "Missoes: 3 por dia (facil, media, dificil). Veja com /missoes ou no NPC da safe. Mais em dayz.snaplag.com.br/eventos" }),
         };
 

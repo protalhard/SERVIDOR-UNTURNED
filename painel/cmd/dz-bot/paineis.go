@@ -181,7 +181,7 @@ func embedsEventos() []*discordgo.MessageEmbed {
 				"• Fique **45 segundos** do lado das caixas pra arrombar.\n"+
 				"• 15 zumbis em volta, e continuam nascendo enquanto tem gente perto.\n"+
 				"• Em 15 minutos o caminhão **explode** e as caixas somem."),
-		ev("helicrash", "🚁 Heli Crash · a cada 2h",
+		ev("helicrash", "🚁 Heli Crash · a cada 30 min",
 			"• O chat avisa 1 minuto antes: **HELI CRASH: um helicóptero militar está com pane e vai cair**.\n"+
 				"• O heli atravessa o céu pegando fogo, perde o controle e **cai com um estrondo** longe das safes.\n"+
 				"• Os destroços ficam queimando e a **fumaça** mostra o lugar. No HUD aparece a distância.\n"+
