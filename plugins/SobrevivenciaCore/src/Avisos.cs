@@ -84,8 +84,10 @@ namespace SobrevivenciaCore
             {
                 var h = AgoraBrasil;
                 int min = h.Hour * 60 + h.Minute, fim = S.RaidFimHora * 60;
-                int faltam = (fim - min + 1440) % 1440;
-                l.Add(("Raid", $"MODO RAID  {Tempo(faltam * 60 - h.Second)}"));
+                int faltam = (fim - min + 1440) % 1440, passou = (min - S.RaidInicioHora * 60 + 1440) % 1440;
+                // só no primeiro minuto do raid e nos últimos 5 (pedido do dono: não fica parado no meio da tela)
+                int seg = faltam * 60 - h.Second;
+                if (passou < 1 || seg <= 300) l.Add(("Raid", $"MODO RAID  {Tempo(seg)}"));
             }
             return l;
         }
