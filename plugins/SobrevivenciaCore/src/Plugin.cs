@@ -37,6 +37,7 @@ namespace SobrevivenciaCore
             foreach (var sp in Provider.clients) OuvirDano(sp?.player);
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
+            LigarCriaturas();
             U.Events.OnPlayerConnected += AoConectar;
             PlayerInput.onPluginKeyTick += RelogioTecla;
             PlayerLife.OnPreDeath += RelogioAntesDeMorrer;
@@ -68,6 +69,7 @@ namespace SobrevivenciaCore
             DesligarSafeZone();
             PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
+            try { DesligarCriaturas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             U.Events.OnPlayerConnected -= AoConectar;
             PlayerInput.onPluginKeyTick -= RelogioTecla;
             PlayerLife.OnPreDeath -= RelogioAntesDeMorrer;

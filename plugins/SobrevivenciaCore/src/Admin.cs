@@ -697,7 +697,15 @@ namespace SobrevivenciaCore
                 var caixa = CaixasPerto(ad.Pos).FirstOrDefault(d => !ad.JaExistiam.Contains(d.instanceID));
                 if (caixa == null) continue;
                 airdrops.RemoveAt(i);
-                try { var nz = NascerZumbis(caixa.model.position, ad.Zumbis); if (nz > 0) Rocket.Core.Logging.Logger.Log($"[Airdrop] {nz} zumbis em volta da caixa"); }
+                try
+                {
+                    var nz = NascerZumbis(caixa.model.position, ad.Zumbis);
+                    if (nz > 0) Rocket.Core.Logging.Logger.Log($"[Airdrop] {nz} zumbis em volta da caixa");
+                    // só em airdrop com zumbis (evento/auto); sem área de zumbi ali, vêm mais infectados no lugar
+                    if (ad.Zumbis > 0)
+                        NascerCriaturas(caixa.model.position, S.AirdropInfectados + (nz == 0 ? S.CriaturasSemZumbi : 0),
+                            sorteCriatura.Next(100) < S.AirdropChanceUrso ? 1 : 0, 660f);
+                }
                 catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
                 var st = (InteractableStorage)caixa.interactable;
                 st.items.clear();
@@ -733,6 +741,7 @@ namespace SobrevivenciaCore
             try { TickArena(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickEvento(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickReservaZumbis(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickCriaturas(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickHeliCrash(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickAvisos(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickTelaMorte(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }

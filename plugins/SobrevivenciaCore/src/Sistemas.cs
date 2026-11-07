@@ -158,6 +158,25 @@ namespace SobrevivenciaCore
         public float HeliCrashAltura = 110f;
         public ushort HeliCrashFumacaEfeito = 51307;
         public float HeliCrashFumacaSegundos = 8f;
+        /// <summary>Criaturas do mod DZ Menu (animais, nascem em qualquer lugar): infectado militar 51310, infectado radioativo 51312
+        /// (sorteados), urso radioativo 51311. Por evento: Infectados/Ursos; sem área de zumbi no ponto, nascem +CriaturasSemZumbi infectados.
+        /// CriaturaRadiacao = radiação (virus) por golpe do urso/infectado radioativo. 0 num ID = desligado.</summary>
+        public ushort CriaturaInfectadoMilitar = 51310;
+        public ushort CriaturaInfectadoRadioativo = 51312;
+        public ushort CriaturaUrso = 51311;
+        public int CriaturasMaxPorPonto = 12;
+        public int CriaturasSemZumbi = 6;
+        public int HeliCrashInfectados = 4;
+        public int HeliCrashUrsos = 1;
+        public int ComboioInfectados = 4;
+        public int ComboioUrsos = 1;
+        public int AirdropInfectados = 2;
+        public int AirdropChanceUrso = 30;
+        public float CriaturaRadiacao = 12f;
+        public int CriaturaInfectadoLootMin = 1;
+        public int CriaturaInfectadoLootMax = 2;
+        public int CriaturaUrsoLootMin = 3;
+        public int CriaturaUrsoLootMax = 5;
         /// <summary>Avisos no HUD (efeito DZ_Avisos do mod): pedido de TPA, teleporte, combate, raid, heli crash. 0 = desligado.</summary>
         public ushort AvisosEfeito = 51305;
         /// <summary>Tela de morte (efeito DZ_Morte do mod): quem matou, arma, distância, dano e botão renascer. 0 = tela do jogo.</summary>
