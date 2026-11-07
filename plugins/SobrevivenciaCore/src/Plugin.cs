@@ -38,6 +38,7 @@ namespace SobrevivenciaCore
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
             LigarCriaturas();
+            LigarTelaMorte();
             U.Events.OnPlayerConnected += AoConectar;
             PlayerInput.onPluginKeyTick += RelogioTecla;
             PlayerLife.OnPreDeath += RelogioAntesDeMorrer;
@@ -69,6 +70,7 @@ namespace SobrevivenciaCore
             DesligarSafeZone();
             PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
+            try { DesligarTelaMorte(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { DesligarCriaturas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             U.Events.OnPlayerConnected -= AoConectar;
             PlayerInput.onPluginKeyTick -= RelogioTecla;
@@ -161,6 +163,7 @@ namespace SobrevivenciaCore
             GuardLiberar(id, 15f);
             OuvirTeleporte(p.Player);
             OuvirDano(p.Player);
+            EsconderMorteDoJogo(p.Player);
             bool novo = !Stats.Existe(id);
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);

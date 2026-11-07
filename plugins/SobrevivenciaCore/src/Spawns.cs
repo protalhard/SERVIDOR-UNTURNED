@@ -83,9 +83,35 @@ namespace SobrevivenciaCore
 
         void SpawnAoRenascer(UnturnedPlayer p, Vector3 pos)
         {
-            if (SafesComSpawn().Count == 0) return;
+            if (SafesComSpawn().Count == 0 && !escolhaRenascer.ContainsKey(Id(p))) return;
             // renasceu na cama: fica lá
-            if (BarricadeManager.tryGetBed(p.CSteamID, out var cama, out _) && (cama - pos).sqrMagnitude < 25f) return;
+            if (BarricadeManager.tryGetBed(p.CSteamID, out var cama, out _) && (cama - pos).sqrMagnitude < 25f) { escolhaRenascer.Remove(Id(p)); return; }
+            // escolheu na tela de morte: vai direto, sem abrir a escolha de safe
+            if (escolhaRenascer.TryGetValue(Id(p), out var escolha))
+            {
+                escolhaRenascer.Remove(Id(p));
+                if (escolha == "aleatorio")
+                {
+                    StartCoroutine(Depois(.5f, p, () =>
+                    {
+                        var lugar = PontoQualquerDoMapa();
+                        if (lugar == null) { var s0 = SpawnAleatorio(); if (s0 != null) IrPraSafe(p, s0.Nome); return; }
+                        GuardLiberar(Id(p), 8f);
+                        p.Player.teleportToLocationUnsafe(lugar.Value + Vector3.up * .5f, (float)(sorte.NextDouble() * 360));
+                        Chat.Info(p, "Voce renasceu num lugar aleatorio do mapa.");
+                    }));
+                    return;
+                }
+                if (escolha.StartsWith("safe:"))
+                {
+                    var nome = escolha.Substring(5);
+                    if (ultimaSafe.TryGetValue(Id(p), out var u) && u.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase)) u.Seguidas++;
+                    else ultimaSafe[Id(p)] = u = new UltimaSafe { Nome = nome, Seguidas = 1 };
+                    u.Quando = Time.realtimeSinceStartup;
+                    StartCoroutine(Depois(.5f, p, () => IrPraSafe(p, nome)));
+                    return;
+                }
+            }
             StartCoroutine(Depois(.5f, p, () => { var s = SpawnAleatorio(); if (s != null) IrPraSafe(p, s.Nome); }));
             StartCoroutine(Depois(2f, p, () => AbrirEscolhaSafe(p, true)));
         }
