@@ -93,14 +93,24 @@ namespace SobrevivenciaCore
             return $"heli sai em {avisoSegundos} s e cai perto de {RegiaoDe(heliPontoMarcado)} (X {heliPontoMarcado.x:0} Z {heliPontoMarcado.z:0})";
         }
 
+        /// <summary>Chão de verdade no ponto: o terreno, ou o que estiver até 40 m acima dele (casa, pedra).
+        /// Antes o raio vinha de 1000 m e batia num colisor invisível no céu do California 2 (o heli "caía" no ar).</summary>
+        static Vector3 ChaoDaQueda(Vector3 p)
+        {
+            float t = Terreno(p.x, p.z);
+            if (float.IsNaN(t)) t = p.y;
+            if (Physics.Raycast(new Vector3(p.x, t + 40f, p.z), Vector3.down, out var hit, 80f, RayMasks.BLOCK_COLLISION, QueryTriggerInteraction.Ignore))
+                return hit.point;
+            return new Vector3(p.x, t, p.z);
+        }
+
         void LargarHeli()
         {
             heliComecaEm = -1f;
             var asset = HeliMilitar();
             if (asset == null) { Rocket.Core.Logging.Logger.Log("[Heli Crash] sem helicoptero"); return; }
             var queda = heliPontoMarcado;
-            if (Physics.Raycast(new Vector3(queda.x, 1000f, queda.z), Vector3.down, out var chao, 2000f, RayMasks.BLOCK_COLLISION, QueryTriggerInteraction.Ignore))
-                queda = chao.point;
+            queda = ChaoDaQueda(queda);
             float ang = (float)(sorte.NextDouble() * Math.PI * 2);
             var dir = new Vector3(Mathf.Cos(ang), 0, Mathf.Sin(ang));
             float voo = Mathf.Max(300f, S.HeliCrashDistanciaVoo);
