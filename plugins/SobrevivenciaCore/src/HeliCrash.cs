@@ -240,7 +240,8 @@ namespace SobrevivenciaCore
                     }
                 }
             int zumbis = NascerZumbis(h.Queda, S.HeliCrashZumbis, true);
-            Rocket.Core.Logging.Logger.Log($"[Heli Crash] {zumbis} zumbis nos destrocos, fumaca: {string.Join(", ", EfeitosFogo().Select(e => $"{e.name} ({e.id})"))}");
+            int bichos = NascerCriaturas(h.Queda, S.HeliCrashInfectados + (zumbis == 0 ? S.CriaturasSemZumbi : 0), S.HeliCrashUrsos, S.HeliCrashMinutos * 60f + 120f);
+            Rocket.Core.Logging.Logger.Log($"[Heli Crash] {zumbis} zumbis e {bichos} criaturas nos destrocos, fumaca: {string.Join(", ", EfeitosFogo().Select(e => $"{e.name} ({e.id})"))}");
             h.ProximaHorda = Time.realtimeSinceStartup + 30f;
             Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", $"o helicoptero caiu perto de {Chat.Limpar(h.Regiao)}! Siga a fumaca: ")
                 + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com item raro")) + Chat.Cor("#FFFFFF", $" e zumbis militares. Some em {S.HeliCrashMinutos} min."));
@@ -267,6 +268,7 @@ namespace SobrevivenciaCore
                 }
                 catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             }
+            if (h.Caiu) LimparCriaturas(h.Queda);
             if (avisar) Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", "os destrocos sumiram. Acabou o evento."));
         }
 
@@ -300,7 +302,7 @@ namespace SobrevivenciaCore
                 if (agora >= h.ProximaHorda && Provider.clients.Any(x => x.player != null && (x.player.transform.position - h.Queda).sqrMagnitude < 150f * 150f))
                 {
                     h.ProximaHorda = agora + 35f;
-                    NascerZumbis(h.Queda, Math.Max(2, S.HeliCrashZumbis / 3), true);
+                    if (NascerZumbis(h.Queda, Math.Max(2, S.HeliCrashZumbis / 3), true) == 0) NascerCriaturas(h.Queda, 2, 0, Mathf.Max(60f, h.Fim - agora + 60f));
                 }
                 return;
             }

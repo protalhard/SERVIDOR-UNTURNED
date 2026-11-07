@@ -109,7 +109,8 @@ namespace SobrevivenciaCore
                     }
                 }
             comboio = c;
-            NascerZumbis(c.Pos, S.ComboioZumbis, true);
+            int zc = NascerZumbis(c.Pos, S.ComboioZumbis, true);
+            NascerCriaturas(c.Pos, S.ComboioInfectados + (zc == 0 ? S.CriaturasSemZumbi : 0), S.ComboioUrsos, S.ComboioMinutos * 60f + 120f);
             var regiao = RegiaoDe(c.Pos);
             Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("COMBOIO EMBOSCADO ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(regiao)}! Caixas militares trancadas e muitos zumbis. Fique {S.ComboioSegundosArrombar} s do lado das caixas pra arrombar. O caminhao explode em {S.ComboioMinutos} min."));
             Rocket.Core.Logging.Logger.Log($"[Comboio] {asset?.vehicleName ?? "sem caminhao"} em X {c.Pos.x:0} Z {c.Pos.z:0} ({regiao}), {c.Caixas.Count} caixas");
@@ -120,6 +121,7 @@ namespace SobrevivenciaCore
         {
             var c = comboio; comboio = null;
             if (c == null) return;
+            LimparCriaturas(c.Pos);
             try { if (c.Caminhao != null && !c.Caminhao.isExploded) VehicleManager.damage(c.Caminhao, 100000f, 1f, false, default(CSteamID), EDamageOrigin.Unknown); }
             catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             foreach (var t in c.Caixas)
@@ -166,7 +168,7 @@ namespace SobrevivenciaCore
             if (chegando && agora >= c.ProximaHorda)
             {
                 c.ProximaHorda = agora + 25f;
-                NascerZumbis(c.Pos, Math.Max(2, S.ComboioZumbis / 3), true);
+                if (NascerZumbis(c.Pos, Math.Max(2, S.ComboioZumbis / 3), true) == 0) NascerCriaturas(c.Pos, 2, 0, Mathf.Max(60f, c.Fim - agora + 60f));
             }
             if (c.Aberto) return;
             if (perto.Count == 0) { if (c.Arrombando > 0) c.Arrombando = Math.Max(0, c.Arrombando - 2f); return; }
