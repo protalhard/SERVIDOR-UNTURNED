@@ -1,0 +1,11 @@
+[Unit]
+Description=Confere se saiu versao nova do Unturned e atualiza o servidor sozinho
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/unturned/repo/scripts/dz-update-jogo.py
+StandardOutput=append:/var/log/dz-update-jogo.log
+StandardError=append:/var/log/dz-update-jogo.log
+TimeoutStartSec=45min
