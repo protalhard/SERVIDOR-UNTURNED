@@ -16,7 +16,7 @@ namespace SobrevivenciaCore
     ///   Status_X_Baixo (borda vermelha abaixo de 25%), Status_Combate (+ _Txt), Status_Sacola (+ _Txt),
     ///   Arma, Arma_Nome, Arma_Municao, Arma_Max, Arma_Modo, Arma_Vazia.
     /// - DZ_Acerto (S.AcertoEfeito), pra quem atira: Acerto_Dano ("-54"), Acerto_Cabeca (cabecinha no meio), Acerto_Abate,
-    ///   Acerto_Som (tique do acerto) e Acerto_Som_Cabeca (som do headshot). Os sons são objetos com AudioSource
+    ///   Acerto_Som (tique do acerto), Acerto_Som_Abate (som de abate) e Acerto_Som_Cabeca (som do headshot). Os sons são objetos com AudioSource
     ///   "Play On Awake" que começam desligados; o plugin liga o que deve tocar.
     /// - DZ_Atingido (S.AtingidoEfeito), pra quem levou o tiro: Atingido_Foto, Atingido_Nome, Atingido_Arma, Atingido_Dano,
     ///   Atingido_Cabeca.
@@ -267,7 +267,7 @@ namespace SobrevivenciaCore
             if (op.Dano) EffectManager.sendUIEffectText(AcertoKey, con, true, "Acerto_Dano", "-" + dano);
             if (cabeca) EffectManager.sendUIEffectVisibility(AcertoKey, con, true, "Acerto_Cabeca", true);
             if (abate) EffectManager.sendUIEffectVisibility(AcertoKey, con, true, "Acerto_Abate", true);
-            if (op.Sons) EffectManager.sendUIEffectVisibility(AcertoKey, con, true, cabeca ? "Acerto_Som_Cabeca" : "Acerto_Som", true);
+            if (op.Sons) EffectManager.sendUIEffectVisibility(AcertoKey, con, true, cabeca ? "Acerto_Som_Cabeca" : abate ? "Acerto_Som_Abate" : "Acerto_Som", true);
         }
 
         void MostrarAtingido(Player vitima, Player atirador, int dano, bool cabeca)
