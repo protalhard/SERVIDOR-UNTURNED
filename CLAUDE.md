@@ -52,3 +52,10 @@ Heli Crash: a cada 30 min contados do sumiço do anterior; some em 15 min, ou 10
 Criaturas (`Criaturas.cs`, /infectados [n] [ursos] | limpar): animais do mod DZ Menu 51310 infectado militar, 51312 infectado
 radioativo, 51311 urso radioativo. São animais (`AnimalManager.spawnAnimal`), então nascem em qualquer ponto, até sem área de zumbi.
 O pack sai de `AnimalManager.packs` pra não renascerem sozinhos; o plugin dá o loot na morte e radiação no golpe dos radioativos.
+
+## Interface estilo Zumbas (nosso jeito)
+- `Interface.cs`: DZ_Status 51313 (status, EM COMBATE, SACOLA, arma; esconde as barras/munição do jogo), DZ_Acerto 51314
+  (dano, headshot com som), DZ_Atingido 51315 (quem te acertou), teclas Plugin Hotkey 1-5, opções por jogador (opcoes_interface.txt).
+- `MenuEventos.cs`: abas Eventos e Comandos do menu e as opções "Sua interface" do Perfil. `RegistrarEvento` alimenta a aba Eventos.
+- Ícones do chat: `branding/chat/*.png` (gerados por `branding/gerar_icones_chat.py`), via `Chat.TodosIcone`/`ParaIcone`.
+- Nomes de elementos pro Unity: `branding/NOMES_hud_tiro_menu_zumbas.md`.
