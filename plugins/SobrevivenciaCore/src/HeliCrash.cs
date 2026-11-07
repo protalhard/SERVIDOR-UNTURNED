@@ -20,7 +20,8 @@ namespace SobrevivenciaCore
             public InteractableVehicle Heli;
             public Vector3 Inicio, Queda, Direcao;
             public float Altura, Comecou, Duracao, Fim, CaiuEm, ProximaFumaca, ProximaHorda;
-            public bool Caiu, Achado;
+            public bool Caiu, Achado, Liberado;
+            public int Abates;
             public string Regiao;
             public List<Transform> Caixas = new List<Transform>();
             /// <summary>Quem já recebeu o marcador do local no mapa.</summary>
@@ -242,12 +243,15 @@ namespace SobrevivenciaCore
                     }
                 }
             // só as nossas criaturas (pedido do dono): nascem em qualquer lugar, então o heli cai em qualquer ponto do mapa
-            int bichos = NascerCriaturas(h.Queda, S.HeliCrashInfectados + S.CriaturasSemZumbi, S.HeliCrashUrsos, S.HeliCrashMinutos * 60f + 120f);
+            int bichos = NascerCriaturas(h.Queda, S.HeliCrashInfectados + S.CriaturasSemZumbi, S.HeliCrashUrsos, S.HeliCrashMinutos * 60f + 120f,
+                total: S.HeliCrashAbates + 6);
+            h.Liberado = S.HeliCrashAbates <= 0;
             Rocket.Core.Logging.Logger.Log($"[Heli Crash] {bichos} criaturas nos destrocos, fumaca: {string.Join(", ", EfeitosFogo().Select(e => $"{e.name} ({e.id})"))}");
             h.ProximaHorda = Time.realtimeSinceStartup + 30f;
             Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH CAIU ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(h.Regiao)}! O local ficou ")
                 + Chat.Cor(S.CorDestaque, Chat.Forte("marcado no mapa")) + Chat.Cor("#FFFFFF", " e tem fumaca alta saindo dos destrocos. ")
-                + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com o melhor loot")) + Chat.Cor("#FFFFFF", $" e infectados. Some em {S.HeliCrashMinutos} min."));
+                + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com o melhor loot")) + Chat.Cor("#FFFFFF", h.Liberado ? $" e infectados. Some em {S.HeliCrashMinutos} min."
+                    : $" trancadas: matem {S.HeliCrashAbates} infectados no local pra abrir. Some em {S.HeliCrashMinutos} min."));
             MarcarHeliNoMapa(h);
             RegistrarEvento("Heli Crash caiu perto de " + Chat.Limpar(h.Regiao));
             Rocket.Core.Logging.Logger.Log($"[Heli Crash] caiu em X {h.Queda.x:0} Z {h.Queda.z:0} ({h.Regiao}), {h.Caixas.Count} caixas");
@@ -283,6 +287,34 @@ namespace SobrevivenciaCore
         }
 
         internal void PararHeliCrash() => AcabarHeliCrash(true);
+
+        /// <summary>Uma criatura do heli morreu: conta pro desbloqueio das caixas.</summary>
+        void AbateHeli(Vector3 centro)
+        {
+            var h = heli;
+            if (h == null || !h.Caiu || h.Liberado || (centro - h.Queda).sqrMagnitude > 60f * 60f) return;
+            h.Abates++;
+            int alvo = Math.Max(1, S.HeliCrashAbates);
+            foreach (var sp in Provider.clients)
+                if (sp?.player != null && (sp.player.transform.position - h.Queda).sqrMagnitude < 150f * 150f)
+                    sp.player.ServerShowHint($"<color=#FF3B30><b>HELI CRASH</b></color>\nInfectados mortos: {Math.Min(h.Abates, alvo)}/{alvo}", 2f);
+            if (h.Abates < alvo) return;
+            h.Liberado = true;
+            RegistrarEvento($"Heli Crash liberado ({alvo} infectados mortos)");
+            Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", $"{alvo} infectados mortos! As caixas dos destrocos estao ")
+                + Chat.Cor(S.CorDestaque, Chat.Forte("ABERTAS")) + Chat.Cor("#FFFFFF", "."));
+        }
+
+        /// <summary>Caixa do heli só abre depois dos abates (chamado no onOpenStorageRequested).</summary>
+        void AoAbrirCaixaHeli(CSteamID quem, InteractableStorage bau, ref bool permitir)
+        {
+            var h = heli;
+            if (!permitir || h == null || h.Liberado || bau == null || !h.Caixas.Contains(bau.transform)) return;
+            permitir = false;
+            var sp = PlayerTool.getSteamPlayer(quem);
+            int alvo = Math.Max(1, S.HeliCrashAbates);
+            if (sp?.player != null) sp.player.ServerShowHint($"<color=#FF3B30><b>CAIXA TRANCADA</b></color>\nMatem {alvo} infectados aqui: {h.Abates}/{alvo}", 3f);
+        }
 
         void AcabarHeliCrash(bool avisar)
         {

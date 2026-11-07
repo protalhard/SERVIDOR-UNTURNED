@@ -170,11 +170,19 @@ namespace SobrevivenciaCore
         public int CriaturasSemZumbi = 6;
         public int HeliCrashInfectados = 4;
         public int HeliCrashUrsos = 1;
+        /// <summary>Heli Crash: as caixas só abrem depois de matar esse tanto de infectados no local (0 = abertas desde o começo).</summary>
+        public int HeliCrashAbates = 20;
+        /// <summary>Urso radioativo toma esse tanto x de dano (menos vida). O dano dele continua igual.</summary>
+        public float CriaturaUrsoDanoRecebido = 1.5f;
         public int ComboioInfectados = 4;
         public int ComboioUrsos = 1;
         public int AirdropInfectados = 2;
         public int AirdropChanceUrso = 30;
         public float CriaturaRadiacao = 12f;
+        /// <summary>Infectado radioativo toma esse tanto x de dano (2.5 = 40% da vida do mod).</summary>
+        public float CriaturaRadioativoDanoRecebido = 2.5f;
+        /// <summary>Comboio: no máximo ComboioReforcos levas de zumbi depois da primeira, só quando sobram poucos vivos.</summary>
+        public int ComboioReforcos = 2;
         public int CriaturaInfectadoLootMin = 1;
         public int CriaturaInfectadoLootMax = 2;
         public int CriaturaUrsoLootMin = 3;

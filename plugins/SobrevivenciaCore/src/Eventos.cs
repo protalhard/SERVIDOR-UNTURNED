@@ -204,7 +204,7 @@ namespace SobrevivenciaCore
         int NascerZumbis(Vector3 centro, int quantos) => NascerZumbis(centro, quantos, false);
 
         /// <summary>militar = vira zumbi de tabela militar e um deles vira chefe (mega).</summary>
-        int NascerZumbis(Vector3 centro, int quantos, bool militar)
+        int NascerZumbis(Vector3 centro, int quantos, bool militar, bool comChefe = true)
         {
             if (quantos <= 0 || ZombieManager.regions == null) return 0;
             if (!LevelNavigation.tryGetBounds(centro, out var bound) || bound >= ZombieManager.regions.Length || ZombieManager.regions[bound]?.zombies == null)
@@ -223,7 +223,7 @@ namespace SobrevivenciaCore
                 .Concat(vivos.Where(z => z.isDead && !reservaZumbis.Contains(z)))
                 .Concat(vivos.Where(z => !z.isDead && LongeDeTodos(z)))
                 .Take(quantos).ToList();
-            bool chefe = militar;
+            bool chefe = militar && comChefe;
             int n = 0;
             foreach (var z in usar)
             {

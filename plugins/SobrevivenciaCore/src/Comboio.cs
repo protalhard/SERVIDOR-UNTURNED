@@ -9,20 +9,20 @@ using UnityEngine;
 namespace SobrevivenciaCore
 {
     /// <summary>Comboio emboscado (aprovado pelo dono): de tempos em tempos um caminhão militar aparece parado e quebrado
-    /// numa estrada do mapa (longe das safes), com caixas trancadas de loot militar. Zumbis em volta, e eles voltam a
-    /// nascer enquanto tem gente perto. Pra abrir, alguém fica 45 s do lado das caixas (arrombando). Em 15 min o
+    /// numa estrada do mapa (longe das safes), com caixas trancadas de loot militar. Zumbis em volta, com no máximo
+    /// ComboioReforcos levas de reforço (só quando sobra pouco zumbi). Pra abrir, alguém fica 45 s do lado das caixas (arrombando). Em 15 min o
     /// caminhão explode e as caixas somem.</summary>
     public partial class Plugin
     {
         class EstadoComboio
         {
             public Vector3 Pos; public InteractableVehicle Caminhao; public List<Transform> Caixas = new List<Transform>();
-            public float Fim, ProximaHorda, Arrombando; public bool Aberto; public ulong QuemArromba;
+            public float Fim, ProximaHorda, Arrombando; public bool Aberto; public ulong QuemArromba; public int Reforcos;
         }
 
         EstadoComboio comboio;
         float proximoComboio = -1f;
-        const float RaioComboio = 10f;
+        const float RaioComboio = 12f;
 
         Vector3? PontoDeEstrada()
         {
@@ -110,7 +110,8 @@ namespace SobrevivenciaCore
                 }
             comboio = c;
             int zc = NascerZumbis(c.Pos, S.ComboioZumbis, true);
-            NascerCriaturas(c.Pos, S.ComboioInfectados + (zc == 0 ? S.CriaturasSemZumbi : 0), S.ComboioUrsos, S.ComboioMinutos * 60f + 120f);
+            // comboio: só infectado militar, sem radioativo nem urso (esses ficam pro heli) e sem ondas sem fim
+            NascerCriaturas(c.Pos, S.ComboioInfectados + (zc == 0 ? S.CriaturasSemZumbi : 0), 0, S.ComboioMinutos * 60f + 120f, false, false);
             var regiao = RegiaoDe(c.Pos);
             Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("COMBOIO EMBOSCADO ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(regiao)}! Caixas militares trancadas e muitos zumbis. Fique {S.ComboioSegundosArrombar} s do lado das caixas pra arrombar. O caminhao explode em {S.ComboioMinutos} min."));
             RegistrarEvento("Comboio emboscado perto de " + Chat.Limpar(regiao));
@@ -136,6 +137,13 @@ namespace SobrevivenciaCore
                 catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             }
             Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("COMBOIO: ")) + Chat.Cor("#FFFFFF", "o caminhao explodiu. Acabou o comboio."));
+        }
+
+        static int ZumbisVivosPerto(Vector3 pos, float raio)
+        {
+            if (ZombieManager.regions == null || !LevelNavigation.tryGetBounds(pos, out var b) || b >= ZombieManager.regions.Length) return 0;
+            var zs = ZombieManager.regions[b]?.zombies;
+            return zs == null ? 0 : zs.Count(z => z != null && !z.isDead && (z.transform.position - pos).sqrMagnitude < raio * raio);
         }
 
         /// <summary>Caixa do comboio só abre depois de arrombada (chamado no onOpenStorageRequested).</summary>
@@ -165,14 +173,20 @@ namespace SobrevivenciaCore
             if (agora >= c.Fim || (c.Caminhao != null && c.Caminhao.isExploded)) { AcabarComboio(); return; }
             var perto = Provider.clients.Where(x => x.player != null && !x.player.life.isDead && (x.player.transform.position - c.Pos).sqrMagnitude < RaioComboio * RaioComboio).ToList();
             var chegando = Provider.clients.Any(x => x.player != null && (x.player.transform.position - c.Pos).sqrMagnitude < 120f * 120f);
-            // zumbis voltam enquanto tem gente por perto
-            if (chegando && agora >= c.ProximaHorda)
+            // reforço: poucas levas, só quando sobra pouco zumbi vivo e antes de arrombar (antes vinha a cada 25 s sem fim,
+            // com chefe novo, e puxava zumbi do resto da área, então nunca acabava)
+            if (chegando && !c.Aberto && c.Reforcos < Math.Max(0, S.ComboioReforcos) && agora >= c.ProximaHorda)
             {
-                c.ProximaHorda = agora + 25f;
-                NascerZumbis(c.Pos, Math.Max(2, S.ComboioZumbis / 3), true);
+                c.ProximaHorda = agora + 45f;
+                if (ZumbisVivosPerto(c.Pos, 45f) < Math.Max(2, S.ComboioZumbis / 3))
+                {
+                    c.Reforcos++;
+                    NascerZumbis(c.Pos, Math.Max(2, S.ComboioZumbis / 3), true, false);
+                }
             }
             if (c.Aberto) return;
-            if (perto.Count == 0) { if (c.Arrombando > 0) c.Arrombando = Math.Max(0, c.Arrombando - 2f); return; }
+            // o progresso não volta: pode sair pra matar zumbi e continuar depois de onde parou
+            if (perto.Count == 0) return;
             c.Arrombando += 1f;
             int alvo = Math.Max(5, S.ComboioSegundosArrombar);
             foreach (var x in perto) x.player.ServerShowHint($"<color=#FFB020><b>ARROMBANDO AS CAIXAS</b></color>\n{Mathf.Min(100, (int)(c.Arrombando * 100 / alvo))}%  (fique perto)", 1.5f);
