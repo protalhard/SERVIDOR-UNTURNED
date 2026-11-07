@@ -23,6 +23,8 @@ namespace SobrevivenciaCore
             public bool Caiu, Achado;
             public string Regiao;
             public List<Transform> Caixas = new List<Transform>();
+            /// <summary>Quem já recebeu o marcador do local no mapa.</summary>
+            public HashSet<ulong> Marcados = new HashSet<ulong>();
         }
 
         EstadoHeli heli;
@@ -87,8 +89,8 @@ namespace SobrevivenciaCore
             heliPontoMarcado = ponto.Value;
             avisoSegundos = Math.Max(5, avisoSegundos);
             heliComecaEm = Time.realtimeSinceStartup + avisoSegundos;
-            Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", "um helicoptero militar esta com pane e vai cair no mapa")
-                + Chat.Cor(S.CorDestaque, Chat.Forte($" em {avisoSegundos} s")) + Chat.Cor("#FFFFFF", ". Olhe pro ceu e siga a fumaca: caixas de loot raro nos destrocos."));
+            Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH VINDO! ")) + Chat.Cor("#FFFFFF", "um helicoptero militar esta com pane e vai cair no mapa")
+                + Chat.Cor(S.CorDestaque, Chat.Forte($" em {avisoSegundos} s")) + Chat.Cor("#FFFFFF", ". Va preparado: nos destrocos ficam os zumbis mais fortes do servidor, mas o loot e o melhor."));
             Rocket.Core.Logging.Logger.Log($"[Heli Crash] marcado pra {avisoSegundos}s, queda em X {heliPontoMarcado.x:0} Z {heliPontoMarcado.z:0}");
             return $"heli sai em {avisoSegundos} s e cai perto de {RegiaoDe(heliPontoMarcado)} (X {heliPontoMarcado.x:0} Z {heliPontoMarcado.z:0})";
         }
@@ -243,9 +245,40 @@ namespace SobrevivenciaCore
             int bichos = NascerCriaturas(h.Queda, S.HeliCrashInfectados + (zumbis == 0 ? S.CriaturasSemZumbi : 0), S.HeliCrashUrsos, S.HeliCrashMinutos * 60f + 120f);
             Rocket.Core.Logging.Logger.Log($"[Heli Crash] {zumbis} zumbis e {bichos} criaturas nos destrocos, fumaca: {string.Join(", ", EfeitosFogo().Select(e => $"{e.name} ({e.id})"))}");
             h.ProximaHorda = Time.realtimeSinceStartup + 30f;
-            Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", $"o helicoptero caiu perto de {Chat.Limpar(h.Regiao)}! Siga a fumaca: ")
-                + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com item raro")) + Chat.Cor("#FFFFFF", $" e zumbis militares. Some em {S.HeliCrashMinutos} min."));
+            Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH CAIU ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(h.Regiao)}! O local ficou ")
+                + Chat.Cor(S.CorDestaque, Chat.Forte("marcado no mapa")) + Chat.Cor("#FFFFFF", " e tem fumaca alta saindo dos destrocos. ")
+                + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com o melhor loot")) + Chat.Cor("#FFFFFF", $", zumbis fortes e infectados. Some em {S.HeliCrashMinutos} min."));
+            MarcarHeliNoMapa(h);
             Rocket.Core.Logging.Logger.Log($"[Heli Crash] caiu em X {h.Queda.x:0} Z {h.Queda.z:0} ({h.Regiao}), {h.Caixas.Count} caixas");
+        }
+
+        /// <summary>Marca o local da queda no mapa de quem ainda não recebeu (quem entra durante o evento também).</summary>
+        void MarcarHeliNoMapa(EstadoHeli h)
+        {
+            foreach (var sp in Provider.clients)
+            {
+                try
+                {
+                    if (sp?.player == null || !h.Marcados.Add(sp.playerID.steamID.m_SteamID)) continue;
+                    sp.player.quests.replicateSetMarker(true, h.Queda, "HELI CRASH");
+                }
+                catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            }
+        }
+
+        /// <summary>Fim do evento: tira o marcador de quem ainda está com ele no local do heli.</summary>
+        void DesmarcarHeliNoMapa(EstadoHeli h)
+        {
+            foreach (var sp in Provider.clients)
+            {
+                try
+                {
+                    var q = sp?.player?.quests;
+                    if (q == null || !q.isMarkerPlaced || (q.markerPosition - h.Queda).sqrMagnitude > 4f) continue;
+                    q.replicateSetMarker(false, Vector3.zero, "");
+                }
+                catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            }
         }
 
         internal void PararHeliCrash() => AcabarHeliCrash(true);
@@ -268,7 +301,7 @@ namespace SobrevivenciaCore
                 }
                 catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             }
-            if (h.Caiu) LimparCriaturas(h.Queda);
+            if (h.Caiu) { LimparCriaturas(h.Queda); DesmarcarHeliNoMapa(h); }
             if (avisar) Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", "os destrocos sumiram. Acabou o evento."));
         }
 
@@ -291,6 +324,7 @@ namespace SobrevivenciaCore
                     Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", "alguem chegou nos destrocos! Eles somem em 10 min."));
                 }
                 if (agora >= h.Fim) { AcabarHeliCrash(true); return; }
+                MarcarHeliNoMapa(h);
                 // fumaça subindo dos destroços pra todo mundo achar
                 if (agora >= h.ProximaFumaca)
                 {
