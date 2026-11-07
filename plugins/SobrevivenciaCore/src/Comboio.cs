@@ -101,7 +101,7 @@ namespace SobrevivenciaCore
                     if (t.GetComponent<InteractableStorage>() is InteractableStorage st)
                     {
                         st.items.clear();
-                        foreach (var it in ConteudoAirdrop(new KitAirdrop { Nome = "auto:auto_evento" }))
+                        foreach (var it in ConteudoAirdrop(new KitAirdrop { Nome = "auto:auto_comboio" }))
                         {
                             if (!Itens.Existe(it.Id)) continue;
                             for (int q = 0; q < it.Quantidade; q++) st.items.tryAddItem(new Item(it.Id, true));
@@ -109,9 +109,10 @@ namespace SobrevivenciaCore
                     }
                 }
             comboio = c;
-            int zc = NascerZumbis(c.Pos, S.ComboioZumbis, true);
-            // comboio: só infectado militar, sem radioativo nem urso (esses ficam pro heli) e sem ondas sem fim
-            NascerCriaturas(c.Pos, S.ComboioInfectados + (zc == 0 ? S.CriaturasSemZumbi : 0), 0, S.ComboioMinutos * 60f + 120f, false, false);
+            // comboio: só zumbi normal (sem chefe, sem infectado radioativo nem urso, que ficam pro heli)
+            int zc = NascerZumbis(c.Pos, S.ComboioZumbis, true, false);
+            // ponto sem área de zumbi no mapa: pra não ficar vazio, vêm infectados militares (só uma leva)
+            if (zc == 0) NascerCriaturas(c.Pos, S.CriaturasSemZumbi, 0, S.ComboioMinutos * 60f + 120f, false, false);
             var regiao = RegiaoDe(c.Pos);
             Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("COMBOIO EMBOSCADO ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(regiao)}! Caixas militares trancadas e muitos zumbis. Fique {S.ComboioSegundosArrombar} s do lado das caixas pra arrombar. O caminhao explode em {S.ComboioMinutos} min."));
             RegistrarEvento("Comboio emboscado perto de " + Chat.Limpar(regiao));
