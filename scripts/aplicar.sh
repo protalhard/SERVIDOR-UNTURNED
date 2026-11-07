@@ -66,7 +66,7 @@ if [ -f "$REPO/server-files/ATUALIZAR-JOGO" ]; then
   if [ "$pedido" != "$feito" ]; then
     echo "$pedido" > "$ESTADO/atualizar-jogo"
     echo "atualizando o jogo pelo SteamCMD e reiniciando (pedido $pedido)"
-    systemd-run --unit "dz-atualizar-jogo-$(date +%s)" --collect /bin/bash "$REPO/scripts/atualizar-jogo.sh" || echo "falhou ao chamar o systemd-run"
+    systemd-run --unit "dz-atualizar-jogo-$(date +%s)" --collect /bin/bash "$REPO/scripts/atualizar-jogo.sh" avisar || echo "falhou ao chamar o systemd-run"
   fi
 fi
 
