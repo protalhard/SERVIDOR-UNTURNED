@@ -69,6 +69,37 @@ namespace SobrevivenciaCore
             return bons[sorte.Next(bons.Count)];
         }
 
+        /// <summary>Ponto em qualquer lugar do mapa (Heli Crash): chão plano, fora da água, fora de telhado e longe das safes.
+        /// Como o Heli Crash usa só as nossas criaturas (animais), não precisa de área de zumbi.</summary>
+        Vector3? PontoQualquerDoMapa()
+        {
+            var safes = Configuration.Instance.ZonasSeguras.Where(z => z.Definido).ToList();
+            float DistSafe(Vector3 p) => safes.Count == 0 ? 999999f : safes.Min(z => DistanciaPlana(p, z.X, z.Z) - z.Raio);
+            float metade = Level.size / 2f - Level.border - 60f;
+            if (metade < 100f) return null;
+            for (int t = 0; t < 300; t++)
+            {
+                float x = (float)(sorte.NextDouble() * 2 - 1) * metade, z = (float)(sorte.NextDouble() * 2 - 1) * metade;
+                float y = Terreno(x, z);
+                if (float.IsNaN(y)) continue;
+                var p = new Vector3(x, y, z);
+                if (SDG.Framework.Water.WaterUtility.isPointUnderwater(p + Vector3.up * 0.5f)) continue;
+                if (ZonaSeguraEm(p) != null || DistSafe(p) < S.DropMinSafe) continue;
+                // chão mais ou menos plano em volta (as caixas ficam a ~10 m)
+                bool plano = true;
+                foreach (var d in new[] { new Vector3(10, 0, 0), new Vector3(-10, 0, 0), new Vector3(0, 0, 10), new Vector3(0, 0, -10) })
+                {
+                    float h = Terreno(x + d.x, z + d.z);
+                    if (float.IsNaN(h) || Mathf.Abs(h - y) > 4f) { plano = false; break; }
+                }
+                if (!plano) continue;
+                // nada em cima (prédio, árvore grande, pedra)
+                if (Physics.Raycast(p + Vector3.up * 40f, Vector3.down, out var hit, 45f, RayMasks.BLOCK_COLLISION, QueryTriggerInteraction.Ignore) && hit.point.y > y + 2f) continue;
+                return p;
+            }
+            return null;
+        }
+
         /// <summary>Começa um evento agora (o painel ou o /evento chamam com aviso menor). Devolve o que aconteceu.</summary>
         internal string ComecarEvento(int avisoSegundos)
         {
