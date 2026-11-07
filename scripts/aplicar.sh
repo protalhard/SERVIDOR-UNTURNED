@@ -57,6 +57,19 @@ if [ -f "$REPO/server-files/REINICIAR" ]; then
   fi
 fi
 
+# 3b) Pedido do dono pra atualizar o JOGO (versão nova do Unturned na Steam): mudar o número em
+#     server-files/ATUALIZAR-JOGO desliga o servidor, roda o SteamCMD (scripts/update.sh) e liga de novo.
+#     Roda numa unidade própria do systemd (o SteamCMD demora) e só uma vez por número.
+if [ -f "$REPO/server-files/ATUALIZAR-JOGO" ]; then
+  pedido=$(cat "$REPO/server-files/ATUALIZAR-JOGO")
+  feito=$(cat "$ESTADO/atualizar-jogo" 2>/dev/null || true)
+  if [ "$pedido" != "$feito" ]; then
+    echo "$pedido" > "$ESTADO/atualizar-jogo"
+    echo "atualizando o jogo pelo SteamCMD e reiniciando (pedido $pedido)"
+    systemd-run --unit "dz-atualizar-jogo-$(date +%s)" --collect /bin/bash "$REPO/scripts/atualizar-jogo.sh" || echo "falhou ao chamar o systemd-run"
+  fi
+fi
+
 # 4) Bot do Discord (não reinicia o jogo)
 if [ -f "$REPO/painel/bin/dz-bot" ]; then
   bot=0
