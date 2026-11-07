@@ -112,7 +112,8 @@ namespace SobrevivenciaCore
             int zc = NascerZumbis(c.Pos, S.ComboioZumbis, true);
             NascerCriaturas(c.Pos, S.ComboioInfectados + (zc == 0 ? S.CriaturasSemZumbi : 0), S.ComboioUrsos, S.ComboioMinutos * 60f + 120f);
             var regiao = RegiaoDe(c.Pos);
-            Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("COMBOIO EMBOSCADO ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(regiao)}! Caixas militares trancadas e muitos zumbis. Fique {S.ComboioSegundosArrombar} s do lado das caixas pra arrombar. O caminhao explode em {S.ComboioMinutos} min."));
+            Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("COMBOIO EMBOSCADO ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(regiao)}! Caixas militares trancadas e muitos zumbis. Fique {S.ComboioSegundosArrombar} s do lado das caixas pra arrombar. O caminhao explode em {S.ComboioMinutos} min."));
+            RegistrarEvento("Comboio emboscado perto de " + Chat.Limpar(regiao));
             Rocket.Core.Logging.Logger.Log($"[Comboio] {asset?.vehicleName ?? "sem caminhao"} em X {c.Pos.x:0} Z {c.Pos.z:0} ({regiao}), {c.Caixas.Count} caixas");
             return $"comboio em {regiao} (X {c.Pos.x:0} Z {c.Pos.z:0})";
         }
@@ -134,7 +135,7 @@ namespace SobrevivenciaCore
                 }
                 catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             }
-            Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("COMBOIO: ")) + Chat.Cor("#FFFFFF", "o caminhao explodiu. Acabou o comboio."));
+            Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("COMBOIO: ")) + Chat.Cor("#FFFFFF", "o caminhao explodiu. Acabou o comboio."));
         }
 
         /// <summary>Caixa do comboio só abre depois de arrombada (chamado no onOpenStorageRequested).</summary>
@@ -178,7 +179,8 @@ namespace SobrevivenciaCore
             if (c.Arrombando >= alvo)
             {
                 c.Aberto = true;
-                Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("COMBOIO: ")) + Chat.Cor("#FFFFFF", $"{Chat.Limpar(perto[0].playerID.characterName)} arrombou as caixas do comboio!"));
+                RegistrarEvento(Chat.Limpar(perto[0].playerID.characterName) + " arrombou o comboio");
+                Chat.TodosIcone("evento", Chat.Cor("#FF3B30", Chat.Forte("COMBOIO: ")) + Chat.Cor("#FFFFFF", $"{Chat.Limpar(perto[0].playerID.characterName)} arrombou as caixas do comboio!"));
             }
         }
     }

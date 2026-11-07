@@ -39,6 +39,7 @@ namespace SobrevivenciaCore
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
             LigarCriaturas();
             LigarTelaMorte();
+            LigarInterface();
             U.Events.OnPlayerConnected += AoConectar;
             PlayerInput.onPluginKeyTick += RelogioTecla;
             PlayerLife.OnPreDeath += RelogioAntesDeMorrer;
@@ -70,6 +71,7 @@ namespace SobrevivenciaCore
             DesligarSafeZone();
             PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
+            try { DesligarInterface(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { DesligarTelaMorte(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { DesligarCriaturas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             U.Events.OnPlayerConnected -= AoConectar;

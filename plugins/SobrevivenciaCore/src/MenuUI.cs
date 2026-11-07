@@ -160,7 +160,9 @@ namespace SobrevivenciaCore
                 case "LojaXp": PreencherVips(p); break;
                 case "Vaults": PreencherVaults(p); break;
                 case "Homes": PreencherHomes(p); break;
-                case "Perfil": PreencherPerfil(p); break;
+                case "Perfil": PreencherPerfil(p); PreencherOpcoesPerfil(p); break;
+                case "Eventos": PreencherEventos(p); break;
+                case "Comandos": PreencherComandos(p); break;
                 case "Faccoes": PreencherFaccoes(p, e); break;
                 case "Admin": PreencherAdmin(p); break;
             }
@@ -374,6 +376,7 @@ namespace SobrevivenciaCore
                 if (!menus.TryGetValue(Id(p), out var e)) return;
                 if (botao.StartsWith("Adm_") || botao.StartsWith("Preco_")) { CliqueAdmin(p, e, botao); return; }
                 if (botao.StartsWith("Aba_")) { MostrarAba(p, e, botao.Substring(4)); return; }
+                if (CliqueEventos(p, botao) || CliqueOpcoesPerfil(p, botao)) return;
                 if (botao.StartsWith("Fac_")) { CliqueFaccao(p, e, botao); return; }
                 if (botao.StartsWith("Kit_") && int.TryParse(botao.Substring(4), out var nk)) { CliqueKit(p, e, nk); return; }
                 if (botao.StartsWith("Vip_")) { CliqueVip(p, botao); return; }
@@ -481,7 +484,7 @@ namespace SobrevivenciaCore
             try
             {
                 var p = UnturnedPlayer.FromPlayer(pl);
-                if (p == null || DigitouAtm(p, campo, texto) || DigitouLoja(p, campo, texto) || !menus.ContainsKey(Id(p))) return;
+                if (p == null || DigitouMorte(p, campo, texto) || DigitouAtm(p, campo, texto) || DigitouLoja(p, campo, texto) || !menus.ContainsKey(Id(p))) return;
                 if (campo.StartsWith("Adm_") || campo.StartsWith("Preco_")) DigitouAdmin(p, campo, texto);
                 else if (campo.StartsWith("Fac_") && menus.TryGetValue(Id(p), out var ef)) DigitouFaccao(p, ef, campo, texto);
             }
@@ -499,6 +502,7 @@ namespace SobrevivenciaCore
                 var sp = PlayerTool.getSteamPlayer(kv.Key);
                 if (sp?.player == null) { menus.Remove(kv.Key); continue; }
                 if (PaginaDaAba(kv.Value.Aba) == "Kits") AtualizarContagemKits(UnturnedPlayer.FromSteamPlayer(sp), kv.Value);
+                else if (kv.Value.Aba == "Eventos") PreencherEventos(UnturnedPlayer.FromSteamPlayer(sp));
             }
             TickAdmin();
             TickHud();
