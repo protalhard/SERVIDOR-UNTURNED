@@ -70,6 +70,19 @@ if [ -f "$REPO/server-files/ATUALIZAR-JOGO" ]; then
   fi
 fi
 
+# 3c) Atualização automática do jogo: o dz-update-jogo.timer confere a cada 10 min se saiu versão nova
+#     do Unturned na Steam; se saiu, avisa quem está online, reinicia e atualiza sozinho (scripts/dz-update-jogo.py).
+un=0
+for u in dz-update-jogo.service dz-update-jogo.timer; do
+  if ! cmp -s "$REPO/scripts/$u" "/etc/systemd/system/$u"; then
+    cp "$REPO/scripts/$u" "/etc/systemd/system/$u"; un=1
+  fi
+done
+if [ "$un" = 1 ]; then systemctl daemon-reload; systemctl enable --now dz-update-jogo.timer; echo "atualizacao automatica do jogo ligada"; fi
+
+# 3d) Textos da lista de servidores (server-files/browser.txt -> bloco Browser do Config.txt; vale no próximo reinício)
+bash "$REPO/scripts/aplicar-browser.sh" || true
+
 # 4) Bot do Discord (não reinicia o jogo)
 if [ -f "$REPO/painel/bin/dz-bot" ]; then
   bot=0
