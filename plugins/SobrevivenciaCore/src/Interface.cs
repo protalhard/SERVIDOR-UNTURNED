@@ -200,6 +200,8 @@ namespace SobrevivenciaCore
                 EffectManager.sendUIEffectVisibility(StatusKey, con, true, n, v);
             }
 
+            // quadrados de status: com o relógio fixo eles repetem o que o relógio já mostra, então ficam escondidos
+            V("Status_Quadrados", S.StatusQuadrados || Efeito(S.RelogioFixoEfeito) == null);
             var vida = pl.life;
             T("Status_Vida_Txt", vida.health + "%");
             T("Status_Fome_Txt", vida.food + "%");
