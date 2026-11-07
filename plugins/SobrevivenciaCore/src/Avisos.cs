@@ -70,7 +70,7 @@ namespace SobrevivenciaCore
                 if (heli.Caiu)
                 {
                     int d = Mathf.RoundToInt(Vector3.Distance(p.Position, heli.Queda));
-                    l.Add(("Heli", $"HELI CRASH  {(d >= 1000 ? (d / 1000f).ToString("0.0") + " km" : d + " m")}"));
+                    l.Add(("Heli", $"HELI CRASH  {(d >= 1000 ? (d / 1000f).ToString("0.0") + " km" : d + " m")}  SOME EM {Tempo(heli.Fim - agora)}"));
                 }
                 else l.Add(("Heli", "HELI CAINDO"));
             }
