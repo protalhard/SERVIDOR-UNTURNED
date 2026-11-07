@@ -30,12 +30,12 @@ DOTNET_ROLL_FORWARD=Major ~/.dotnet/tools/ilspycmd -t SDG.Unturned.ZombieManager
 Resumo completo da API do jogo pra plugin: `docs/UNTURNED-API.md`.
 
 ## O que já aprendemos do jogo (economiza tempo)
-- **Zumbis**: cada área de navegação (`LevelNavigation.tryGetBounds`) tem um pool fixo em `ZombieManager.regions[bound].zombies`.
-  Dá pra criar zumbi novo em qualquer área com `ZombieManager.instance.addZombie(bound, tipo, ...)`, mas o cliente só vê
-  depois de receber a lista da área de novo: chamar por reflexão o privado `SendZombiesToPlayer(conexão, bound)` pros
-  jogadores com `player.movement.bound == bound`, e só então `zombie.sendRevive(...)`. `askZombies` está vazio (obsoleto).
-  Tipo = índice em `LevelZombies.tables` (tabela "milit..." = militar). Feito em `Eventos.cs` `NascerZumbis`.
-  Lugar sem área de zumbi (ex.: Costa Mesa Mall) não tem bound: usar zumbis das áreas vizinhas.
+- **Zumbis**: cada área de navegação (`LevelNavigation.tryGetBounds`) tem um pool em `ZombieManager.regions[bound].zombies`.
+  O cliente recebe a lista da área UMA vez quando entra nela (`ReceiveZombies` ignora se a área já está carregada), então
+  zumbi criado com `addZombie` depois que o jogador já está na área fica invisível pra ele, e zumbi de outra área também.
+  Solução usada (`Eventos.cs`): ao carregar o mapa, antes de ter gente, cada área ganha uma reserva de 16 zumbis mortos
+  (`addZombie`), que o plugin impede de renascer sozinha (segura `_lastDead`); os eventos só usam zumbis da área do ponto
+  (`sendRevive` muda tipo, roupa e posição). Ponto fora de área de zumbi (ex.: Costa Mesa Mall) não tem como ter zumbi.
 - **Chão no California 2**: raio de cima com `RayMasks.BLOCK_COLLISION` a partir de y=1000 bate num colisor invisível no céu.
   Use `Terreno(x, z)` (Montar.cs: raio com `GROUND|GROUND2`) e só depois um raio curto de ~40 m pra telhado/pedra.
 - **Veículos**: vida 0 = explode depois de 4 s; sem dono e sem motorista o servidor simula e replica a posição.

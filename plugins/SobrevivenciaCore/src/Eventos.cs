@@ -58,6 +58,10 @@ namespace SobrevivenciaCore
             }
             candidatos.AddRange(PontosAirdropCa2);
             var fora = candidatos.Where(p => ZonaSeguraEm(p) == null).ToList();
+            // prefere pontos dentro de área de zumbi do mapa (fora delas não dá pra ter zumbi no evento)
+            var comZumbi = fora.Where(p => LevelNavigation.tryGetBounds(p, out var b) && ZombieManager.regions != null && b < ZombieManager.regions.Length
+                && ZombieManager.regions[b]?.zombies?.Count > 0).ToList();
+            if (comZumbi.Count > 0) fora = comZumbi;
             if (fora.Count == 0) return null;
             var bons = fora.Where(p => { var d = DistSafe(p); return d >= S.DropMinSafe && d <= S.DropMaxSafe; }).ToList();
             if (bons.Count == 0) bons = fora.Where(p => DistSafe(p) >= S.DropMinSafe).ToList();
@@ -114,95 +118,103 @@ namespace SobrevivenciaCore
             Rocket.Core.Logging.Logger.Log("[Evento auto] " + r);
         }
 
-        /// <summary>Zumbis em volta do ponto (eventos, airdrop, heli crash). Primeiro acorda os mortos da área;
-        /// se faltar, CRIA zumbis novos na área (ZombieManager.addZombie, o mesmo que o jogo usa ao carregar o mapa)
-        /// e manda a lista nova pra quem está ali. Sem área de zumbi no ponto, puxa os das áreas mais perto.</summary>
+        // ---------- Zumbis dos eventos ----------
+        // O cliente só conhece os zumbis da área em que entrou: a lista da área chega uma vez só (o cliente ignora
+        // uma segunda lista da mesma área). Então zumbi criado depois que o jogador já está na área fica invisível.
+        // Solução: logo que o mapa carrega (antes de ter gente), cada área ganha uma RESERVA de zumbis mortos.
+        // Todo jogador recebe a reserva junto com a área, e os eventos só reavivam e movem zumbis dessa área.
+        // A reserva não renasce sozinha pelo jogo (o plugin segura o tempo de morte deles).
+        const int ReservaZumbisPorArea = 16;
+        readonly HashSet<Zombie> reservaZumbis = new HashSet<Zombie>();
+        bool reservaPronta;
+        float proxSegurarReserva;
+        static System.Reflection.FieldInfo campoUltimaMorte;
+
+        void TickReservaZumbis()
+        {
+            if (!Level.isLoaded || ZombieManager.regions == null || ZombieManager.instance == null) return;
+            if (!reservaPronta) PrepararReservaZumbis();
+            if (Time.realtimeSinceStartup < proxSegurarReserva) return;
+            proxSegurarReserva = Time.realtimeSinceStartup + 30f;
+            if (campoUltimaMorte == null)
+                campoUltimaMorte = typeof(Zombie).GetField("_lastDead", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            foreach (var z in reservaZumbis)
+                if (z != null && z.isDead) campoUltimaMorte?.SetValue(z, Time.realtimeSinceStartup);
+        }
+
+        void PrepararReservaZumbis()
+        {
+            reservaPronta = true;
+            int criados = 0, areas = 0;
+            for (int b = 0; b < ZombieManager.regions.Length && b < 255; b++)
+            {
+                var reg = ZombieManager.regions[b];
+                if (reg?.zombies == null || reg.zombies.Count == 0) continue;
+                // jogador já dentro da área não receberia a reserva: pula (só acontece se o plugin recarregar com gente)
+                if (Provider.clients.Any(c => c?.player?.movement != null && c.player.movement.bound == b)) continue;
+                var modelo = reg.zombies.FirstOrDefault(z => z != null);
+                if (modelo == null) continue;
+                byte tipo = reg.zombies.Where(z => z != null).GroupBy(z => z.type).OrderByDescending(g => g.Count()).First().Key;
+                for (int i = 0; i < ReservaZumbisPorArea && reg.zombies.Count < ushort.MaxValue; i++)
+                {
+                    ZombieManager.instance.addZombie((byte)b, tipo, (byte)EZombieSpeciality.NORMAL, byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue,
+                        (byte)sorte.Next(4), (byte)sorte.Next(3), modelo.transform.position, 0f, true);
+                    reservaZumbis.Add(reg.zombies[reg.zombies.Count - 1]);
+                    criados++;
+                }
+                areas++;
+            }
+            Rocket.Core.Logging.Logger.Log($"[Zumbis] reserva pros eventos: {criados} zumbis em {areas} areas");
+        }
+
+        /// <summary>Zumbis em volta do ponto (eventos, airdrop, heli crash). Usa só zumbis da área do ponto (os que os
+        /// jogadores dali enxergam): primeiro a reserva, depois os mortos, depois os vivos longe de todo mundo.</summary>
         int NascerZumbis(Vector3 centro, int quantos) => NascerZumbis(centro, quantos, false);
 
-        // quantos zumbis o plugin já criou em cada área (o jogo não apaga; limite pra não crescer sem fim)
-        readonly Dictionary<byte, int> zumbisCriados = new Dictionary<byte, int>();
-        const int MaxZumbisCriadosPorArea = 40;
-        static System.Reflection.MethodInfo mandarZumbis;
-
-        /// <summary>militar = prefere zumbis de tabela militar e faz um deles virar chefe (mega).</summary>
+        /// <summary>militar = vira zumbi de tabela militar e um deles vira chefe (mega).</summary>
         int NascerZumbis(Vector3 centro, int quantos, bool militar)
         {
             if (quantos <= 0 || ZombieManager.regions == null) return 0;
+            if (!LevelNavigation.tryGetBounds(centro, out var bound) || bound >= ZombieManager.regions.Length || ZombieManager.regions[bound]?.zombies == null)
+            {
+                Rocket.Core.Logging.Logger.Log($"[Zumbis] ponto X {centro.x:0} Z {centro.z:0} fora de area de zumbi do mapa: sem zumbis ali");
+                return 0;
+            }
+            var reg = ZombieManager.regions[bound];
             bool LongeDeTodos(Zombie z) => Provider.clients.All(c => c.player == null || (c.player.transform.position - z.transform.position).sqrMagnitude > 150f * 150f);
-            bool TabelaMilitar(int t) => LevelZombies.tables != null && t < LevelZombies.tables.Count
-                && (LevelZombies.tables[t].name ?? "").IndexOf("milit", StringComparison.OrdinalIgnoreCase) >= 0;
-            Vector3 Ponto()
+            int tipoMilitar = -1;
+            if (militar && LevelZombies.tables != null)
+                tipoMilitar = Enumerable.Range(0, LevelZombies.tables.Count)
+                    .Where(t => (LevelZombies.tables[t].name ?? "").IndexOf("milit", StringComparison.OrdinalIgnoreCase) >= 0).DefaultIfEmpty(-1).First();
+            var vivos = reg.zombies.Where(z => z != null && !z.isBoss).ToList();
+            var usar = vivos.Where(z => z.isDead && reservaZumbis.Contains(z))
+                .Concat(vivos.Where(z => z.isDead && !reservaZumbis.Contains(z)))
+                .Concat(vivos.Where(z => !z.isDead && LongeDeTodos(z)))
+                .Take(quantos).ToList();
+            bool chefe = militar;
+            int n = 0;
+            foreach (var z in usar)
             {
                 float ang = (float)(sorte.NextDouble() * Math.PI * 2), dist = 6f + (float)sorte.NextDouble() * 16f;
                 var p = centro + new Vector3(Mathf.Cos(ang) * dist, 0, Mathf.Sin(ang) * dist);
                 if (Physics.Raycast(new Vector3(p.x, centro.y + 40f, p.z), Vector3.down, out var hit, 90f, RayMasks.BLOCK_COLLISION, QueryTriggerInteraction.Ignore))
                     p = hit.point;
-                return p + Vector3.up * 0.5f;
-            }
-            bool chefe = militar;
-            int n = 0;
-            void Reviver(Zombie z)
-            {
+                p += Vector3.up * 0.5f;
+                byte tipo = tipoMilitar >= 0 ? (byte)tipoMilitar : z.type;
+                byte shirt = z.shirt, pants = z.pants, hat = z.hat, gear = z.gear;
+                if (tipo != z.type || reservaZumbis.Contains(z))
+                {
+                    var tab = LevelZombies.tables[tipo];
+                    byte Roupa(int slot) => tab.slots != null && slot < tab.slots.Length && tab.slots[slot].table.Count > 0 && sorte.NextDouble() < tab.slots[slot].chance
+                        ? (byte)sorte.Next(tab.slots[slot].table.Count) : byte.MaxValue;
+                    shirt = Roupa(0); pants = Roupa(1); hat = Roupa(2); gear = Roupa(3);
+                }
                 var esp = z.speciality == EZombieSpeciality.NONE ? EZombieSpeciality.NORMAL : z.speciality;
                 if (chefe) { esp = EZombieSpeciality.MEGA; chefe = false; }
-                z.sendRevive(z.type, (byte)esp, z.shirt, z.pants, z.hat, z.gear, Ponto(), (float)(sorte.NextDouble() * 360));
-                n++;
+                else if (esp.IsBoss()) esp = EZombieSpeciality.NORMAL;
+                try { z.sendRevive(tipo, (byte)esp, shirt, pants, hat, gear, p, (float)(sorte.NextDouble() * 360)); n++; }
+                catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); break; }
             }
-
-            bool temArea = LevelNavigation.tryGetBounds(centro, out var bound) && bound < ZombieManager.regions.Length && ZombieManager.regions[bound] != null;
-            var reg = temArea ? ZombieManager.regions[bound] : null;
-            try
-            {
-                // 1) os mortos da área
-                if (reg?.zombies != null)
-                {
-                    var mortos = reg.zombies.Where(z => z != null && z.isDead && !z.isBoss);
-                    if (militar) mortos = mortos.OrderByDescending(z => TabelaMilitar(z.type) ? 1 : 0);
-                    foreach (var z in mortos.Take(quantos).ToList()) Reviver(z);
-                }
-                // 2) faltou: cria zumbis novos na área
-                if (n < quantos && reg != null && LevelZombies.tables != null && LevelZombies.tables.Count > 0)
-                {
-                    zumbisCriados.TryGetValue(bound, out var ja);
-                    int criar = Math.Min(quantos - n, MaxZumbisCriadosPorArea - ja);
-                    if (criar > 0)
-                    {
-                        // tabela: militar se pedir e existir; senão a mais comum da área; senão a primeira
-                        int tipo = -1;
-                        if (militar) tipo = Enumerable.Range(0, LevelZombies.tables.Count).Where(TabelaMilitar).DefaultIfEmpty(-1).First();
-                        if (tipo < 0 && reg.zombies.Count > 0) tipo = reg.zombies.Where(z => z != null).GroupBy(z => (int)z.type).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault();
-                        if (tipo < 0 || tipo >= LevelZombies.tables.Count) tipo = 0;
-                        var tab = LevelZombies.tables[tipo];
-                        byte Roupa(int slot) => tab.slots != null && slot < tab.slots.Length && tab.slots[slot].table.Count > 0 && sorte.NextDouble() < tab.slots[slot].chance
-                            ? (byte)sorte.Next(tab.slots[slot].table.Count) : byte.MaxValue;
-                        var novos = new List<Zombie>();
-                        for (int i = 0; i < criar && reg.zombies.Count < ushort.MaxValue; i++)
-                        {
-                            ZombieManager.instance.addZombie(bound, (byte)tipo, (byte)EZombieSpeciality.NORMAL, Roupa(0), Roupa(1), Roupa(2), Roupa(3),
-                                (byte)sorte.Next(4), (byte)sorte.Next(3), Ponto(), (float)(sorte.NextDouble() * 360), true);
-                            novos.Add(reg.zombies[reg.zombies.Count - 1]);
-                        }
-                        zumbisCriados[bound] = ja + novos.Count;
-                        // quem está nessa área recebe a lista nova (senão não vê os zumbis criados)
-                        if (mandarZumbis == null)
-                            mandarZumbis = typeof(ZombieManager).GetMethod("SendZombiesToPlayer", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                        foreach (var c in Provider.clients)
-                            if (c?.player?.movement != null && c.player.movement.bound == bound)
-                                mandarZumbis?.Invoke(ZombieManager.instance, new object[] { c.transportConnection, bound });
-                        foreach (var z in novos) Reviver(z);
-                    }
-                }
-                // 3) sem área no ponto (ou cheia): puxa zumbis longe de todo mundo das áreas mais perto
-                if (n < quantos)
-                {
-                    var perto = ZombieManager.regions.Where(r => r?.zombies != null && r.zombies.Count > 0)
-                        .OrderBy(r => r.zombies.Where(z => z != null).Select(z => (z.transform.position - centro).sqrMagnitude).DefaultIfEmpty(float.MaxValue).Min())
-                        .Take(3).SelectMany(r => r.zombies)
-                        .Where(z => z != null && !z.isBoss && (z.isDead || LongeDeTodos(z)));
-                    foreach (var z in perto.Take(quantos - n).ToList()) Reviver(z);
-                }
-            }
-            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             return n;
         }
     }

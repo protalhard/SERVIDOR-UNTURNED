@@ -45,8 +45,8 @@ lista interna) sem a função "Server.../send..." não aparece pros jogadores.
 ## Zumbis (ZombieManager)
 - Pool fixo por área de navegação (`LevelNavigation.tryGetBounds(pos, out bound)`), em `regions[bound].zombies`.
 - Reviver/mover: `zombie.sendRevive(tipo, especialidade, roupas, posição, ângulo)`; tipos em `LevelZombies.tables`.
-- CRIAR zumbi novo: `ZombieManager.instance.addZombie(bound, tipo, ...)` + reenviar a lista da área (método privado
-  `SendZombiesToPlayer` por reflexão) pros jogadores daquela área. Já feito em `Eventos.cs` `NascerZumbis`.
+- CRIAR zumbi novo: `ZombieManager.instance.addZombie(bound, tipo, ...)`, mas o cliente só recebe a lista da área uma vez
+  (ao entrar nela). Crie antes de ter jogador na área (reserva no carregamento do mapa) e depois só reavive. Ver `Eventos.cs`.
 - Especialidades: NORMAL, MEGA (chefe), CRAWLER, SPRINTER, FLANKER_*, BURNER, ACID, SPIRIT, BOSS_ELECTRIC/WIND/FIRE/MAGMA/NUCLEAR/SPIRIT/ALL, DL_* (Dying Light).
 - `getZombiesInRadius`, `teleportZombieBackIntoMap`, ondas (`waveIndex`, `onWaveUpdated`), beacon de horda (BeaconManager).
 
