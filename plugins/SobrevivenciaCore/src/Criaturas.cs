@@ -87,6 +87,7 @@ namespace SobrevivenciaCore
                 var cc = a.GetComponent<CharacterController>();
                 if (cc != null) { cc.stepOffset = Mathf.Min(cc.stepOffset, S.CriaturaDegrau); cc.slopeLimit = Mathf.Min(cc.slopeLimit, 45f); }
                 if (!pack.animals.Contains(a)) pack.animals.Add(a);
+                AjustarVida(a, urso);
                 criaturas.RemoveAll(c => c.A == a);
                 criaturas.Add(new Criatura { A = a, Centro = centro, Fim = fim, Urso = urso, Fraca = fraca });
                 feitos++;
@@ -214,11 +215,28 @@ namespace SobrevivenciaCore
             if (!permitir || par.animal == null || criaturas.Count == 0) return;
             var a = par.animal;
             var c = criaturas.FirstOrDefault(x => x.A == a);
-            if (c == null || a.asset == null || a.asset.health == 0) return;
-            // pedido do dono: vida igual à do bicho comum (urso radioativo = urso normal, infectado = zumbi normal).
-            // O mod tem vida maior, então o golpe vale proporcionalmente mais. O dano deles continua o mesmo.
-            float alvo = c.Urso ? VidaUrsoNormal() : VidaZumbiNormal();
-            if (alvo > 0 && alvo < a.asset.health) par.damage *= a.asset.health / alvo;
+            if (c == null || c.Urso) return;
+            // infectado apanha igual zumbi: o golpe usa o dano da arma contra zumbi (com tiro na cabeça valendo como no
+            // zumbi), em vez do dano contra animal, que é bem menor. A vida dele já é a do zumbi comum (AjustarVida).
+            if (par.instigator is Player pl && pl.equipment?.asset is ItemWeaponAsset w && w.zombieDamageMultiplier != null)
+                par.damage = w.zombieDamageMultiplier.multiply(par.limb);
+        }
+
+        static readonly System.Reflection.FieldInfo CampoVidaAnimal = typeof(Animal).GetField("health", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        static readonly System.Reflection.FieldInfo CampoRegen = typeof(AnimalAsset).GetField("_regen", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+        /// <summary>Pedido do dono: vida igual à do bicho comum (urso radioativo = urso normal, infectado = zumbi comum) e
+        /// sem regenerar vida no meio da briga. O dano que eles dão continua o mesmo.</summary>
+        void AjustarVida(Animal a, bool urso)
+        {
+            try
+            {
+                if (a?.asset == null) return;
+                if (CampoRegen != null && a.asset.regen < 60f) CampoRegen.SetValue(a.asset, 99999f);
+                float alvo = urso ? VidaUrsoNormal() : VidaZumbiNormal();
+                if (alvo > 0 && CampoVidaAnimal != null) CampoVidaAnimal.SetValue(a, (ushort)Mathf.Clamp(alvo, 1, 65535));
+            }
+            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
 
         float vidaUrsoNormal = -1f, vidaZumbiNormal = -1f;
@@ -232,7 +250,7 @@ namespace SobrevivenciaCore
             var urso = todos.Where(x => x != null && x.id != S.CriaturaUrso && x.id != S.CriaturaInfectadoMilitar && x.id != S.CriaturaInfectadoRadioativo
                     && (x.animalName ?? "").IndexOf("bear", StringComparison.OrdinalIgnoreCase) >= 0 && x.health > 0)
                 .OrderBy(x => x.id).FirstOrDefault();
-            vidaUrsoNormal = urso?.health ?? 0;
+            vidaUrsoNormal = urso != null ? Mathf.Min(urso.health, 400) : 150f;
             Rocket.Core.Logging.Logger.Log($"[Criaturas] urso radioativo com vida de urso normal: {(urso == null ? "urso nao achado" : $"{urso.animalName} ({urso.id}) {urso.health}")}");
             return vidaUrsoNormal;
         }
@@ -242,7 +260,7 @@ namespace SobrevivenciaCore
         {
             if (vidaZumbiNormal >= 0) return vidaZumbiNormal;
             var vidas = (LevelZombies.tables ?? new List<ZombieTable>()).Where(t => t != null && t.health > 0).Select(t => (float)t.health).OrderBy(v => v).ToList();
-            vidaZumbiNormal = vidas.Count == 0 ? 100f : vidas[vidas.Count / 2];
+            vidaZumbiNormal = vidas.Count == 0 ? 100f : Mathf.Clamp(vidas[vidas.Count / 2], 60f, 300f);
             Rocket.Core.Logging.Logger.Log($"[Criaturas] infectados com vida de zumbi normal: {vidaZumbiNormal}");
             return vidaZumbiNormal;
         }
