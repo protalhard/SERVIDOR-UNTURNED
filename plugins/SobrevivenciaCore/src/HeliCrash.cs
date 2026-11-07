@@ -84,7 +84,7 @@ namespace SobrevivenciaCore
             if (!Level.isLoaded) return "mapa carregando";
             if (HeliCrashAtivo) return "ja tem um heli crash acontecendo";
             if (HeliMilitar() == null) return "nenhum helicoptero carregado no servidor";
-            var ponto = aqui ?? PontoDeQueda();
+            var ponto = aqui ?? PontoQualquerDoMapa() ?? PontoDeQueda();
             if (ponto == null) return "sem ponto de queda fora das safes";
             heliPontoMarcado = ponto.Value;
             avisoSegundos = Math.Max(5, avisoSegundos);
@@ -241,13 +241,13 @@ namespace SobrevivenciaCore
                         }
                     }
                 }
-            int zumbis = NascerZumbis(h.Queda, S.HeliCrashZumbis, true);
-            int bichos = NascerCriaturas(h.Queda, S.HeliCrashInfectados + (zumbis == 0 ? S.CriaturasSemZumbi : 0), S.HeliCrashUrsos, S.HeliCrashMinutos * 60f + 120f);
-            Rocket.Core.Logging.Logger.Log($"[Heli Crash] {zumbis} zumbis e {bichos} criaturas nos destrocos, fumaca: {string.Join(", ", EfeitosFogo().Select(e => $"{e.name} ({e.id})"))}");
+            // só as nossas criaturas (pedido do dono): nascem em qualquer lugar, então o heli cai em qualquer ponto do mapa
+            int bichos = NascerCriaturas(h.Queda, S.HeliCrashInfectados + S.CriaturasSemZumbi, S.HeliCrashUrsos, S.HeliCrashMinutos * 60f + 120f);
+            Rocket.Core.Logging.Logger.Log($"[Heli Crash] {bichos} criaturas nos destrocos, fumaca: {string.Join(", ", EfeitosFogo().Select(e => $"{e.name} ({e.id})"))}");
             h.ProximaHorda = Time.realtimeSinceStartup + 30f;
             Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH CAIU ")) + Chat.Cor("#FFFFFF", $"perto de {Chat.Limpar(h.Regiao)}! O local ficou ")
                 + Chat.Cor(S.CorDestaque, Chat.Forte("marcado no mapa")) + Chat.Cor("#FFFFFF", " e tem fumaca alta saindo dos destrocos. ")
-                + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com o melhor loot")) + Chat.Cor("#FFFFFF", $", zumbis fortes e infectados. Some em {S.HeliCrashMinutos} min."));
+                + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com o melhor loot")) + Chat.Cor("#FFFFFF", $" e infectados. Some em {S.HeliCrashMinutos} min."));
             MarcarHeliNoMapa(h);
             Rocket.Core.Logging.Logger.Log($"[Heli Crash] caiu em X {h.Queda.x:0} Z {h.Queda.z:0} ({h.Regiao}), {h.Caixas.Count} caixas");
         }
@@ -332,12 +332,7 @@ namespace SobrevivenciaCore
                     var fogo = EfeitosFogo();
                     if (fogo.Count > 0) Efeito(fogo[0], h.Queda + Vector3.up, true);
                 }
-                // zumbis voltam enquanto tem gente chegando
-                if (agora >= h.ProximaHorda && Provider.clients.Any(x => x.player != null && (x.player.transform.position - h.Queda).sqrMagnitude < 150f * 150f))
-                {
-                    h.ProximaHorda = agora + 35f;
-                    NascerZumbis(h.Queda, Math.Max(2, S.HeliCrashZumbis / 3), true);
-                }
+                // as ondas de infectados vêm pelo TickCriaturas (Criaturas.cs)
                 return;
             }
             if (S.HeliCrashIntervaloMinutos <= 0) return;

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Roda na VPS (como root) toda vez que o sincronizador acha um commit novo no GitHub.
 # Aplica só o que é seguro: plugins compilados e pedido de reinício.
-# Não mexe em Commands.dat, Config.txt, mundo nem token.
+# Não mexe em Config.txt, mundo nem token. No Commands.dat só ajusta MaxPlayers (server-files/max-jogadores.txt).
 set -euo pipefail
 
 REPO=/home/unturned/repo
@@ -44,6 +44,18 @@ PY
   then
     chown unturned:unturned "$PERM"
     reiniciar=1
+  fi
+fi
+
+# 2b) Vagas do servidor: server-files/max-jogadores.txt -> MaxPlayers no Commands.dat (vale no próximo início)
+CMDS="$INST/Server/Commands.dat"
+if [ -f "$REPO/server-files/max-jogadores.txt" ] && [ -f "$CMDS" ]; then
+  vagas=$(tr -dc '0-9' < "$REPO/server-files/max-jogadores.txt")
+  if [ -n "$vagas" ] && ! grep -qix "maxplayers $vagas" <(tr -d '\r' < "$CMDS"); then
+    if grep -qi '^maxplayers' "$CMDS"; then sed -i "s/^[Mm][Aa][Xx][Pp][Ll][Aa][Yy][Ee][Rr][Ss].*/MaxPlayers $vagas/" "$CMDS"
+    else printf '\nMaxPlayers %s\n' "$vagas" >> "$CMDS"; fi
+    chown unturned:unturned "$CMDS"
+    echo "vagas do servidor: $vagas (vale no proximo reinicio)"
   fi
 fi
 
