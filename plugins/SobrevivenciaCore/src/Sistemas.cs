@@ -64,6 +64,8 @@ namespace SobrevivenciaCore
         public string CorPerigo = "#FF4D4D";
         public string Prefixo = "DZ";
         public string IconeChat = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon64.png";
+        /// <summary>Pasta dos ícones do chat (caveira.png, combate.png...). Vazio = usa o IconeChat em tudo.</summary>
+        public string IconesChatBase = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/chat";
         public string LinkDiscord = "";
 
         /// <summary>LinkDiscord da config ou, se vazio, o convite que o bot do Discord criou.</summary>
@@ -191,6 +193,10 @@ namespace SobrevivenciaCore
         public ushort AvisosEfeito = 51305;
         /// <summary>Tela de morte (efeito DZ_Morte do mod): quem matou, arma, distância, dano e botão renascer. 0 = tela do jogo.</summary>
         public ushort MorteEfeito = 51306;
+        /// <summary>HUD novo (status, combate, sacola e arma), aviso de acerto (dano, headshot com som) e de quem te acertou. 0 = desligado.</summary>
+        public ushort StatusEfeito = 51313;
+        public ushort AcertoEfeito = 51314;
+        public ushort AtingidoEfeito = 51315;
         /// <summary>Relógio fixo no canto (efeito do mod, 0 = desligado). Ligado, some a tecla do relógio e as barras do jogo.</summary>
         public ushort RelogioFixoEfeito = 51299;
         /// <summary>Minimapa no canto de cima à direita (efeito do mod, 0 = desligado). A imagem vem do site:

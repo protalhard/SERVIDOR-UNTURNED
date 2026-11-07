@@ -20,7 +20,11 @@ namespace SobrevivenciaCore
             public float Inicio = Time.realtimeSinceStartup;
             public int DanoDado, DanoLevado, Abates, Acertos, DanoBichos;
         }
-        class TelaMorte { public float MorreuEm; public bool Cama; public string Renascer, Casa, Aleatorio; public string[] Safes = new string[8]; }
+        class TelaMorte
+        {
+            public float MorreuEm; public bool Cama; public string Renascer, Casa, Aleatorio; public string[] Safes = new string[8];
+            public ulong Matador; public string MatadorNome = ""; public bool Reportado; public string Motivo = "";
+        }
 
         /// <summary>Onde o jogador escolheu renascer na tela de morte ("safe:Nome" ou "aleatorio"). O SpawnAoRenascer usa.</summary>
         readonly Dictionary<ulong, string> escolhaRenascer = new Dictionary<ulong, string>();
@@ -47,6 +51,7 @@ namespace SobrevivenciaCore
             if (vitima == null || dano == 0) return;
             var idV = vitima.channel.owner.playerID.steamID.m_SteamID;
             VidaDe(idV).DanoLevado += dano;
+            try { AcertoEmJogador(vitima, dano, parte, matador); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             if (matador != CSteamID.Nil && matador.m_SteamID != idV && PlayerTool.getPlayer(matador) != null)
             {
                 var v = VidaDe(matador.m_SteamID);
@@ -171,8 +176,15 @@ namespace SobrevivenciaCore
             }
             int vivoSeg = Mathf.RoundToInt(Time.realtimeSinceStartup - vida.Inicio);
             var f = FichaDe(vitima);
-            StartCoroutine(Depois(1.2f, vitima, () => MostrarTelaMorte(vitima, matador != null, por, arma, dist, vidaMatador,
-                Tempo(vivoSeg), vida.Abates, vida.DanoDado, vida.DanoLevado, f.Kd, vida.DanoBichos)));
+            ulong idM = matador != null ? assassino.m_SteamID : 0;
+            string nomeM = matador != null ? Chat.Limpar(matador.channel.owner.playerID.characterName) : "";
+            bool cabeca = parte == ELimb.SKULL;
+            StartCoroutine(Depois(1.2f, vitima, () =>
+            {
+                MostrarTelaMorte(vitima, matador != null, por, arma, dist, vidaMatador,
+                    Tempo(vivoSeg), vida.Abates, vida.DanoDado, vida.DanoLevado, f.Kd, vida.DanoBichos);
+                MostrarMatador(vitima, idM, nomeM, cabeca);
+            }));
         }
 
         void MostrarTelaMorte(UnturnedPlayer p, bool porJogador, string por, string arma, string dist, string vidaMatador,
@@ -214,6 +226,69 @@ namespace SobrevivenciaCore
                 if (tem) T("Morte_Safe_" + (i + 1) + "_Nome", Chat.Limpar(nomes[i]).ToUpperInvariant());
             }
             AtualizarTelaMorte(p, tela);
+        }
+
+        /// <summary>Cartão QUEM TE MATOU: foto da Steam, nome, abates, K/D e HS% do matador, etiqueta NA CABEÇA e o botão
+        /// de reportar (abre Morte_Report com o campo Morte_Report_Motivo). Elementos: Morte_Matador_Foto, Morte_Matador_Nome,
+        /// Morte_Matador_Stats, Morte_Cabeca, Morte_Reportar (+ _Texto), Morte_Report, Morte_Report_Titulo.</summary>
+        void MostrarMatador(UnturnedPlayer p, ulong idM, string nomeM, bool cabeca)
+        {
+            if (p?.Player == null || !telasMorte.TryGetValue(Id(p), out var tela)) return;
+            var con = ConDe(p.Player);
+            void T(string n, string v) => EffectManager.sendUIEffectText(MorteKey, con, true, n, v);
+            void V(string n, bool v) => EffectManager.sendUIEffectVisibility(MorteKey, con, true, n, v);
+            tela.Matador = idM; tela.MatadorNome = nomeM;
+            V("Morte_Cabeca", cabeca && idM != 0);
+            V("Morte_Reportar", idM != 0);
+            V("Morte_Report", false);
+            if (idM == 0) return;
+            var fm = Stats.Obter(idM);
+            T("Morte_Matador_Nome", nomeM);
+            T("Morte_Matador_Stats", $"{fm.Abates:N0} abates · K/D {fm.Kd:0.00} · HS {fm.PorcentoCabeca}%");
+            T("Morte_Reportar_Texto", "REPORTAR");
+            if (avatares.TryGetValue(idM, out var url) && !string.IsNullOrEmpty(url))
+                EffectManager.sendUIEffectImageURL(MorteKey, con, true, "Morte_Matador_Foto", url, true, false);
+        }
+
+        /// <summary>Botões extras da tela de morte: reportar, Discord e site.</summary>
+        bool CliqueMorteExtra(UnturnedPlayer p, string botao)
+        {
+            switch (botao)
+            {
+                case "Morte_Discord": AbrirDiscord(p); return true;
+                case "Morte_Site": AbrirSite(p); return true;
+                case "Morte_Reportar": case "Morte_Report_Cancelar": case "Morte_Report_Enviar": break;
+                default: return false;
+            }
+            if (!telasMorte.TryGetValue(Id(p), out var t) || t.Matador == 0) return true;
+            var con = ConDe(p.Player);
+            if (botao == "Morte_Report_Cancelar") { EffectManager.sendUIEffectVisibility(MorteKey, con, true, "Morte_Report", false); return true; }
+            if (t.Reportado) { Chat.Aviso(p, "Voce ja reportou esse jogador. A staff vai olhar."); return true; }
+            if (botao == "Morte_Reportar")
+            {
+                EffectManager.sendUIEffectText(MorteKey, con, true, "Morte_Report_Titulo", "REPORTAR " + t.MatadorNome);
+                EffectManager.sendUIEffectVisibility(MorteKey, con, true, "Morte_Report", true);
+                return true;
+            }
+            // enviar
+            int resta = ReportResta(p);
+            if (resta > 0) { Chat.Erro(p, $"Espere {resta}s pra reportar de novo."); return true; }
+            var alvo = PlayerTool.getPlayer(new CSteamID(t.Matador));
+            if (alvo == null) { Chat.Erro(p, "Ele saiu do servidor. Quando ele voltar, use /report nome motivo."); return true; }
+            Reportar(p, UnturnedPlayer.FromPlayer(alvo), string.IsNullOrWhiteSpace(t.Motivo) ? "pela tela de morte" : t.Motivo.Trim());
+            t.Reportado = true;
+            EffectManager.sendUIEffectVisibility(MorteKey, con, true, "Morte_Report", false);
+            EffectManager.sendUIEffectText(MorteKey, con, true, "Morte_Reportar_Texto", "REPORTADO");
+            Chat.Ok(p, "Report enviado pra staff, com foto da tela dele. Obrigado!");
+            return true;
+        }
+
+        /// <summary>Campo do motivo do report. Devolve true se era dele.</summary>
+        bool DigitouMorte(UnturnedPlayer p, string campo, string texto)
+        {
+            if (campo != "Morte_Report_Motivo") return false;
+            if (telasMorte.TryGetValue(Id(p), out var t)) t.Motivo = (texto ?? "").Length > 120 ? texto.Substring(0, 120) : texto ?? "";
+            return true;
         }
 
         float EsperaRenascer(bool cama)
@@ -259,6 +334,7 @@ namespace SobrevivenciaCore
         /// <summary>Botões da tela de morte. Devolve true se era dela.</summary>
         bool CliqueMorte(UnturnedPlayer p, string botao)
         {
+            if (botao.StartsWith("Morte_") && CliqueMorteExtra(p, botao)) return true;
             if (botao != "Morte_Renascer" && botao != "Morte_Casa" && botao != "Morte_Aleatorio" && !botao.StartsWith("Morte_Safe_")) return false;
             if (!telasMorte.TryGetValue(Id(p), out var t)) return true;
             if (!p.Player.life.isDead) { FecharTelaMorte(p); return true; }

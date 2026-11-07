@@ -117,7 +117,7 @@ namespace SobrevivenciaCore
             LightingManager.SetScheduledWeather(clima, avisoSegundos, duracao);
             eventoComecaEm = Time.realtimeSinceStartup + avisoSegundos;
             var min = Mathf.CeilToInt(avisoSegundos / 60f);
-            Chat.Todos(Chat.Cor(S.CorDestaque, Chat.Forte($"EVENTO: {eventoNome} CHEGANDO EM {min} MIN!"))
+            Chat.TodosIcone("evento", Chat.Cor(S.CorDestaque, Chat.Forte($"EVENTO: {eventoNome} CHEGANDO EM {min} MIN!"))
                 + Chat.Cor("#FFFFFF", " Quando comecar, cai o ") + Chat.Cor(S.CorDestaque, Chat.Forte("BAU DO EVENTO"))
                 + Chat.Cor("#FFFFFF", " com loot top e zumbis em volta. Fique de olho no ceu."));
             Rocket.Core.Logging.Logger.Log($"[Evento] {eventoNome} ({clima.name}) em {avisoSegundos}s, por {duracao / 60f:0} min. Bau em X {eventoPonto.x:0} Z {eventoPonto.z:0}");
@@ -136,7 +136,8 @@ namespace SobrevivenciaCore
                     Rocket.Core.Logging.Logger.Log("[Evento] " + erro);
                 else
                 {
-                    Chat.Todos(Chat.Cor(S.CorDestaque, Chat.Forte(eventoNome + " COMECOU!")) + Chat.Cor("#FFFFFF", " O bau some em 10 minutos. Cuidado com os zumbis."));
+                    Chat.TodosIcone("evento", Chat.Cor(S.CorDestaque, Chat.Forte(eventoNome + " COMECOU!")) + Chat.Cor("#FFFFFF", " O bau some em 10 minutos. Cuidado com os zumbis."));
+                    RegistrarEvento(eventoNome + " comecou perto de " + Chat.Limpar(RegiaoDe(eventoPonto)));
                     Rocket.Core.Logging.Logger.Log($"[Evento] bau caiu em X {eventoPonto.x:0} Z {eventoPonto.z:0}");
                 }
             }

@@ -15,7 +15,34 @@ namespace SobrevivenciaCore
     {
         const short AvisosKey = 5134;
         const int AvisosFaixas = 4;
-        static readonly string[] AvisoTipos = { "Tpa", "Teleporte", "Combate", "Raid", "Heli", "Horda", "Limpa" };
+        static readonly string[] AvisoTipos = { "Tpa", "Teleporte", "Combate", "Raid", "Heli", "Horda", "Limpa", "Base", "Comboio", "Evento", "Dica" };
+
+        // base sendo atacada (dono, grupo e facção): até quando mostrar, quem ataca e onde
+        readonly Dictionary<ulong, (float Ate, string Quem, Vector3 Onde)> baseAtacada = new Dictionary<ulong, (float, string, Vector3)>();
+        readonly Dictionary<ulong, float> baseAtacadaMarcada = new Dictionary<ulong, float>();
+        // dica que passa no topo junto com o anúncio do chat
+        string dicaTopo; float dicaTopoAte;
+
+        void MostrarDicaNoTopo(string texto)
+        {
+            dicaTopo = Chat.Limpar(System.Text.RegularExpressions.Regex.Replace(texto ?? "", "<.*?>", ""));
+            dicaTopoAte = Time.realtimeSinceStartup + 10f;
+        }
+
+        /// <summary>Faixa BASE ATACADA pra todo mundo que é da base (chamado a cada golpe de raid valendo, no máximo 1x a cada 3 s por base).</summary>
+        void AvisarBaseAtacada(ulong chave, ulong dono, ulong grupo, Faccao fac, string quem, Vector3 onde)
+        {
+            float agora = Time.realtimeSinceStartup;
+            if (baseAtacadaMarcada.TryGetValue(chave, out var t) && agora < t) return;
+            baseAtacadaMarcada[chave] = agora + 3f;
+            foreach (var c in Provider.clients)
+            {
+                if (c?.player == null) continue;
+                var cid = c.playerID.steamID.m_SteamID;
+                if (cid == dono || (grupo != 0 && c.player.quests.groupID.m_SteamID == grupo) || (fac != null && FaccaoDe(cid) == fac))
+                    baseAtacada[cid] = (agora + 45f, quem, onde);
+            }
+        }
 
         class EstadoAvisos
         {
@@ -75,6 +102,22 @@ namespace SobrevivenciaCore
                 else l.Add(("Heli", "HELI CAINDO"));
             }
             else if (heliComecaEm > 0) l.Add(("Heli", $"HELI CRASH  {Tempo(heliComecaEm - agora)}"));
+            if (baseAtacada.TryGetValue(id, out var ba))
+            {
+                if (agora < ba.Ate)
+                {
+                    int d = Mathf.RoundToInt(Vector3.Distance(p.Position, ba.Onde));
+                    l.Insert(0, ("Base", $"SUA BASE ESTA SENDO ATACADA  {(d >= 1000 ? (d / 1000f).ToString("0.0") + " km" : d + " m")}  {Chat.Limpar(ba.Quem)}"));
+                }
+                else baseAtacada.Remove(id);
+            }
+            if (comboio != null)
+            {
+                int d = Mathf.RoundToInt(Vector3.Distance(p.Position, comboio.Pos));
+                l.Add(("Comboio", $"COMBOIO  {(d >= 1000 ? (d / 1000f).ToString("0.0") + " km" : d + " m")}  EXPLODE EM {Tempo(comboio.Fim - agora)}"));
+            }
+            if (eventoComecaEm > agora) l.Add(("Evento", $"{Chat.Limpar(eventoNome ?? "EVENTO").ToUpperInvariant()}  {Tempo(eventoComecaEm - agora)}"));
+            if (dicaTopo != null && agora < dicaTopoAte) l.Add(("Dica", dicaTopo));
             if (hordaCentro != null && (p.Position - hordaCentro.Value).sqrMagnitude < 150f * 150f)
             {
                 if (hordaVivos > 0) l.Add(("Horda", $"HORDA  {hordaVivos}/{Mathf.Max(hordaMax, hordaVivos)}"));

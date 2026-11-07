@@ -27,6 +27,20 @@ namespace SobrevivenciaCore
         public static void Todos(string texto)
             => ChatManager.serverSendMessage(Prefixo + texto, Color.white, null, null, EChatMode.SAY, S.IconeChat, true);
 
+        /// <summary>Mensagem sem o [prefixo], com um ícone nosso do lado (branding/chat/NOME.png): caveira, cabeca, zumbi,
+        /// morte, combate, ok, sacola, dica, vip, evento.</summary>
+        public static void TodosIcone(string icone, string texto)
+            => ChatManager.serverSendMessage(texto, Color.white, null, null, EChatMode.SAY, Icone(icone), true);
+
+        public static void ParaIcone(UnturnedPlayer p, string icone, string texto)
+        {
+            var sp = p?.Player?.channel?.owner;
+            if (sp == null) return;
+            ChatManager.serverSendMessage(texto, Color.white, null, sp, EChatMode.SAY, Icone(icone), true);
+        }
+
+        public static string Icone(string nome) => string.IsNullOrWhiteSpace(S.IconesChatBase) ? S.IconeChat : S.IconesChatBase.TrimEnd('/') + "/" + nome + ".png";
+
         public static void Info(UnturnedPlayer p, string texto) => Para(p, Cor(S.CorTexto, texto));
         public static void Ok(UnturnedPlayer p, string texto) => Para(p, Cor(S.CorOk, texto));
         public static void Aviso(UnturnedPlayer p, string texto) => Para(p, Cor(S.CorDestaque, texto));

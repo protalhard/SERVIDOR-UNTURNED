@@ -670,7 +670,8 @@ namespace SobrevivenciaCore
             if (tabelaAirdrop == null) { erro = "Nao achei tabela de airdrop no servidor."; return false; }
             airdrops.Add(new AirdropPendente { Pos = onde, Kit = kit, Fim = Time.realtimeSinceStartup + 300f, Zumbis = zumbis < 0 ? S.AirdropZumbis : zumbis, JaExistiam = new HashSet<uint>(CaixasPerto(onde).Select(d => d.instanceID)) });
             LevelManager.SpawnAirdrop(onde, tabelaAirdrop);
-            Chat.Todos(Chat.Cor(S.CorDestaque, Chat.Forte("AIRDROP " + (titulo ?? kit.Nome).ToUpperInvariant() + " A CAMINHO!")) + Chat.Cor(S.CorApagada, " Olhe pro ceu."));
+            Chat.TodosIcone("evento", Chat.Cor(S.CorDestaque, Chat.Forte("AIRDROP " + (titulo ?? kit.Nome).ToUpperInvariant() + " A CAMINHO!")) + Chat.Cor(S.CorApagada, " Olhe pro ceu."));
+            RegistrarEvento("Airdrop " + Chat.Limpar(titulo ?? kit.Nome) + " perto de " + Chat.Limpar(RegiaoDe(onde)));
             return true;
         }
 
