@@ -19,8 +19,8 @@ namespace SobrevivenciaCore
         {
             public InteractableVehicle Heli;
             public Vector3 Inicio, Queda, Direcao;
-            public float Altura, Comecou, Duracao, Fim, ProximaFumaca, ProximaHorda;
-            public bool Caiu;
+            public float Altura, Comecou, Duracao, Fim, CaiuEm, ProximaFumaca, ProximaHorda;
+            public bool Caiu, Achado;
             public string Regiao;
             public List<Transform> Caixas = new List<Transform>();
         }
@@ -123,15 +123,18 @@ namespace SobrevivenciaCore
                 Regiao = RegiaoDe(queda),
             };
             var pos0 = inicio + Vector3.up * altura;
-            pos0.y = Mathf.Max(pos0.y, queda.y + altura);
+            float chaoInicio = Terreno(inicio.x, inicio.z);
+            pos0.y = Mathf.Max(queda.y + altura, float.IsNaN(chaoInicio) ? 0f : chaoInicio + altura);
             h.Heli = VehicleManager.spawnVehicleV2(asset, pos0, Quaternion.LookRotation(dir));
             if (h.Heli == null) { Rocket.Core.Logging.Logger.Log("[Heli Crash] o jogo nao criou o helicoptero"); return; }
             try
             {
                 h.Heli.tellLocked(CSteamID.Nil, CSteamID.Nil, true); // ninguém entra no heli caindo
                 VehicleManager.sendVehicleFuel(h.Heli, 0);
-                // pouca vida: o próprio jogo mostra o heli soltando fumaça e fogo
-                VehicleManager.sendVehicleHealth(h.Heli, (ushort)Math.Max(1, h.Heli.asset.health / 12));
+                // vida cheia no voo (com pouca vida ele explodia logo no começo, longe de todo mundo); a fumaça vem dos efeitos
+                VehicleManager.sendVehicleHealth(h.Heli, h.Heli.asset.health);
+                var rb0 = h.Heli.GetComponent<Rigidbody>();
+                if (rb0 != null) { rb0.useGravity = false; rb0.isKinematic = true; }
             }
             catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             heli = h;
@@ -157,8 +160,10 @@ namespace SobrevivenciaCore
                 if (t < 0.55f) y = h.Queda.y + h.Altura;
                 else { float k = (t - 0.55f) / 0.45f; y = h.Queda.y + h.Altura * (1f - k * k); }
                 // não entra no morro no caminho
-                if (Physics.Raycast(new Vector3(plano.x, y + 200f, plano.z), Vector3.down, out var hit, 400f, RayMasks.GROUND, QueryTriggerInteraction.Ignore))
-                    y = Mathf.Max(y, hit.point.y + (t < 0.97f ? 6f : 0.5f));
+                float chao = Terreno(plano.x, plano.z);
+                if (!float.IsNaN(chao)) y = Mathf.Max(y, chao + (t < 0.97f ? 6f : 0.5f));
+                // nada derruba o heli antes da hora
+                if (h.Heli.health < h.Heli.asset.health / 2) VehicleManager.sendVehicleHealth(h.Heli, h.Heli.asset.health);
                 var pos = new Vector3(plano.x, y, plano.z);
                 if (t >= 0.55f) giro += Time.fixedDeltaTime * Mathf.Lerp(40f, 260f, (t - 0.55f) / 0.45f);
                 float nariz = t < 0.55f ? 6f : Mathf.Lerp(6f, 35f, (t - 0.55f) / 0.45f);
@@ -186,12 +191,15 @@ namespace SobrevivenciaCore
                 }
             }
             if (heli != h) yield break;
+            if (h.Heli == null || h.Heli.isExploded)
+                Rocket.Core.Logging.Logger.Log($"[Heli Crash] o voo acabou antes da hora ({(Time.realtimeSinceStartup - h.Comecou):0}s de {h.Duracao:0}s): heli {(h.Heli == null ? "sumiu" : "explodiu")}");
             Cair(h, explosao);
         }
 
         void Cair(EstadoHeli h, EffectAsset explosao)
         {
             h.Caiu = true;
+            h.CaiuEm = Time.realtimeSinceStartup;
             h.Fim = Time.realtimeSinceStartup + Math.Max(5, S.HeliCrashMinutos) * 60f;
             try
             {
@@ -231,7 +239,8 @@ namespace SobrevivenciaCore
                         }
                     }
                 }
-            NascerZumbis(h.Queda, S.HeliCrashZumbis, true);
+            int zumbis = NascerZumbis(h.Queda, S.HeliCrashZumbis, true);
+            Rocket.Core.Logging.Logger.Log($"[Heli Crash] {zumbis} zumbis nos destrocos, fumaca: {string.Join(", ", EfeitosFogo().Select(e => $"{e.name} ({e.id})"))}");
             h.ProximaHorda = Time.realtimeSinceStartup + 30f;
             Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", $"o helicoptero caiu perto de {Chat.Limpar(h.Regiao)}! Siga a fumaca: ")
                 + Chat.Cor(S.CorDestaque, Chat.Forte($"{h.Caixas.Count} caixas com item raro")) + Chat.Cor("#FFFFFF", $" e zumbis militares. Some em {S.HeliCrashMinutos} min."));
@@ -245,6 +254,8 @@ namespace SobrevivenciaCore
             heliComecaEm = -1f;
             var h = heli; heli = null;
             if (h == null) return;
+            // o próximo conta a partir de quando este some (pedido do dono)
+            if (S.HeliCrashIntervaloMinutos > 0) proximoHeli = Time.realtimeSinceStartup + S.HeliCrashIntervaloMinutos * 60f;
             try { if (h.Heli != null) VehicleManager.askVehicleDestroy(h.Heli); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             foreach (var t in h.Caixas)
             {
@@ -270,6 +281,13 @@ namespace SobrevivenciaCore
                 // se o voo travou por algum motivo (heli apagado), encerra
                 if (!h.Caiu && (h.Heli == null || agora > h.Comecou + h.Duracao + 20f)) { AcabarHeliCrash(false); return; }
                 if (!h.Caiu) return;
+                // ninguém chegou: some em HeliCrashMinutos (15). Alguém chegou nos destroços: some 10 min depois disso.
+                if (!h.Achado && Provider.clients.Any(x => x.player != null && (x.player.transform.position - h.Queda).sqrMagnitude < 40f * 40f))
+                {
+                    h.Achado = true;
+                    h.Fim = agora + 600f;
+                    Chat.Todos(Chat.Cor("#FF3B30", Chat.Forte("HELI CRASH: ")) + Chat.Cor("#FFFFFF", "alguem chegou nos destrocos! Eles somem em 10 min."));
+                }
                 if (agora >= h.Fim) { AcabarHeliCrash(true); return; }
                 // fumaça subindo dos destroços pra todo mundo achar
                 if (agora >= h.ProximaFumaca)

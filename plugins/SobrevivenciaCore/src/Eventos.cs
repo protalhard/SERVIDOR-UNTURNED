@@ -122,14 +122,21 @@ namespace SobrevivenciaCore
         int NascerZumbis(Vector3 centro, int quantos, bool militar)
         {
             if (quantos <= 0 || ZombieManager.regions == null) return 0;
-            if (!LevelNavigation.tryGetBounds(centro, out var bound) || bound >= ZombieManager.regions.Length) return 0;
-            var reg = ZombieManager.regions[bound];
-            if (reg?.zombies == null || reg.zombies.Count == 0) return 0;
+            // zumbis da área do ponto; se ali não tem área de zumbi (shopping, estrada), pega das áreas mais perto
+            var regioes = new List<ZombieRegion>();
+            if (LevelNavigation.tryGetBounds(centro, out var bound) && bound < ZombieManager.regions.Length && ZombieManager.regions[bound]?.zombies?.Count > 0)
+                regioes.Add(ZombieManager.regions[bound]);
+            else
+                regioes.AddRange(ZombieManager.regions.Where(r => r?.zombies != null && r.zombies.Count > 0)
+                    .OrderBy(r => r.zombies.Where(z => z != null).Select(z => (z.transform.position - centro).sqrMagnitude).DefaultIfEmpty(float.MaxValue).Min())
+                    .Take(3));
+            if (regioes.Count == 0) return 0;
+            var todos = regioes.SelectMany(r => r.zombies).Where(z => z != null && !z.isBoss).ToList();
             bool LongeDeTodos(Zombie z) => Provider.clients.All(c => c.player == null || (c.player.transform.position - z.transform.position).sqrMagnitude > 150f * 150f);
             bool EhMilitar(Zombie z) => LevelZombies.tables != null && z.type < LevelZombies.tables.Count
                 && (LevelZombies.tables[z.type].name ?? "").IndexOf("milit", StringComparison.OrdinalIgnoreCase) >= 0;
-            var candidatos = reg.zombies.Where(z => z != null && z.isDead && !z.isBoss)
-                .Concat(reg.zombies.Where(z => z != null && !z.isDead && !z.isBoss && LongeDeTodos(z)));
+            var candidatos = todos.Where(z => z.isDead)
+                .Concat(todos.Where(z => !z.isDead && LongeDeTodos(z)));
             if (militar) candidatos = candidatos.OrderByDescending(z => EhMilitar(z) ? 1 : 0);
             var usar = candidatos.Take(quantos).ToList();
             bool chefe = militar;
