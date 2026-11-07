@@ -51,7 +51,8 @@ airdrop automático (`AirdropSorteio.cs`, `Admin.cs`). Todos usam `NascerZumbis`
 Heli Crash: a cada 30 min contados do sumiço do anterior; some em 15 min, ou 10 min depois que alguém chega.
 As caixas do Heli Crash só abrem depois de matar `HeliCrashAbates` (20) criaturas no local. Comboio: 80 zumbis normais
 (sem chefe, radioativo nem urso), sem reforço (`ComboioReforcos` 0), loot `auto_comboio` (um pouco abaixo do heli) e o arrombar não perde progresso.
-Infectado radioativo toma 2.5x de dano e urso 1.5x (menos vida, o dano deles é o mesmo).
+Vida das criaturas (`AoBaterCriatura`): urso radioativo = vida do urso normal do jogo, infectados = vida do zumbi comum
+(o golpe vale vida_do_mod/vida_normal x); o dano que eles dão não muda.
 Criaturas (`Criaturas.cs`, /infectados [n] [ursos] | limpar): animais do mod DZ Menu 51310 infectado militar, 51312 infectado
 radioativo, 51311 urso radioativo. São animais (`AnimalManager.spawnAnimal`), então nascem em qualquer ponto, até sem área de zumbi.
 O pack sai de `AnimalManager.packs` pra não renascerem sozinhos; o plugin dá o loot na morte e radiação no golpe dos radioativos.

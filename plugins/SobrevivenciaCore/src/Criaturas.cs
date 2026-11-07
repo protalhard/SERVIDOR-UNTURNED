@@ -214,11 +214,37 @@ namespace SobrevivenciaCore
             if (!permitir || par.animal == null || criaturas.Count == 0) return;
             var a = par.animal;
             var c = criaturas.FirstOrDefault(x => x.A == a);
-            if (c == null) return;
-            if (c.Fraca) par.damage *= S.CriaturaInicialDanoRecebido;
-            // infectado radioativo: com arma comum era quase impossível de matar
-            if (a.id == S.CriaturaInfectadoRadioativo) par.damage *= Math.Max(0.1f, S.CriaturaRadioativoDanoRecebido);
-            else if (c.Urso) par.damage *= Math.Max(0.1f, S.CriaturaUrsoDanoRecebido);
+            if (c == null || a.asset == null || a.asset.health == 0) return;
+            // pedido do dono: vida igual à do bicho comum (urso radioativo = urso normal, infectado = zumbi normal).
+            // O mod tem vida maior, então o golpe vale proporcionalmente mais. O dano deles continua o mesmo.
+            float alvo = c.Urso ? VidaUrsoNormal() : VidaZumbiNormal();
+            if (alvo > 0 && alvo < a.asset.health) par.damage *= a.asset.health / alvo;
+        }
+
+        float vidaUrsoNormal = -1f, vidaZumbiNormal = -1f;
+
+        /// <summary>Vida do urso do jogo (não o do mod). 0 = não achou.</summary>
+        float VidaUrsoNormal()
+        {
+            if (vidaUrsoNormal >= 0) return vidaUrsoNormal;
+            var todos = new List<AnimalAsset>();
+            Assets.find(todos);
+            var urso = todos.Where(x => x != null && x.id != S.CriaturaUrso && x.id != S.CriaturaInfectadoMilitar && x.id != S.CriaturaInfectadoRadioativo
+                    && (x.animalName ?? "").IndexOf("bear", StringComparison.OrdinalIgnoreCase) >= 0 && x.health > 0)
+                .OrderBy(x => x.id).FirstOrDefault();
+            vidaUrsoNormal = urso?.health ?? 0;
+            Rocket.Core.Logging.Logger.Log($"[Criaturas] urso radioativo com vida de urso normal: {(urso == null ? "urso nao achado" : $"{urso.animalName} ({urso.id}) {urso.health}")}");
+            return vidaUrsoNormal;
+        }
+
+        /// <summary>Vida do zumbi comum do mapa (a do meio entre as tabelas de zumbi).</summary>
+        float VidaZumbiNormal()
+        {
+            if (vidaZumbiNormal >= 0) return vidaZumbiNormal;
+            var vidas = (LevelZombies.tables ?? new List<ZombieTable>()).Where(t => t != null && t.health > 0).Select(t => (float)t.health).OrderBy(v => v).ToList();
+            vidaZumbiNormal = vidas.Count == 0 ? 100f : vidas[vidas.Count / 2];
+            Rocket.Core.Logging.Logger.Log($"[Criaturas] infectados com vida de zumbi normal: {vidaZumbiNormal}");
+            return vidaZumbiNormal;
         }
 
         void LigarCriaturas()
