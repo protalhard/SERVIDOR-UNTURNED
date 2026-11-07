@@ -27,6 +27,8 @@ dotnet tool install -g ilspycmd --version 8.2.0.7535
 DOTNET_ROLL_FORWARD=Major ~/.dotnet/tools/ilspycmd -t SDG.Unturned.ZombieManager <Assembly-CSharp.dll> > ZombieManager.cs
 ```
 
+Resumo completo da API do jogo pra plugin: `docs/UNTURNED-API.md`.
+
 ## O que já aprendemos do jogo (economiza tempo)
 - **Zumbis**: cada área de navegação (`LevelNavigation.tryGetBounds`) tem um pool fixo em `ZombieManager.regions[bound].zombies`.
   Dá pra criar zumbi novo em qualquer área com `ZombieManager.instance.addZombie(bound, tipo, ...)`, mas o cliente só vê
