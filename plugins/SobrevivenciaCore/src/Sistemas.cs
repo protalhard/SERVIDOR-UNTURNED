@@ -197,6 +197,8 @@ namespace SobrevivenciaCore
         public ushort StatusEfeito = 51313;
         public ushort AcertoEfeito = 51314;
         public ushort AtingidoEfeito = 51315;
+        /// <summary>Quadrados de status do HUD novo (Status_Quadrados). Desligado: com o relógio fixo, fica só o relógio embaixo.</summary>
+        public bool StatusQuadrados = false;
         /// <summary>Relógio fixo no canto (efeito do mod, 0 = desligado). Ligado, some a tecla do relógio e as barras do jogo.</summary>
         public ushort RelogioFixoEfeito = 51299;
         /// <summary>Minimapa no canto de cima à direita (efeito do mod, 0 = desligado). A imagem vem do site:
