@@ -142,7 +142,7 @@ namespace SobrevivenciaCore
         public int ComboioMinJogadores = 2;
         public int ComboioMinutos = 15;
         public int ComboioCaixas = 2;
-        public int ComboioZumbis = 15;
+        public int ComboioZumbis = 80;
         public int ComboioSegundosArrombar = 45;
         public ushort ComboioVeiculo = 0;
         /// <summary>Heli Crash: a cada X minutos com pelo menos N online (0 = desligado). Aviso no chat Y s antes do heli sair.
@@ -170,11 +170,19 @@ namespace SobrevivenciaCore
         public int CriaturasSemZumbi = 6;
         public int HeliCrashInfectados = 4;
         public int HeliCrashUrsos = 1;
+        /// <summary>Heli Crash: as caixas só abrem depois de matar esse tanto de infectados no local (0 = abertas desde o começo).</summary>
+        public int HeliCrashAbates = 20;
+        /// <summary>Urso radioativo toma esse tanto x de dano (menos vida). O dano dele continua igual.</summary>
+        public float CriaturaUrsoDanoRecebido = 1.5f;
         public int ComboioInfectados = 4;
         public int ComboioUrsos = 1;
         public int AirdropInfectados = 2;
         public int AirdropChanceUrso = 30;
         public float CriaturaRadiacao = 12f;
+        /// <summary>Infectado radioativo toma esse tanto x de dano (2.5 = 40% da vida do mod).</summary>
+        public float CriaturaRadioativoDanoRecebido = 2.5f;
+        /// <summary>Comboio: levas extras de zumbi depois da primeira (0 = nenhuma: os zumbis não aumentam), só quando sobram poucos vivos.</summary>
+        public int ComboioReforcos = 0;
         public int CriaturaInfectadoLootMin = 1;
         public int CriaturaInfectadoLootMax = 2;
         public int CriaturaUrsoLootMin = 3;
@@ -502,6 +510,14 @@ namespace SobrevivenciaCore
             {
                 if (RelogioFixoEfeito == 0) RelogioFixoEfeito = 51299;
                 VersaoPadroes = 18;
+                mudou = true;
+            }
+            // v19: comboio só com zumbi normal, 80 deles, sem reforço (pedido do dono em 07/11)
+            if (VersaoPadroes < 19)
+            {
+                if (ComboioZumbis < 80) ComboioZumbis = 80;
+                ComboioReforcos = 0;
+                VersaoPadroes = 19;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

@@ -38,18 +38,19 @@ namespace SobrevivenciaCore
 
         /// <summary>Nasce infectados (militar ou radioativo, sorteado) e ursos em volta do ponto. Somem em "segundos"
         /// (ou antes, com LimparCriaturas). ondas = depois vem mais em ondas até CriaturasPorEvento. Retorna quantos nasceram.</summary>
-        internal int NascerCriaturas(Vector3 centro, int infectados, int ursos, float segundos, bool ondas = true)
+        internal int NascerCriaturas(Vector3 centro, int infectados, int ursos, float segundos, bool ondas = true, bool radioativos = true, int total = 0)
         {
-            int n = NascerLeva(centro, infectados, ursos, Time.realtimeSinceStartup + segundos, true);
-            if (ondas && n > 0 && S.CriaturasPorEvento > n)
+            int n = NascerLeva(centro, infectados, ursos, Time.realtimeSinceStartup + segundos, true, radioativos);
+            total = Math.Max(total, S.CriaturasPorEvento);
+            if (ondas && n > 0 && total > n)
             {
                 pontosCriaturas.RemoveAll(x => (x.Centro - centro).sqrMagnitude < 60f * 60f);
-                pontosCriaturas.Add(new PontoCriaturas { Centro = centro, Fim = Time.realtimeSinceStartup + segundos, Proxima = Time.realtimeSinceStartup + 20f, Feitos = n, Total = S.CriaturasPorEvento });
+                pontosCriaturas.Add(new PontoCriaturas { Centro = centro, Fim = Time.realtimeSinceStartup + segundos, Proxima = Time.realtimeSinceStartup + 20f, Feitos = n, Total = total });
             }
             return n;
         }
 
-        int NascerLeva(Vector3 centro, int infectados, int ursos, float fim, bool fraca)
+        int NascerLeva(Vector3 centro, int infectados, int ursos, float fim, bool fraca, bool radioativos = true)
         {
             if (!Level.isLoaded || AnimalManager.animals == null) return 0;
             // não enche o ponto: conta o que ainda está vivo ali
@@ -63,7 +64,7 @@ namespace SobrevivenciaCore
             for (int i = 0; i < ursos; i++) pedidos.Add((S.CriaturaUrso, true));
             for (int i = 0; i < infectados; i++)
             {
-                bool rad = S.CriaturaInfectadoRadioativo != 0 && (S.CriaturaInfectadoMilitar == 0 || sorteCriatura.Next(2) == 0);
+                bool rad = radioativos && S.CriaturaInfectadoRadioativo != 0 && (S.CriaturaInfectadoMilitar == 0 || sorteCriatura.Next(2) == 0);
                 pedidos.Add((rad ? S.CriaturaInfectadoRadioativo : S.CriaturaInfectadoMilitar, false));
             }
             foreach (var (id, urso) in pedidos)
@@ -137,6 +138,7 @@ namespace SobrevivenciaCore
                 {
                     // morreu na mão de jogador: o plugin solta o loot (o mod não tem carne/pele)
                     criaturas.RemoveAt(i);
+                    try { AbateHeli(c.Centro); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
                     try { LootCriatura(c); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
                     continue;
                 }
@@ -212,7 +214,11 @@ namespace SobrevivenciaCore
             if (!permitir || par.animal == null || criaturas.Count == 0) return;
             var a = par.animal;
             var c = criaturas.FirstOrDefault(x => x.A == a);
-            if (c != null && c.Fraca) par.damage *= S.CriaturaInicialDanoRecebido;
+            if (c == null) return;
+            if (c.Fraca) par.damage *= S.CriaturaInicialDanoRecebido;
+            // infectado radioativo: com arma comum era quase impossível de matar
+            if (a.id == S.CriaturaInfectadoRadioativo) par.damage *= Math.Max(0.1f, S.CriaturaRadioativoDanoRecebido);
+            else if (c.Urso) par.damage *= Math.Max(0.1f, S.CriaturaUrsoDanoRecebido);
         }
 
         void LigarCriaturas()
