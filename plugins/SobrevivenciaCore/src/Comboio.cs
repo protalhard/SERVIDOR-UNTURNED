@@ -168,7 +168,7 @@ namespace SobrevivenciaCore
             if (chegando && agora >= c.ProximaHorda)
             {
                 c.ProximaHorda = agora + 25f;
-                if (NascerZumbis(c.Pos, Math.Max(2, S.ComboioZumbis / 3), true) == 0) NascerCriaturas(c.Pos, 2, 0, Mathf.Max(60f, c.Fim - agora + 60f));
+                NascerZumbis(c.Pos, Math.Max(2, S.ComboioZumbis / 3), true);
             }
             if (c.Aberto) return;
             if (perto.Count == 0) { if (c.Arrombando > 0) c.Arrombando = Math.Max(0, c.Arrombando - 2f); return; }

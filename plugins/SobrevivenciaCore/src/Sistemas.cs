@@ -177,6 +177,16 @@ namespace SobrevivenciaCore
         public int CriaturaInfectadoLootMax = 2;
         public int CriaturaUrsoLootMin = 3;
         public int CriaturaUrsoLootMax = 5;
+        /// <summary>Ondas: com gente a até 120 m, a cada CriaturasOndaSegundos vêm até CriaturasPorOnda, com no máximo
+        /// CriaturasVivasPorPonto vivas, até CriaturasPorEvento no total. A primeira leva toma CriaturaInicialDanoRecebido x dano
+        /// (1.5 = 2/3 da vida) e bate CriaturaInicialDano x. CriaturaDegrau = altura máx. que sobem (agro sem subir em carro/pedra).</summary>
+        public int CriaturasPorEvento = 25;
+        public int CriaturasVivasPorPonto = 8;
+        public int CriaturasPorOnda = 3;
+        public float CriaturasOndaSegundos = 15f;
+        public float CriaturaInicialDanoRecebido = 1.5f;
+        public float CriaturaInicialDano = 0.8f;
+        public float CriaturaDegrau = 0.4f;
         /// <summary>Avisos no HUD (efeito DZ_Avisos do mod): pedido de TPA, teleporte, combate, raid, heli crash. 0 = desligado.</summary>
         public ushort AvisosEfeito = 51305;
         /// <summary>Tela de morte (efeito DZ_Morte do mod): quem matou, arma, distância, dano e botão renascer. 0 = tela do jogo.</summary>

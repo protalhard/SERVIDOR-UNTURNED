@@ -302,7 +302,7 @@ namespace SobrevivenciaCore
                 if (agora >= h.ProximaHorda && Provider.clients.Any(x => x.player != null && (x.player.transform.position - h.Queda).sqrMagnitude < 150f * 150f))
                 {
                     h.ProximaHorda = agora + 35f;
-                    if (NascerZumbis(h.Queda, Math.Max(2, S.HeliCrashZumbis / 3), true) == 0) NascerCriaturas(h.Queda, 2, 0, Mathf.Max(60f, h.Fim - agora + 60f));
+                    NascerZumbis(h.Queda, Math.Max(2, S.HeliCrashZumbis / 3), true);
                 }
                 return;
             }

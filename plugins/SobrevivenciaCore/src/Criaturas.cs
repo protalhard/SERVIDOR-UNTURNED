@@ -18,19 +18,40 @@ namespace SobrevivenciaCore
             public Vector3 Centro;
             public float Fim;
             public bool Urso;
+            /// <summary>Primeira leva do evento: um pouco menos de vida e de dano (pedido do dono). As ondas vêm fortes.</summary>
+            public bool Fraca;
+        }
+
+        /// <summary>Ponto de evento com ondas: enquanto tem gente perto, vem mais criatura até matar CriaturasPorEvento.</summary>
+        class PontoCriaturas
+        {
+            public Vector3 Centro;
+            public float Fim, Proxima;
+            public int Feitos, Total;
         }
 
         readonly List<Criatura> criaturas = new List<Criatura>();
+        readonly List<PontoCriaturas> pontosCriaturas = new List<PontoCriaturas>();
         static readonly System.Random sorteCriatura = new System.Random();
 
         bool CriaturaRadioativa(ushort id) => id == S.CriaturaUrso || id == S.CriaturaInfectadoRadioativo;
 
         /// <summary>Nasce infectados (militar ou radioativo, sorteado) e ursos em volta do ponto. Somem em "segundos"
-        /// (ou antes, com LimparCriaturas). Retorna quantos nasceram.</summary>
-        internal int NascerCriaturas(Vector3 centro, int infectados, int ursos, float segundos)
+        /// (ou antes, com LimparCriaturas). ondas = depois vem mais em ondas até CriaturasPorEvento. Retorna quantos nasceram.</summary>
+        internal int NascerCriaturas(Vector3 centro, int infectados, int ursos, float segundos, bool ondas = true)
+        {
+            int n = NascerLeva(centro, infectados, ursos, Time.realtimeSinceStartup + segundos, true);
+            if (ondas && n > 0 && S.CriaturasPorEvento > n)
+            {
+                pontosCriaturas.RemoveAll(x => (x.Centro - centro).sqrMagnitude < 60f * 60f);
+                pontosCriaturas.Add(new PontoCriaturas { Centro = centro, Fim = Time.realtimeSinceStartup + segundos, Proxima = Time.realtimeSinceStartup + 20f, Feitos = n, Total = S.CriaturasPorEvento });
+            }
+            return n;
+        }
+
+        int NascerLeva(Vector3 centro, int infectados, int ursos, float fim, bool fraca)
         {
             if (!Level.isLoaded || AnimalManager.animals == null) return 0;
-            float agora = Time.realtimeSinceStartup;
             // não enche o ponto: conta o que ainda está vivo ali
             int vivosAli = criaturas.Count(c => c.A != null && !c.A.isDead && (c.Centro - centro).sqrMagnitude < 60f * 60f);
             int teto = Math.Max(0, S.CriaturasMaxPorPonto - vivosAli);
@@ -61,9 +82,12 @@ namespace SobrevivenciaCore
                     if (a.pack.animals.Count == 0 && AnimalManager.packs != null && AnimalManager.packs.Count > 1) AnimalManager.packs.Remove(a.pack);
                 }
                 a.pack = pack;
+                // agro: sem isso eles sobem em carro, pedra e caixa. O servidor que move o animal, então vale pra todos.
+                var cc = a.GetComponent<CharacterController>();
+                if (cc != null) { cc.stepOffset = Mathf.Min(cc.stepOffset, S.CriaturaDegrau); cc.slopeLimit = Mathf.Min(cc.slopeLimit, 45f); }
                 if (!pack.animals.Contains(a)) pack.animals.Add(a);
                 criaturas.RemoveAll(c => c.A == a);
-                criaturas.Add(new Criatura { A = a, Centro = centro, Fim = agora + segundos, Urso = urso });
+                criaturas.Add(new Criatura { A = a, Centro = centro, Fim = fim, Urso = urso, Fraca = fraca });
                 feitos++;
             }
             if (feitos > 0) Rocket.Core.Logging.Logger.Log($"[Criaturas] {feitos} em X {centro.x:0} Z {centro.z:0}");
@@ -97,12 +121,14 @@ namespace SobrevivenciaCore
         {
             float agora = Time.realtimeSinceStartup;
             foreach (var c in criaturas) if ((c.Centro - centro).sqrMagnitude < raio * raio && c.Fim > agora) c.Fim = agora;
+            pontosCriaturas.RemoveAll(x => (x.Centro - centro).sqrMagnitude < raio * raio);
         }
 
         void TickCriaturas()
         {
-            if (criaturas.Count == 0) return;
             float agora = Time.realtimeSinceStartup;
+            TickOndasCriaturas(agora);
+            if (criaturas.Count == 0) return;
             for (int i = criaturas.Count - 1; i >= 0; i--)
             {
                 var c = criaturas[i];
@@ -120,6 +146,25 @@ namespace SobrevivenciaCore
                 if (gentePerto && agora < c.Fim + 300f) continue;
                 criaturas.RemoveAt(i);
                 try { c.A.askDamage(ushort.MaxValue, Vector3.up, out _, out _, false, false); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            }
+        }
+
+        void TickOndasCriaturas(float agora)
+        {
+            for (int i = pontosCriaturas.Count - 1; i >= 0; i--)
+            {
+                var p = pontosCriaturas[i];
+                if (agora >= p.Fim || p.Feitos >= p.Total) { pontosCriaturas.RemoveAt(i); continue; }
+                if (agora < p.Proxima) continue;
+                p.Proxima = agora + Mathf.Max(5f, S.CriaturasOndaSegundos);
+                if (!Provider.clients.Any(x => x.player != null && !x.player.life.isDead && (x.player.transform.position - p.Centro).sqrMagnitude < 120f * 120f)) continue;
+                int vivos = criaturas.Count(c => c.A != null && !c.A.isDead && (c.Centro - p.Centro).sqrMagnitude < 60f * 60f);
+                int quer = Math.Min(S.CriaturasVivasPorPonto - vivos, p.Total - p.Feitos);
+                if (quer <= 0) continue;
+                quer = Math.Min(quer, Math.Max(1, S.CriaturasPorOnda));
+                // a cada ~8 da onda vem um urso
+                int ursos = S.CriaturaUrso != 0 && sorteCriatura.Next(8) == 0 ? 1 : 0;
+                p.Feitos += NascerLeva(p.Centro, quer - ursos, ursos, p.Fim, false);
             }
         }
 
@@ -151,18 +196,36 @@ namespace SobrevivenciaCore
         /// <summary>Golpe do urso ou do infectado radioativo deixa o jogador com radiação (virus).</summary>
         void AoDanoCriatura(ref DamagePlayerParameters par, ref bool permitir)
         {
-            if (!permitir || par.cause != EDeathCause.ANIMAL || par.player == null || criaturas.Count == 0 || S.CriaturaRadiacao <= 0) return;
+            if (!permitir || par.cause != EDeathCause.ANIMAL || par.player == null || criaturas.Count == 0) return;
             var pos = par.player.transform.position;
-            var c = criaturas.FirstOrDefault(x => x.A != null && !x.A.isDead && CriaturaRadioativa(x.A.id) && (x.A.transform.position - pos).sqrMagnitude < 7f * 7f);
+            var c = criaturas.Where(x => x.A != null && !x.A.isDead && (x.A.transform.position - pos).sqrMagnitude < 7f * 7f)
+                .OrderBy(x => (x.A.transform.position - pos).sqrMagnitude).FirstOrDefault();
             if (c == null) return;
-            try { par.player.life.serverModifyVirus(-S.CriaturaRadiacao); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            if (c.Fraca) par.damage *= S.CriaturaInicialDano;
+            if (!CriaturaRadioativa(c.A.id)) return;
+            if (S.CriaturaRadiacao > 0) try { par.player.life.serverModifyVirus(-S.CriaturaRadiacao); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
 
-        void LigarCriaturas() => DamageTool.damagePlayerRequested += AoDanoCriatura;
+        /// <summary>Primeira leva toma mais dano (= menos vida).</summary>
+        void AoBaterCriatura(ref DamageAnimalParameters par, ref bool permitir)
+        {
+            if (!permitir || par.animal == null || criaturas.Count == 0) return;
+            var a = par.animal;
+            var c = criaturas.FirstOrDefault(x => x.A == a);
+            if (c != null && c.Fraca) par.damage *= S.CriaturaInicialDanoRecebido;
+        }
+
+        void LigarCriaturas()
+        {
+            DamageTool.damagePlayerRequested += AoDanoCriatura;
+            DamageTool.damageAnimalRequested += AoBaterCriatura;
+        }
 
         void DesligarCriaturas()
         {
             DamageTool.damagePlayerRequested -= AoDanoCriatura;
+            DamageTool.damageAnimalRequested -= AoBaterCriatura;
+            pontosCriaturas.Clear();
             foreach (var c in criaturas) try { if (c.A != null && !c.A.isDead) c.A.askDamage(ushort.MaxValue, Vector3.up, out _, out _, false, false); } catch { }
             criaturas.Clear();
         }
@@ -188,7 +251,7 @@ namespace SobrevivenciaCore
             int ursos = a.Length > 1 && int.TryParse(a[1], out var y) ? Mathf.Clamp(y, 0, 5) : 1;
             var frente = p.Player.transform.forward; frente.y = 0;
             if (frente.sqrMagnitude < 0.01f) frente = Vector3.forward;
-            int n = P.NascerCriaturas(p.Position + frente.normalized * 20f, inf, ursos, 600f);
+            int n = P.NascerCriaturas(p.Position + frente.normalized * 20f, inf, ursos, 600f, false);
             P.LogAdmin(p, $"INFECTADOS: {n}");
             if (n > 0) Chat.Info(p, $"{n} criaturas nasceram na sua frente. Somem em 10 min.");
             else Chat.Erro(p, "Nao nasceu nenhuma. O mod DZ Menu com os animais novos ja foi reenviado no Workshop e o servidor reiniciou?");
