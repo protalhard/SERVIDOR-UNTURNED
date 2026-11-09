@@ -502,6 +502,7 @@ namespace SobrevivenciaCore
             int r = Itens.Remover(p, it.Id, Math.Min(tem, e.Qtd));
             long ganho = (long)it.Paga * r;
             Dinheiro.Dar(p, ganho);
+            LogVenda(p, e.Loja.Id, it.Id, r, ganho);
             LT(p, "Loja_Dinheiro", C(Verde, "$ " + Dinheiro.NoBolso(p).ToString("N0")) + C(Cinza, " no bolso"));
             // a lista de venda só mostra o que ele tem: atualiza (some se vendeu tudo)
             Recarregar(p, e);
@@ -519,11 +520,28 @@ namespace SobrevivenciaCore
             {
                 int r = Itens.Remover(p, it.Id, Itens.Contar(p, it.Id));
                 qtd += r; total += (long)r * it.Paga;
+                if (r > 0) LogVenda(p, e.Loja.Id, it.Id, r, (long)r * it.Paga);
             }
             if (qtd == 0) { AvisoLoja(p, "Voce nao tem nada que esse vendedor compre.", false); return; }
             Dinheiro.Dar(p, total);
             AvisoLoja(p, $"Vendeu {qtd} itens por $ {total:N0}.", true);
             LT(p, "Loja_Dinheiro", C(Verde, "$ " + Dinheiro.NoBolso(p).ToString("N0")) + C(Cinza, " no bolso"));
+        }
+
+        // ---------- Log de vendas (pra rastrear de onde vem o dinheiro) ----------
+
+        /// <summary>Grava cada venda pra loja em vendas.log (pasta do plugin) e no log do Rocket.</summary>
+        public void LogVenda(UnturnedPlayer p, string loja, ushort item, int qtd, long valor)
+        {
+            try
+            {
+                var nome = Chat.Limpar(p.CharacterName);
+                var linha = string.Join("\t", AgoraBrasil.ToString("yyyy-MM-dd HH:mm:ss"), Id(p), nome, loja ?? "",
+                    item, Itens.Nome(item), qtd, valor);
+                File.AppendAllText(Path.Combine(Directory, "vendas.log"), linha + Environment.NewLine);
+                Rocket.Core.Logging.Logger.Log($"[LOJA] {nome} ({Id(p)}) vendeu {qtd}x {Itens.Nome(item)} ({item}) por {valor} na loja {loja}");
+            }
+            catch (Exception ex) { Rocket.Core.Logging.Logger.LogException(ex); }
         }
 
         // ---------- Vault comprado com dinheiro ----------

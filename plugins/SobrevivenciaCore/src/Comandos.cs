@@ -172,6 +172,7 @@ namespace SobrevivenciaCore
             int removidos = Itens.Remover(p, it.Id, qtd);
             long ganho = (long)it.Paga * removidos;
             Dinheiro.Dar(p, ganho);
+            P.LogVenda(p, loja.Id, it.Id, removidos, ganho);
             P.Msg(p, $"Vendeu {removidos}x {Itens.Nome(it.Id)} por ${ganho}.");
         }
     }
@@ -189,6 +190,7 @@ namespace SobrevivenciaCore
             {
                 int r = Itens.Remover(p, it.Id, Itens.Contar(p, it.Id));
                 itens += r; total += (long)r * it.Paga;
+                if (r > 0) P.LogVenda(p, loja.Id, it.Id, r, (long)r * it.Paga);
             }
             if (itens == 0) { P.Erro(p, "Voce nao tem nada que essa loja compre."); return; }
             Dinheiro.Dar(p, total);
