@@ -64,6 +64,8 @@ namespace SobrevivenciaCore
         public string CorPerigo = "#FF4D4D";
         public string Prefixo = "DZ";
         public string IconeChat = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/icon64.png";
+        /// <summary>Pasta dos ícones do chat (caveira.png, combate.png...). Vazio = usa o IconeChat em tudo.</summary>
+        public string IconesChatBase = "https://raw.githubusercontent.com/protalhard/SERVIDOR-UNTURNED/main/branding/chat";
         public string LinkDiscord = "";
 
         /// <summary>LinkDiscord da config ou, se vazio, o convite que o bot do Discord criou.</summary>
@@ -140,14 +142,72 @@ namespace SobrevivenciaCore
         public int ComboioMinJogadores = 2;
         public int ComboioMinutos = 15;
         public int ComboioCaixas = 2;
-        public int ComboioZumbis = 15;
+        public int ComboioZumbis = 80;
         public int ComboioSegundosArrombar = 45;
         public ushort ComboioVeiculo = 0;
+        /// <summary>Heli Crash: a cada X minutos com pelo menos N online (0 = desligado). Aviso no chat Y s antes do heli sair.
+        /// O heli voa HeliCrashDistanciaVoo metros a HeliCrashVelocidade m/s e HeliCrashAltura m do chão. Os destroços ficam HeliCrashMinutos.
+        /// HeliCrashVeiculo: 4031 = Chopper do California 2 (o heli militar do mapa); 0 = acha um helicóptero pelo nome. HeliCrashFumacaEfeito = coluna de fumaça do mod DZ (DZ_Fumaca).</summary>
+        public int HeliCrashIntervaloMinutos = 30;
+        public int HeliCrashMinJogadores = 1;
+        public int HeliCrashAvisoSegundos = 60;
+        public int HeliCrashMinutos = 15;
+        public int HeliCrashCaixas = 3;
+        public int HeliCrashZumbis = 12;
+        public ushort HeliCrashVeiculo = 4031;
+        public float HeliCrashDistanciaVoo = 900f;
+        public float HeliCrashVelocidade = 40f;
+        public float HeliCrashAltura = 110f;
+        public ushort HeliCrashFumacaEfeito = 51307;
+        public float HeliCrashFumacaSegundos = 8f;
+        /// <summary>Criaturas do mod DZ Menu (animais, nascem em qualquer lugar): infectado militar 51310, infectado radioativo 51312
+        /// (sorteados), urso radioativo 51311. Por evento: Infectados/Ursos; sem área de zumbi no ponto, nascem +CriaturasSemZumbi infectados.
+        /// CriaturaRadiacao = radiação (virus) por golpe do urso/infectado radioativo. 0 num ID = desligado.</summary>
+        public ushort CriaturaInfectadoMilitar = 51310;
+        public ushort CriaturaInfectadoRadioativo = 51312;
+        public ushort CriaturaUrso = 51311;
+        public int CriaturasMaxPorPonto = 12;
+        public int CriaturasSemZumbi = 6;
+        public int HeliCrashInfectados = 4;
+        public int HeliCrashUrsos = 1;
+        /// <summary>Heli Crash: as caixas só abrem depois de matar esse tanto de infectados no local (0 = abertas desde o começo).</summary>
+        public int HeliCrashAbates = 20;
+        public int ComboioInfectados = 4;
+        public int ComboioUrsos = 1;
+        public int AirdropInfectados = 2;
+        public int AirdropChanceUrso = 30;
+        public float CriaturaRadiacao = 12f;
+        /// <summary>Comboio: levas extras de zumbi depois da primeira (0 = nenhuma: os zumbis não aumentam), só quando sobram poucos vivos.</summary>
+        public int ComboioReforcos = 0;
+        public int CriaturaInfectadoLootMin = 1;
+        public int CriaturaInfectadoLootMax = 2;
+        public int CriaturaUrsoLootMin = 3;
+        public int CriaturaUrsoLootMax = 5;
+        /// <summary>Ondas: com gente a até 120 m, a cada CriaturasOndaSegundos vêm até CriaturasPorOnda, com no máximo
+        /// CriaturasVivasPorPonto vivas, até CriaturasPorEvento no total. A primeira leva toma CriaturaInicialDanoRecebido x dano
+        /// (1.5 = 2/3 da vida) e bate CriaturaInicialDano x. CriaturaDegrau = altura máx. que sobem (agro sem subir em carro/pedra).</summary>
+        public int CriaturasPorEvento = 25;
+        public int CriaturasVivasPorPonto = 8;
+        public int CriaturasPorOnda = 3;
+        public float CriaturasOndaSegundos = 15f;
+        public float CriaturaInicialDanoRecebido = 1.5f;
+        public float CriaturaInicialDano = 0.8f;
+        public float CriaturaDegrau = 0.4f;
+        /// <summary>Avisos no HUD (efeito DZ_Avisos do mod): pedido de TPA, teleporte, combate, raid, heli crash. 0 = desligado.</summary>
+        public ushort AvisosEfeito = 51305;
+        /// <summary>Tela de morte (efeito DZ_Morte do mod): quem matou, arma, distância, dano e botão renascer. 0 = tela do jogo.</summary>
+        public ushort MorteEfeito = 51306;
+        /// <summary>HUD novo (status, combate, sacola e arma), aviso de acerto (dano, headshot com som) e de quem te acertou. 0 = desligado.</summary>
+        public ushort StatusEfeito = 51313;
+        public ushort AcertoEfeito = 51314;
+        public ushort AtingidoEfeito = 51315;
+        /// <summary>Quadrados de status do HUD novo (Status_Quadrados). Desligado: com o relógio fixo, fica só o relógio embaixo.</summary>
+        public bool StatusQuadrados = false;
         /// <summary>Relógio fixo no canto (efeito do mod, 0 = desligado). Ligado, some a tecla do relógio e as barras do jogo.</summary>
         public ushort RelogioFixoEfeito = 51299;
         /// <summary>Minimapa no canto de cima à direita (efeito do mod, 0 = desligado). A imagem vem do site:
         /// {x} e {y} = pixel do mapa (Chart, MiniMapaLargura x MiniMapaAltura) onde o jogador está.</summary>
-        public ushort MiniMapaEfeito = 51300;
+        public ushort MiniMapaEfeito = 0; // desligado a pedido do dono (era 51300)
         public string MiniMapaUrl = "http://54.94.93.87/mini/{x}_{y}.jpg";
         public int MiniMapaLargura = 3905;
         public int MiniMapaAltura = 5441;
@@ -439,6 +499,21 @@ namespace SobrevivenciaCore
             {
                 if (MontarDesnivelMax < 10f) MontarDesnivelMax = 10f;
                 VersaoPadroes = 16;
+                mudou = true;
+            }
+            // v18: relógio fixo de volta (pedido do dono em 06/11, agora com sangramento, osso quebrado e radiação)
+            if (VersaoPadroes < 18)
+            {
+                if (RelogioFixoEfeito == 0) RelogioFixoEfeito = 51299;
+                VersaoPadroes = 18;
+                mudou = true;
+            }
+            // v19: comboio só com zumbi normal, 80 deles, sem reforço (pedido do dono em 07/11)
+            if (VersaoPadroes < 19)
+            {
+                if (ComboioZumbis < 80) ComboioZumbis = 80;
+                ComboioReforcos = 0;
+                VersaoPadroes = 19;
                 mudou = true;
             }
             // config antiga sem bônus/título nos kits de rank: copia do padrão

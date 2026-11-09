@@ -155,6 +155,8 @@ namespace SobrevivenciaCore
 
             // raid valendo: avisa o dono (se online) e registra
             ulong chave = grupo != 0 ? grupo : dono;
+            try { AvisarBaseAtacada(chave, dono, grupo, FaccaoPorGrupo(grupo) ?? FaccaoDe(dono), sp.playerID.characterName, pos); }
+            catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             if (!alertaDono.TryGetValue(chave, out var prox) || Time.realtimeSinceStartup > prox)
             {
                 alertaDono[chave] = Time.realtimeSinceStartup + 120f;

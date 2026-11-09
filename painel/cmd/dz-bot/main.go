@@ -48,6 +48,8 @@ type Estado struct {
 	Salas   map[string]string `json:"salas,omitempty"`
 	// enquetes criadas pelo painel admin (pra mostrar os votos lá)
 	Enquetes []dados.EnqueteDiscord `json:"enquetes,omitempty"`
+	// títulos do novidades.md já postados em #updates
+	Novidades map[string]bool `json:"novidades,omitempty"`
 }
 
 var (
@@ -351,10 +353,6 @@ func montar(s *discordgo.Session, g *discordgo.Guild) error {
 		Color:       corLaranja, Image: &discordgo.MessageEmbedImage{URL: capaURL},
 		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: iconeURL}, Footer: &discordgo.MessageEmbedFooter{Text: rodape},
 	}}})
-	postar(s, "regras", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{
-		{Title: "🎮 Regras do jogo", Description: textoRegrasJogo, Color: corLaranja},
-		{Title: "💬 Regras do Discord", Description: textoRegrasDiscord, Color: corAmbar, Footer: &discordgo.MessageEmbedFooter{Text: rodape}},
-	}})
 	postar(s, "comojogar", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{{
 		Title: "Como jogar", Description: textoComoJogar, Color: corLaranja,
 		Thumbnail: &discordgo.MessageEmbedThumbnail{URL: iconeURL}, Footer: &discordgo.MessageEmbedFooter{Text: rodape},
@@ -688,6 +686,13 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 	cat, staff := estado.Canais["cat_suporte"], estado.Cargos["staff"]
 	mu.Unlock()
 	u := i.Member.User
+	// responde na hora (o Discord só espera 3 s); criar canal e postar demora mais
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{Flags: discordgo.MessageFlagsEphemeral}})
+	responder := func(_ *discordgo.Session, _ *discordgo.InteractionCreate, e *discordgo.MessageEmbed, _ bool) {
+		_, _ = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{Embeds: &[]*discordgo.MessageEmbed{e}})
+	}
 	if nomesMotivo[motivo] == "" {
 		motivo = "outro"
 	}
@@ -728,7 +733,7 @@ func abrirTicket(s *discordgo.Session, i *discordgo.InteractionCreate, motivo st
 	}
 	estado.Tickets[ch.ID] = u.ID
 	salvarEstado()
-	postar(s, "logs", &discordgo.MessageSend{Content: fmt.Sprintf("🎫 **Ticket aberto** (%s) por <@%s>: <#%s>", nomesMotivo[motivo], u.ID, ch.ID),
+	postar(s, "logs", &discordgo.MessageSend{Content: fmt.Sprintf("🎫 **Ticket aberto** (%s) por <@%s>: <#%s> `#%s`", nomesMotivo[motivo], u.ID, ch.ID, ch.Name),
 		AllowedMentions: &discordgo.MessageAllowedMentions{}})
 	postar(s, "staff", &discordgo.MessageSend{Embeds: []*discordgo.MessageEmbed{embedFichaJogo(u.ID, ch.ID)}, AllowedMentions: &discordgo.MessageAllowedMentions{}})
 	mu.Unlock()

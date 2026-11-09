@@ -19,6 +19,7 @@ namespace SobrevivenciaCore
         {
             public Vector3 UltPos; public float UltTempo; public bool TemPos;
             public float LiberadoAte;
+            public Vector3 DestinoTp; public float DestinoAte; // último teleporte do servidor (vale 45 s)
             public int SpeedSeguidos; public float SpeedPico;
             public float NoArDesde = -1, NoArY; public bool VooAvisado;
             public readonly List<float> Atravessou = new List<float>();
@@ -65,6 +66,30 @@ namespace SobrevivenciaCore
             UseableGun.onBulletHit += AoAcertarTiro;
             UseableGun.onBulletSpawned += AoAtirar;
             InvokeRepeating(nameof(TickGuard), 2f, 0.5f);
+            foreach (var sp in Provider.clients) OuvirTeleporte(sp?.player);
+        }
+
+        /// <summary>Todo teleporte feito pelo servidor (/safe, /home, /tpa, arena, admin, outros plugins) passa por
+        /// Player.ReceiveTeleport no servidor e dispara onPlayerTeleported. Hack não dispara isso, então o Guard libera.</summary>
+        void OuvirTeleporte(Player pl)
+        {
+            if (pl == null) return;
+            pl.onPlayerTeleported -= AoTeleportarServidor;
+            pl.onPlayerTeleported += AoTeleportarServidor;
+        }
+
+        void AoTeleportarServidor(Player pl, Vector3 ponto)
+        {
+            try
+            {
+                if (pl?.channel?.owner == null) return;
+                ulong id = pl.channel.owner.playerID.steamID.m_SteamID;
+                GuardLiberar(id, 5f);
+                // o cliente pode demorar pra carregar a região e o pulo chega depois: lembra pra onde o servidor mandou
+                var g = guard[id];
+                g.DestinoTp = ponto; g.DestinoAte = Time.realtimeSinceStartup + 45f;
+            }
+            catch { }
         }
 
         void DesligarGuard()
@@ -141,7 +166,13 @@ namespace SobrevivenciaCore
             var nome = sp.playerID.characterName;
 
             // 1) teleporte: pulo enorme de uma vez
-            if (plano > S.GuardTeleporteMetros && !CarroPerto(pos))
+            bool tpServidor = agora < g.DestinoAte &&
+                (Vector3.Distance(Plano(pos), Plano(g.DestinoTp)) < 40f || Vector3.Distance(Plano(g.UltPos), Plano(g.DestinoTp)) < 40f);
+            if (plano > S.GuardTeleporteMetros && tpServidor)
+            {
+                g.SpeedSeguidos = 0; // pulo pro (ou do) destino de um TP do servidor: não é hack
+            }
+            else if (plano > S.GuardTeleporteMetros && !CarroPerto(pos))
             {
                 Pontuar(id, nome, "TELEPORTE", 20, $"andou {plano:0} m em {dt:0.0}s ({g.UltPos.x:0} {g.UltPos.z:0} -> {pos.x:0} {pos.z:0})", false);
                 g.SpeedSeguidos = 0;

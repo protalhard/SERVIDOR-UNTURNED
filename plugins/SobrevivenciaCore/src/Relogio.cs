@@ -77,7 +77,8 @@ namespace SobrevivenciaCore
         static void EsconderHudNativo(Player pl, bool esconder)
         {
             var f = EPluginWidgetFlags.ShowHealth | EPluginWidgetFlags.ShowFood | EPluginWidgetFlags.ShowWater |
-                    EPluginWidgetFlags.ShowVirus | EPluginWidgetFlags.ShowStamina | EPluginWidgetFlags.ShowOxygen;
+                    EPluginWidgetFlags.ShowVirus | EPluginWidgetFlags.ShowStamina | EPluginWidgetFlags.ShowOxygen |
+                    EPluginWidgetFlags.ShowStatusIcons; // ícones de fome, sede, safe, lua... ficam embaixo do relógio
             if (esconder) pl.disablePluginWidgetFlag(f); else pl.enablePluginWidgetFlag(f);
         }
 

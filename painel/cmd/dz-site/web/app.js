@@ -91,6 +91,13 @@
         'Pra abrir, fique <b>45 segundos</b> do lado das caixas, arrombando.',
         '15 zumbis em volta, e eles continuam nascendo enquanto tem gente perto.',
         'Em 15 minutos o caminhão <b>explode</b> e as caixas somem.'] },
+    { id: 'helicrash', nome: 'Heli Crash', quando: 'A cada 30 min', resumo: 'Helicóptero cai pegando fogo. Siga a fumaça: caixas com item raro nos destroços.',
+      itens: ['O chat avisa 1 minuto antes: <b>"HELI CRASH: um helicóptero militar está com pane e vai cair"</b>.',
+        'O <b>Chopper</b> militar do California 2 atravessa o céu soltando fogo e fumaça, perde o controle, gira e <b>cai com um estrondo</b> longe das safes.',
+        'Os destroços ficam queimando e a <b>fumaça</b> mostra o lugar de longe. No HUD aparece a distância até o crash.',
+        '3 caixas em volta dos destroços, todas com 2 armas do mercado negro e equipamento top. Uma é a do <b>ITEM RARO</b>: até 3 armas top, 2 equipamentos top, acessório, granada e quase sempre visão noturna.',
+        '12 zumbis militares (com um chefe) e mais horda enquanto tem gente perto. Cuidado com a explosão: quem estiver embaixo morre.',
+        'Os destroços e as caixas somem em 15 minutos.'] },
     { id: 'missoes', nome: 'Missões diárias', quando: 'Todo dia', resumo: 'Fácil, média e difícil. Dinheiro e XP pra quem cumprir.',
       itens: ['Todo dia à meia-noite saem 3 missões iguais pra todo mundo: uma <b>fácil</b>, uma <b>média</b> e uma <b>difícil</b>.',
         'Exemplos: matar zumbis, caçar animais, pescar, matar mega zumbi, matar jogadores.',
@@ -157,7 +164,7 @@
 
       <section class="secao"><h2>Eventos e <span>missões</span></h2>
         <p class="fraco" style="margin:-8px 0 16px">Coisas acontecendo o tempo todo no mapa. <a href="/eventos" data-link>Veja como funciona cada um →</a></p>
-        <div class="grade g4">${EVENTOS.map(cartaoEvento).join('')}</div>
+        <div class="grade g5">${EVENTOS.map(cartaoEvento).join('')}</div>
       </section>
 
       <section class="secao"><h2>O mapa: <span>California 2</span></h2>
@@ -464,7 +471,7 @@
 
     async eventos () {
       setTimeout(() => { const h = location.hash.slice(1); if (h && document.getElementById('ev-' + h)) document.getElementById('ev-' + h).scrollIntoView({ behavior: 'smooth' }); }, 50);
-      return cabeca('Eventos', 'Eventos e <em>missões</em>', 'Airdrop, clima, comboio e missões diárias: o que acontece no mapa e como pegar o loot.') +
+      return cabeca('Eventos', 'Eventos e <em>missões</em>', 'Airdrop, clima, comboio, heli crash e missões diárias: o que acontece no mapa e como pegar o loot.') +
         EVENTOS.map(e => `<section class="secao evento-detalhe" id="ev-${e.id}"><img src="/img/eventos/${e.id}.jpg" alt="${e.nome}" loading="lazy">
           <div><span class="evento-quando">${e.quando}</span><h2>${e.nome}</h2><ul>${e.itens.map(i => `<li>${i}</li>`).join('')}</ul></div></section>`).join('') +
         `<p class="fraco" style="text-align:center;margin-top:20px">A staff também pode começar um evento ou comboio a qualquer hora. Fique de olho no chat do jogo e no Discord.</p>`;
@@ -510,13 +517,20 @@
       const leg = { perm: 'BAN PERMANENTE', ban: 'BAN', mute: 'MUTE / BAN', aviso: 'AVISO', var: 'PUNIÇÃO VARIADA' };
       const jogo = [['Hack, cheat, macro ou qualquer programa que dê vantagem', 'perm'], ['Abusar de bug ou exploit (reporte em ticket)', 'ban'],
         ['Construir dentro da safe zone ou bloquear lojas e ATMs', 'aviso'], ['Conta secundária pra fugir de punição', 'perm'],
-        ['Racismo, ameaça real ou ofensa pesada no chat', 'mute'], ['Entrar num grupo só pra roubar ou destruir a base por dentro', 'var']];
+        ['Racismo, ameaça real ou ofensa pesada no chat', 'mute'], ['Entrar num grupo ou facção só pra roubar ou destruir a base por dentro', 'var'],
+        ['Usar /tpa, /home ou /safe pra levar alguém pra emboscada', 'ban'], ['Combinar mortes pra farmar recompensa, missão, arena ou torneio', 'ban'],
+        ['Golpe ou tentativa de burlar o leilão ou a arena', 'ban'], ['Cercar airdrop, baú de evento ou comboio com construção', 'aviso']];
       const disc = [['Discriminação, assédio ou exposição de dados', 'perm'], ['Divulgar outros servidores, cheats ou links suspeitos', 'ban'],
-        ['Flood, spam ou correntes', 'mute'], ['Brigar com a staff no chat em vez de abrir ticket', 'aviso'], ['Conteúdo adulto ou violência real', 'perm']];
+        ['Flood, spam ou correntes', 'mute'], ['Brigar com a staff no chat em vez de abrir ticket', 'aviso'], ['Conteúdo adulto ou violência real', 'perm'], ['Pedir unban de outra pessoa (cada um abre o próprio ticket)', 'aviso']];
       const bloco = (t, l) => `<div class="painel" style="padding:8px 4px"><h3 style="padding:12px 16px">${t}</h3>${l.map(([r, p], i) =>
         `<div class="regra"><span class="n">${i + 1}.</span><span class="t">${r}</span><span class="pun ${p}">${leg[p]}</span></div>`).join('')}</div>`;
       return cabeca('Regras oficiais', 'Regras do <em>servidor</em>', 'Ao entrar no servidor ou no Discord você concorda com as regras abaixo. Fora da safe zone, PvP, raid e emboscada fazem parte do jogo.') +
-        `<div class="grade g2">${bloco('🎮 Jogo', jogo)}${bloco('💬 Discord', disc)}</div>`;
+        `<div class="grade g2">${bloco('🎮 Jogo', jogo)}${bloco('💬 Discord', disc)}</div>` +
+        `<div class="painel" style="margin-top:18px"><h3>Bom saber</h3><ul style="margin:0;padding-left:20px;display:grid;gap:8px">
+          <li>Saiu do jogo em combate (até 2 min depois de um tiro)? O personagem morre e larga tudo no chão.</li>
+          <li>O mapa só mantém 3 aeronaves destrancadas. As que passarem disso somem. Tranque a sua.</li>
+          <li>Raid liberado só no horário do servidor (veja no Discord, canal raid-e-proteção). Base com o dono offline fica protegida.</li>
+          <li>Base abandonada: aviso com 10 dias sem ninguém entrar, perde a proteção com 15 e é apagada com 21.</li></ul></div>`;
     },
 
     async perfil () {
@@ -694,7 +708,23 @@
     if (ativo && ativo.offsetWidth) { barra.style.width = ativo.offsetWidth + 'px'; barra.style.transform = 'translateX(' + ativo.offsetLeft + 'px)'; barra.classList.add('on'); }
     else barra.classList.remove('on');
   }
-  addEventListener('resize', marcarMenu);
+  // menu cheio (tela estreita ou conta logada larga): vira o botão ☰
+  function ajustarMenu() {
+    const b = document.body, env = document.querySelector('.topo .envolve'), m = document.getElementById('menu');
+    if (!env || !m) return;
+    const cheio = () => {
+      const mr = m.getBoundingClientRect(), mk = document.querySelector('.marca').getBoundingClientRect(), d = document.querySelector('.topo-dir').getBoundingClientRect();
+      return env.scrollWidth > env.clientWidth + 1 || mr.left < mk.right + 8 || mr.right > d.left - 8;
+    };
+    b.classList.remove('menu-compacto', 'menu-apertado');
+    if (getComputedStyle(m).display !== 'none') {
+      if (cheio()) b.classList.add('menu-apertado'); // primeiro esconde o botão do Discord e encurta o nome
+      if (cheio()) b.classList.add('menu-compacto');
+    }
+    marcarMenu();
+  }
+  window.ajustarMenu = ajustarMenu;
+  addEventListener('resize', ajustarMenu);
 
   // ---------- checkout da Loja VIP (Pix e cartão, tudo no nosso site) ----------
   const ESCOLHAS = {
@@ -872,7 +902,7 @@
 
   // ---------- roteador ----------
   async function abrir(caminho, empilhar) {
-    const partes = caminho.split('?')[0].replace(/^\/+|\/+$/g, '').split('/');
+    const partes = caminho.split(/[?#]/)[0].replace(/^\/+|\/+$/g, '').split('/');
     let nome = partes[0], arg = partes[1];
     if (empilhar) history.pushState({}, '', caminho);
     document.querySelectorAll('.menu a').forEach(a => a.classList.toggle('ativo', a.getAttribute('href') === '/' + nome));
@@ -903,6 +933,8 @@
       const st = await api('/api/status');
       if (st.discord) { const d = document.getElementById('link-discord'); d.href = st.discord; d.hidden = false; }
     } catch (e) {}
+    ajustarMenu();
+    if (document.fonts) document.fonts.ready.then(ajustarMenu);
     abrir(location.pathname + location.search, false);
   })();
 

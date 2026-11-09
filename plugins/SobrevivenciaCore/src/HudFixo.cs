@@ -8,7 +8,7 @@ namespace SobrevivenciaCore
 {
     /// <summary>Relógio fixo (modelo A) e minimapa, sempre na tela. Somem com o inventário, menus do servidor ou morto.
     /// Relógio (S.RelogioFixoEfeito): os mesmos elementos do relógio de tecla (Rel_Hora, Rel_E_Txt, Rel_E_1..10) e Rel_Dia (MANHÃ, TARDE...).
-    /// Minimapa (S.MiniMapaEfeito): Mini_Mapa (RawImage com a imagem do site), Mini_Seta_0..7 (seta pra onde o
+    /// Minimapa (S.MiniMapaEfeito): Mini_Mapa (Image, não RawImage: o cliente só aplica URL em UI.Image), Mini_Seta_0..7 (seta pra onde o
     /// jogador olha: 0 = norte, 2 = leste, 4 = sul, 6 = oeste) e Mini_Local (nome do lugar).</summary>
     public partial class Plugin
     {
@@ -18,7 +18,8 @@ namespace SobrevivenciaCore
         class EstadoHudFixo
         {
             public bool Rel, Mini, Gps = true;
-            public float ProximoGps;
+            public float ProximoGps, ProximoAviso;
+            public string Aviso = "";
             public string Url, Local;
             public int Seta = -1;
             public readonly Dictionary<string, string> Textos = new Dictionary<string, string>();
@@ -106,6 +107,7 @@ namespace SobrevivenciaCore
                     e.Rel = false;
                 }
                 if (e.Rel) AtualizarRelogioFixo(pl, e);
+                if (e.Rel) AvisoSaude(pl, e, agora);
 
                 // minimapa
                 if (mini != null && S.MiniMapaPrecisaGps && agora >= e.ProximoGps) { e.ProximoGps = agora + 3f; e.Gps = TemGps(pl); }
@@ -123,6 +125,26 @@ namespace SobrevivenciaCore
                 if (e.Mini) AtualizarMinimapa(pl, e);
             }
             foreach (var id in new List<ulong>(hudFixo.Keys)) if (!vistos.Contains(id)) hudFixo.Remove(id);
+        }
+
+        /// <summary>Na radiação (deadzone) ou com a imunidade baixa: a vida começa a cair.</summary>
+        static bool MorrendoRadiacao(Player pl) => pl.movement.isRadiated || pl.life.virus <= 25;
+
+        // os ícones nativos ficam escondidos com o relógio; os ícones do relógio mostram, e o aviso na tela diz o que fazer
+        static void AvisoSaude(Player pl, EstadoHudFixo e, float agora)
+        {
+            var l = pl.life;
+            string aviso = l.isBleeding && l.isBroken ? "SANGRANDO E PERNA QUEBRADA: use bandagem e tala"
+                : l.isBleeding ? "SANGRANDO: use bandagem ou curativo"
+                : l.isBroken ? "PERNA QUEBRADA: use uma tala"
+                : l.virus == 0 ? "RADIACAO: saia da zona e tome anti-radiacao" : "";
+            if (l.isDead) aviso = "";
+            if (aviso.Length > 0 && (aviso != e.Aviso || agora >= e.ProximoAviso))
+            {
+                pl.ServerShowHint(aviso, 3f);
+                e.ProximoAviso = agora + 2.5f;
+            }
+            e.Aviso = aviso;
         }
 
         void AtualizarRelogioFixo(Player pl, EstadoHudFixo e)
@@ -152,7 +174,13 @@ namespace SobrevivenciaCore
                 T($"Rel_{RelEstados[i]}_Txt", v + "%");
                 int seg = Mathf.CeilToInt(v / 10f);
                 for (int s = 1; s <= 10; s++) V($"Rel_{RelEstados[i]}_{s}", s <= seg);
+                // pedaço do anel piscando quando está baixo (stamina e oxigênio só quando zeram)
+                V($"Rel_{RelEstados[i]}_Baixo", i >= 4 ? v <= 5 : v <= 25);
             }
+            // ícones de status (o mod faz eles piscarem): sangrando, osso quebrado e radiação
+            V("Rel_Sangrando", l.isBleeding);
+            V("Rel_Quebrado", l.isBroken);
+            V("Rel_Radiacao", MorrendoRadiacao(pl));
         }
 
         void AtualizarMinimapa(Player pl, EstadoHudFixo e)

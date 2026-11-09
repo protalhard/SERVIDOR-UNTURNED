@@ -33,8 +33,13 @@ namespace SobrevivenciaCore
             LigarTracer();
             LigarLojas();
             UnturnedPlayerEvents.OnPlayerDeath += AoMorrer;
+            UnturnedPlayerEvents.OnPlayerDeath += AoMorrerTela;
+            foreach (var sp in Provider.clients) OuvirDano(sp?.player);
             UnturnedPlayerEvents.OnPlayerUpdateStat += AoMudarStat;
             DamageTool.damagePlayerRequested += AoDanoNoJogador;
+            LigarCriaturas();
+            LigarTelaMorte();
+            LigarInterface();
             U.Events.OnPlayerConnected += AoConectar;
             PlayerInput.onPluginKeyTick += RelogioTecla;
             PlayerLife.OnPreDeath += RelogioAntesDeMorrer;
@@ -60,10 +65,15 @@ namespace SobrevivenciaCore
             DesligarLojas();
             DesligarFaccoes();
             UnturnedPlayerEvents.OnPlayerDeath -= AoMorrer;
+            UnturnedPlayerEvents.OnPlayerDeath -= AoMorrerTela;
+            foreach (var sp in Provider.clients) { PararDeOuvirDano(sp?.player); try { if (sp?.player != null) FecharTelaMorte(UnturnedPlayer.FromSteamPlayer(sp)); } catch { } }
             UnturnedPlayerEvents.OnPlayerUpdateStat -= AoMudarStat;
             DesligarSafeZone();
             PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
+            try { DesligarInterface(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { DesligarTelaMorte(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { DesligarCriaturas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             U.Events.OnPlayerConnected -= AoConectar;
             PlayerInput.onPluginKeyTick -= RelogioTecla;
             PlayerLife.OnPreDeath -= RelogioAntesDeMorrer;
@@ -72,6 +82,7 @@ namespace SobrevivenciaCore
             DesligarLogRoubos();
             DesligarArena();
             try { AcabarComboio(); } catch { }
+            try { AcabarHeliCrash(false); } catch { }
             try { DesligarHudFixo(); } catch { }
             DesligarRecompensas();
             UnturnedPlayerEvents.OnPlayerRevive -= AoRenascer;
@@ -152,6 +163,9 @@ namespace SobrevivenciaCore
             BarrarNaPausa(p);
             var id = p.CSteamID.m_SteamID;
             GuardLiberar(id, 15f);
+            OuvirTeleporte(p.Player);
+            OuvirDano(p.Player);
+            EsconderMorteDoJogo(p.Player);
             bool novo = !Stats.Existe(id);
             if (!Banco.Existe(id) && Configuration.Instance.SaldoInicialBanco > 0)
                 Banco.Somar(id, Configuration.Instance.SaldoInicialBanco);
@@ -172,6 +186,8 @@ namespace SobrevivenciaCore
             try { LogSaiu(p); } catch { }
             GuardarBolsoAoSair(p);
             RelogioSaiu(p);
+            PararDeOuvirDano(p.Player);
+            telasMorte.Remove(p.CSteamID.m_SteamID); vidas.Remove(p.CSteamID.m_SteamID); avisos.Remove(p.CSteamID.m_SteamID);
             missoesAbertas.Remove(p.CSteamID.m_SteamID);
             zonaAtual.Remove(p.CSteamID.m_SteamID);
             saiuSafeEm.Remove(p.CSteamID.m_SteamID);
@@ -198,6 +214,8 @@ namespace SobrevivenciaCore
         void AoRenascer(UnturnedPlayer p, Vector3 pos, byte angulo)
         {
             renasceuEm[p.CSteamID.m_SteamID] = Time.realtimeSinceStartup;
+            FecharTelaMorte(p);
+            vidas[p.CSteamID.m_SteamID] = new VidaAtual();
             GuardLiberar(p.CSteamID.m_SteamID, 8f);
             StartCoroutine(Depois(1f, p, () => MostrarHud(p)));
             StartCoroutine(Depois(2f, p, () => MarcarSafeNoMapa(p)));

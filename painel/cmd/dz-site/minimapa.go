@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/draw"
 	"image/jpeg"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -47,7 +48,12 @@ func carregarChart(arq string) (image.Image, error) {
 }
 
 func rotasMinimapa(mux *http.ServeMux, pastaIcones string) {
-	arq := filepath.Join(pastaIcones, "..", "mapa", "ca2-chart.jpg")
+	// prefere o mapa de verdade do jogo (Map.png do California2 em JPG); sem ele, usa o Chart (desenhado)
+	arq := filepath.Join(pastaIcones, "..", "mapa", "ca2-map.jpg")
+	if _, err := os.Stat(arq); err != nil {
+		arq = filepath.Join(pastaIcones, "..", "mapa", "ca2-chart.jpg")
+	}
+	log.Println("minimapa: usando", filepath.Base(arq))
 	mux.HandleFunc("/mini/", func(w http.ResponseWriter, r *http.Request) {
 		nome := filepath.Base(r.URL.Path)
 		m := reMini.FindStringSubmatch(nome)

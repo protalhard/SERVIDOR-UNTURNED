@@ -51,18 +51,28 @@ main.envolve { flex: 1; padding: 34px 0 70px; }
 .marca span { white-space: nowrap; }
 .marca img { width: 34px; height: 34px; border-radius: 8px; filter: drop-shadow(0 0 12px rgba(255,90,0,.45)); }
 .menu { display: flex; gap: 20px; position: relative; }
-.menu a { color: var(--texto); font: 600 13px var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: 6px 0; border-bottom: 2px solid transparent; }
+.menu a { white-space: nowrap; color: var(--texto); font: 600 13px var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: 6px 0; border-bottom: 2px solid transparent; }
 .menu a:hover, .menu a.ativo { color: var(--titulo); }
 .menu a.ativo { text-shadow: 0 0 18px rgba(255,90,0,.5); }
 .topo-dir { margin-left: auto; display: flex; gap: 10px; align-items: center; }
 .hamburguer { display: none; background: none; border: 1px solid var(--borda2); color: var(--titulo); border-radius: 8px; font-size: 18px; padding: 4px 10px; }
+@media (max-width: 1360px) { .menu { gap: 15px; } .topo .envolve { gap: 20px; } }
 @media (max-width: 980px) {
   .menu { display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0; background: rgba(5,5,6,.97); border-bottom: 1px solid var(--borda); padding: 8px 16px; }
   .menu.aberto { display: flex; }
   .menu a { padding: 12px 0; }
   .hamburguer { display: block; }
-  #link-discord { display: none; }
-}
+  #link-discord { display: none; }}
+body.menu-compacto .menu { display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0; background: rgba(5,5,6,.97); border-bottom: 1px solid var(--borda); padding: 8px 16px; }
+body.menu-compacto .menu.aberto { display: flex; }
+body.menu-compacto .menu a { padding: 12px 0; }
+body.menu-compacto .hamburguer { display: block; }
+body.menu-compacto #link-discord { display: none; }
+.marca, .topo-dir, .menu { flex-shrink: 0; }
+body.menu-compacto .menu-luz { display: none; }
+body.menu-apertado #link-discord { display: none; }
+body.menu-apertado #botao-conta { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
+
 
 /* títulos de página */
 .cabeca { text-align: center; margin: 22px 0 36px; }
@@ -80,8 +90,10 @@ main.envolve { flex: 1; padding: 34px 0 70px; }
 .painel.destaque { border-color: var(--c-40); box-shadow: 0 0 0 1px var(--c-20), 0 20px 60px -30px rgba(255,90,0,.6); }
 .grade { display: grid; gap: 18px; }
 .g2 { grid-template-columns: repeat(2, 1fr); } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
-@media (max-width: 900px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
-@media (min-width: 600px) and (max-width: 900px) { .g4 { grid-template-columns: repeat(2, 1fr); } }
+.g5 { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 1220px) { .g5 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 900px) { .g2, .g3, .g4, .g5 { grid-template-columns: 1fr; } }
+@media (min-width: 600px) and (max-width: 900px) { .g4, .g5 { grid-template-columns: repeat(2, 1fr); } }
 
 /* início */
 .heroi { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding: 30px 0 50px; }
@@ -236,7 +248,7 @@ td.ord { color: var(--c); font-weight: 800; }
   background: linear-gradient(90deg, transparent, var(--c), transparent); box-shadow: 0 0 12px var(--c), 0 0 26px rgba(255,90,0,.6);
   transition: transform .45s cubic-bezier(.3,.8,.2,1), width .45s, opacity .3s; }
 .menu-luz.on { opacity: 1; }
-@media (max-width: 900px) { .menu-luz { display: none; } }
+@media (max-width: 980px) { .menu-luz { display: none; } }
 .fio { position: relative; height: 3px; margin: 22px 8% 0; background: linear-gradient(90deg, var(--c), var(--c3)); box-shadow: var(--brilho); border-radius: 3px; overflow: hidden; }
 .fio::after { content: ""; position: absolute; inset: 0; width: 34%; background: linear-gradient(90deg, transparent, #FFF8, transparent); animation: correr 2.2s linear infinite; }
 @keyframes correr { from { transform: translateX(-100%); } to { transform: translateX(300%); } }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Roda na VPS (como root) toda vez que o sincronizador acha um commit novo no GitHub.
 # Aplica só o que é seguro: plugins compilados e pedido de reinício.
-# Não mexe em Commands.dat, Config.txt, mundo nem token.
+# Não mexe em Config.txt, mundo nem token. No Commands.dat só ajusta MaxPlayers (server-files/max-jogadores.txt).
 set -euo pipefail
 
 REPO=/home/unturned/repo
@@ -47,6 +47,18 @@ PY
   fi
 fi
 
+# 2b) Vagas do servidor: server-files/max-jogadores.txt -> MaxPlayers no Commands.dat (vale no próximo início)
+CMDS="$INST/Server/Commands.dat"
+if [ -f "$REPO/server-files/max-jogadores.txt" ] && [ -f "$CMDS" ]; then
+  vagas=$(tr -dc '0-9' < "$REPO/server-files/max-jogadores.txt")
+  if [ -n "$vagas" ] && ! grep -qix "maxplayers $vagas" <(tr -d '\r' < "$CMDS"); then
+    if grep -qi '^maxplayers' "$CMDS"; then sed -i "s/^[Mm][Aa][Xx][Pp][Ll][Aa][Yy][Ee][Rr][Ss].*/MaxPlayers $vagas/" "$CMDS"
+    else printf '\nMaxPlayers %s\n' "$vagas" >> "$CMDS"; fi
+    chown unturned:unturned "$CMDS"
+    echo "vagas do servidor: $vagas (vale no proximo reinicio)"
+  fi
+fi
+
 # 3) Pedido de reinício: mudar o número em server-files/REINICIAR força um restart
 if [ -f "$REPO/server-files/REINICIAR" ]; then
   pedido=$(cat "$REPO/server-files/REINICIAR")
@@ -56,6 +68,32 @@ if [ -f "$REPO/server-files/REINICIAR" ]; then
     reiniciar=1
   fi
 fi
+
+# 3b) Pedido do dono pra atualizar o JOGO (versão nova do Unturned na Steam): mudar o número em
+#     server-files/ATUALIZAR-JOGO desliga o servidor, roda o SteamCMD (scripts/update.sh) e liga de novo.
+#     Roda numa unidade própria do systemd (o SteamCMD demora) e só uma vez por número.
+if [ -f "$REPO/server-files/ATUALIZAR-JOGO" ]; then
+  pedido=$(cat "$REPO/server-files/ATUALIZAR-JOGO")
+  feito=$(cat "$ESTADO/atualizar-jogo" 2>/dev/null || true)
+  if [ "$pedido" != "$feito" ]; then
+    echo "$pedido" > "$ESTADO/atualizar-jogo"
+    echo "atualizando o jogo pelo SteamCMD e reiniciando (pedido $pedido)"
+    systemd-run --unit "dz-atualizar-jogo-$(date +%s)" --collect /bin/bash "$REPO/scripts/atualizar-jogo.sh" avisar || echo "falhou ao chamar o systemd-run"
+  fi
+fi
+
+# 3c) Atualização automática do jogo: o dz-update-jogo.timer confere a cada 10 min se saiu versão nova
+#     do Unturned na Steam; se saiu, avisa quem está online, reinicia e atualiza sozinho (scripts/dz-update-jogo.py).
+un=0
+for u in dz-update-jogo.service dz-update-jogo.timer; do
+  if ! cmp -s "$REPO/scripts/$u" "/etc/systemd/system/$u"; then
+    cp "$REPO/scripts/$u" "/etc/systemd/system/$u"; un=1
+  fi
+done
+if [ "$un" = 1 ]; then systemctl daemon-reload; systemctl enable --now dz-update-jogo.timer; echo "atualizacao automatica do jogo ligada"; fi
+
+# 3d) Textos da lista de servidores (server-files/browser.txt -> bloco Browser do Config.txt; vale no próximo reinício)
+bash "$REPO/scripts/aplicar-browser.sh" || true
 
 # 4) Bot do Discord (não reinicia o jogo)
 if [ -f "$REPO/painel/bin/dz-bot" ]; then
@@ -119,26 +157,17 @@ for u in dz-painel.service dz-painel.timer; do
 done
 if [ "$pn" = 1 ]; then systemctl daemon-reload; systemctl enable --now dz-painel.timer; echo "executor do painel ligado"; fi
 
-# 7) Reinício: só com o servidor vazio. Com gente online, fica pendente e o
-#    sincronizador tenta de novo a cada 5 min (no máximo 6 h esperando).
+# 7) Reinício do jogo: NUNCA automático (pedido do dono). Os arquivos novos já ficam no lugar e entram
+#    no reinício diário da madrugada (ReinicioDiario do plugin) ou quando o dono mandar reiniciar.
+#    O arquivo "reiniciar-pendente" só avisa que tem novidade esperando; some quando o jogo reinicia.
 PENDENTE="$ESTADO/reiniciar-pendente"
 [ "$reiniciar" = 1 ] && [ ! -f "$PENDENTE" ] && touch "$PENDENTE"
 if [ -f "$PENDENTE" ]; then
-  online=$(python3 - "$INST/Rocket/Plugins/SobrevivenciaCore/status.json" <<'PY'
-import json, sys, time
-try:
-    s = json.load(open(sys.argv[1]))
-    print(len(s.get("jogadores") or []) if time.time() - s.get("atualizado", 0) < 90 else 0)
-except Exception:
-    print(0)
-PY
-)
-  idade=$(( $(date +%s) - $(stat -c %Y "$PENDENTE") ))
-  if [ "$online" -gt 0 ] && [ "$idade" -lt 21600 ]; then
-    echo "reinicio adiado: $online jogador(es) online"
-  else
+  inicio=$(systemctl show unturned -p ActiveEnterTimestamp --value 2>/dev/null)
+  ini_s=$(date -d "$inicio" +%s 2>/dev/null || echo 0)
+  if [ "$ini_s" -gt "$(stat -c %Y "$PENDENTE")" ]; then
     rm -f "$PENDENTE"
-    echo "reiniciando o servidor"
-    systemctl restart unturned
+  elif [ "$reiniciar" = 1 ]; then
+    echo "jogo atualizado: entra no proximo reinicio da madrugada"
   fi
 fi

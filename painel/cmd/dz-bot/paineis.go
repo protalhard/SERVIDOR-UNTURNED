@@ -124,6 +124,14 @@ func garantirPaineis(s *discordgo.Session) {
 			{Label: "Outro assunto", Value: "outro", Emoji: &discordgo.ComponentEmoji{Name: "💬"}},
 		},
 	})})
+	mu.Lock()
+	craid := estado.Canais["regrasraid"]
+	mu.Unlock()
+	garantirPainel(s, "regras", "🎮 Regras do jogo", []*discordgo.MessageEmbed{
+		{Title: "🎮 Regras do jogo", Description: fmt.Sprintf(textoRegrasJogo, craid), Color: corLaranja},
+		{Title: "💬 Regras do Discord", Description: textoRegrasDiscord, Color: corAmbar, Footer: &discordgo.MessageEmbedFooter{Text: rodape}},
+	}, nil)
+	postarNovidades(s)
 	garantirPainel(s, "regrasraid", "🏠 Raid e proteção de bases", []*discordgo.MessageEmbed{embedRegrasRaid()}, nil)
 	garantirPainel(s, "lojavip", "💎 Loja VIP", []*discordgo.MessageEmbed{{
 		Title: "💎 Loja VIP", Color: corAmbar, URL: siteURL + "/loja",
@@ -173,6 +181,13 @@ func embedsEventos() []*discordgo.MessageEmbed {
 				"• Fique **45 segundos** do lado das caixas pra arrombar.\n"+
 				"• 15 zumbis em volta, e continuam nascendo enquanto tem gente perto.\n"+
 				"• Em 15 minutos o caminhão **explode** e as caixas somem."),
+		ev("helicrash", "🚁 Heli Crash · a cada 30 min",
+			"• O chat avisa 1 minuto antes: **HELI CRASH: um helicóptero militar está com pane e vai cair**.\n"+
+				"• O heli atravessa o céu pegando fogo, perde o controle e **cai com um estrondo** longe das safes.\n"+
+				"• Os destroços ficam queimando e a **fumaça** mostra o lugar. No HUD aparece a distância.\n"+
+				"• 3 caixas em volta, uma com **ITEM RARO**: 2 armas do mercado negro, equipamento top e quase sempre visão noturna.\n"+
+				"• 12 zumbis militares com um chefe, e mais horda enquanto tem gente perto.\n"+
+				"• Some em 15 minutos."),
 		ev("missoes", "📋 Missões diárias · todo dia",
 			"• À meia-noite saem 3 missões iguais pra todos: **fácil**, **média** e **difícil**.\n"+
 				"• Ex.: matar zumbis, caçar, pescar, matar mega zumbi, matar jogadores.\n"+

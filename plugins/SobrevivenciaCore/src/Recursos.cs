@@ -151,7 +151,7 @@ namespace SobrevivenciaCore
             combateAte[id] = Time.realtimeSinceStartup + S.CombateSegundos;
             var p = UnturnedPlayer.FromPlayer(pl);
             if (teleportes.Remove(id)) Chat.Erro(p, "Teleporte cancelado: voce entrou em combate.");
-            if (novo) Chat.Para(p, Chat.Cor(S.CorPerigo, Chat.Forte("Modo de combate ATIVADO")) +
+            if (novo) Chat.ParaIcone(p, "combate", "Você entrou em " + Chat.Cor(S.CorPrincipal, "modo de combate") + "." +
                 Chat.Cor(S.CorApagada, " (" + Chat.Tempo(S.CombateSegundos) + " sem /safe, /home, /tpa e /vault)") +
                 (S.PunirDeslogarEmCombate ? Chat.Cor(S.CorPerigo, " Se sair do jogo agora, voce morre e deixa suas coisas.") : ""));
             if (Cofres.Aberto(id)) Cofres.Fechar(p);
@@ -213,7 +213,7 @@ namespace SobrevivenciaCore
                 {
                     combateAte.Remove(id);
                     var sp = PlayerTool.getSteamPlayer(id);
-                    if (sp?.player != null) Chat.Ok(UnturnedPlayer.FromSteamPlayer(sp), "Modo de combate encerrado.");
+                    if (sp?.player != null) Chat.ParaIcone(UnturnedPlayer.FromSteamPlayer(sp), "ok", Chat.Cor(S.CorOk, "Modo de combate acabou."));
                 }
 
             foreach (var id in pedidosTpa.Where(kv => kv.Value.expira <= agora).Select(kv => kv.Key).ToList())
@@ -240,7 +240,9 @@ namespace SobrevivenciaCore
             if (S.AnuncioSegundos > 0 && agora >= proximoAnuncio && S.Anuncios.Count > 0)
             {
                 proximoAnuncio = agora + S.AnuncioSegundos;
-                Chat.Todos(Chat.Cor(S.CorTexto, S.Anuncios[indiceAnuncio++ % S.Anuncios.Count]));
+                var anuncio = S.Anuncios[indiceAnuncio++ % S.Anuncios.Count];
+                Chat.TodosIcone("dica", Chat.Cor(S.CorTexto, anuncio));
+                MostrarDicaNoTopo(anuncio);
             }
             if (S.AnuncioNegroSegundos > 0 && agora >= proximoAnuncioNegro && !string.IsNullOrWhiteSpace(S.AnuncioNegro))
             {
@@ -310,6 +312,7 @@ namespace SobrevivenciaCore
             var fv = FichaDe(vitima);
             fv.Mortes++;
             Stats.Mudou();
+            ComecarSacola(vitima);
             if (S.MarcarMorteNoMapa) MarcarMorte(vitima);
 
             var matador = assassino != CSteamID.Nil && assassino != vitima.CSteamID ? PlayerTool.getPlayer(assassino) : null;
@@ -322,8 +325,9 @@ namespace SobrevivenciaCore
                 if (cabeca) fm.Cabeca++;
                 var arma = matador.equipment?.asset?.itemName;
                 int dist = Mathf.RoundToInt(Vector3.Distance(pm.Position, vitima.Position));
-                Chat.Todos(NomeColorido(fm) + Chat.Cor(S.CorPrincipal, " matou ") + NomeColorido(fv) +
-                    Chat.Cor(S.CorApagada, (arma != null ? " com " + Chat.Limpar(arma) : "") + " a " + dist + "m") + (cabeca ? Chat.Cor(S.CorPerigo, " (na cabeca)") : ""));
+                Chat.TodosIcone(cabeca ? "cabeca" : "caveira", NomeColorido(fm) + Chat.Cor(S.CorPerigo, " matou ") + NomeColorido(fv) +
+                    (cabeca ? Chat.Cor(S.CorPerigo, " com um tiro na cabeça") : "") +
+                    Chat.Cor(S.CorApagada, (arma != null ? " · " + Chat.Limpar(arma) : "") + " · " + dist + " m"));
                 DarXp(pm, S.XpAbate + (cabeca ? S.XpCabeca : 0), cabeca ? "abate na cabeca" : "abate");
                 var prox = ProximoKitPorAbates(fm);
                 if (prox != null)
@@ -339,7 +343,9 @@ namespace SobrevivenciaCore
             }
             else if (S.MostrarTodasMortes)
             {
-                Chat.Todos(NomeColorido(fv) + Chat.Cor(S.CorApagada, " " + DescreverMorte(causa)));
+                string bicho = causa == EDeathCause.ZOMBIE || causa == EDeathCause.ANIMAL ? BichoQueMatou(vitima.Position, causa, out _) : null;
+                bool porBicho = causa == EDeathCause.ZOMBIE || causa == EDeathCause.ANIMAL;
+                Chat.TodosIcone(porBicho ? "zumbi" : "morte", NomeColorido(fv) + Chat.Cor(porBicho ? S.CorOk : "#C9CDD3", " " + FraseMorte(causa, bicho) + "."));
             }
         }
 
@@ -369,10 +375,46 @@ namespace SobrevivenciaCore
             try
             {
                 p.Player.quests.replicateSetMarker(true, p.Position, "Sua morte");
-                StartCoroutine(Depois(4f, p, () => Chat.Para(p, Chat.Cor(S.CorDestaque, "Sua morte foi marcada no mapa.") +
-                    Chat.Cor(S.CorApagada, " Corra pra pegar suas coisas antes que alguém pegue!"))));
+                int min = Mathf.Max(1, Mathf.RoundToInt(TempoSacola / 60f));
+                StartCoroutine(Depois(4f, p, () => Chat.ParaIcone(p, "sacola", Chat.Cor(S.CorDestaque, "Sua morte foi marcada no mapa.") +
+                    Chat.Cor("#C9CDD3", $" Suas coisas ficam lá por {min} min. Corra antes que alguém pegue!"))));
             }
             catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+        }
+
+        static readonly System.Random sorteioFrase = new System.Random();
+        static string Sortear(params string[] frases) => frases[sorteioFrase.Next(frases.Length)];
+
+        /// <summary>Frase do kill feed pra quem morreu sem ser por jogador (várias por causa, sorteadas).</summary>
+        static string FraseMorte(EDeathCause c, string bicho)
+        {
+            switch (c)
+            {
+                case EDeathCause.ZOMBIE:
+                    if (bicho != null && bicho != "Zumbi") return Sortear($"foi pego por um {bicho.ToLowerInvariant()}", $"não aguentou um {bicho.ToLowerInvariant()}");
+                    return Sortear("virou comida de zumbi", "foi o almoço da horda", "achou que dava pra correr dos zumbis", "deu um abraço num zumbi");
+                case EDeathCause.ANIMAL:
+                    if (bicho != null && bicho.Contains("nfectado")) return Sortear($"foi despedaçado por um {bicho.ToLowerInvariant()}", $"virou janta de {bicho.ToLowerInvariant()}");
+                    if (bicho != null && bicho.Contains("Urso")) return Sortear("levou um abraço do urso radioativo", "perdeu a briga pro urso radioativo");
+                    return Sortear("foi atacado por um bicho", "virou presa na floresta");
+                case EDeathCause.BONES: return Sortear("achou que sabia voar", "pulou sem paraquedas", "quebrou as canelas e não levantou mais");
+                case EDeathCause.FOOD: return Sortear("esqueceu de comer e morreu de fome", "morreu de fome com a mochila vazia");
+                case EDeathCause.WATER: return Sortear("morreu de sede", "esqueceu de beber água");
+                case EDeathCause.FREEZING: return Sortear("virou picolé", "morreu congelado");
+                case EDeathCause.BURNING: case EDeathCause.BURNER: return Sortear("virou churrasco", "morreu queimado");
+                case EDeathCause.INFECTION: return Sortear("deixou a radiação vencer", "pegou a infecção e não aguentou");
+                case EDeathCause.ACID: case EDeathCause.SPIT: return Sortear("foi derretido por ácido", "levou uma cusparada de zumbi");
+                case EDeathCause.SUICIDE: return Sortear("desistiu da vida", "apertou o botão de sair da vida");
+                case EDeathCause.BREATH: return Sortear("esqueceu de respirar debaixo d'água", "se afogou");
+                case EDeathCause.ROADKILL: case EDeathCause.VEHICLE: return Sortear("foi atropelado", "virou lombada");
+                case EDeathCause.GRENADE: case EDeathCause.MISSILE: case EDeathCause.CHARGE: case EDeathCause.SPLASH: return Sortear("explodiu em mil pedaços", "virou confete");
+                case EDeathCause.LANDMINE: return Sortear("pisou numa mina", "achou uma mina do jeito errado");
+                case EDeathCause.SHRED: return "se enroscou no arame farpado";
+                case EDeathCause.SENTRY: return Sortear("foi metralhado por uma sentinela", "chegou perto demais de uma sentinela");
+                case EDeathCause.BLEEDING: return Sortear("sangrou até morrer", "esqueceu do curativo");
+                case EDeathCause.GUN: return "levou uma bala perdida";
+                default: return "morreu";
+            }
         }
 
         static string DescreverMorte(EDeathCause c)
