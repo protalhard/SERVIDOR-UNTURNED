@@ -145,6 +145,7 @@ namespace SobrevivenciaCore
             };
             try { AjustarEconomia(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { AjustarKitsMadeira(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { AjustarKitsNovos(); } catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
         }
 
         public const int VersaoEconomia = 3;

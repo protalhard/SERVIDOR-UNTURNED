@@ -58,6 +58,14 @@ Criaturas (`Criaturas.cs`, /infectados [n] [ursos] | limpar): animais do mod DZ 
 radioativo, 51311 urso radioativo. São animais (`AnimalManager.spawnAnimal`), então nascem em qualquer ponto, até sem área de zumbi.
 O pack sai de `AnimalManager.packs` pra não renascerem sozinhos; o plugin dá o loot na morte e radiação no golpe dos radioativos.
 
+## Kits, raid e loot (10/11)
+- `KitsNovos.cs`: kit base grátis (2 h, casa 4x4 de madeira + porta de metal, gerador, 4 cofres, Claim Flag...), arqueiro (30 min)
+  e o kit de nascer (Colt). IDs achados pelo nome uma vez (log `[Kits]`). O que não cabe fica em `kit_pendentes.tsv`: /kit nome de novo.
+- Raid: horário desligado; com o dono/grupo online raida a qualquer hora, com Claim Flag protege offline. Aviso "Sua base esta sendo
+  atacada!" (RaidAvisoSegundos) e libera /home e /safe sem intervalo (RaidLiberaTpSegundos). /safe funciona de qualquer lugar; /vault também.
+- `LootExtra.cs`: pontos de loot de tabela "milit" ganham 10 itens; zona de gás (DeadzoneVolumeManager) ganha itens top; o jogo não
+  nasce nada nesses pontos, o plugin repõe (log `[Loot]` diz quantos pontos). Zumbi militar dropa a mais.
+
 ## Interface estilo Zumbas (nosso jeito)
 - `Interface.cs`: DZ_Status 51313 (status, EM COMBATE, SACOLA, arma; esconde as barras/munição do jogo), DZ_Acerto 51314
   (dano, headshot com som), DZ_Atingido 51315 (quem te acertou), teclas Plugin Hotkey 1-5, opções por jogador (opcoes_interface.txt).

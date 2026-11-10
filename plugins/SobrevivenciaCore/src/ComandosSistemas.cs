@@ -40,13 +40,24 @@ namespace SobrevivenciaCore
 
         internal static void Warp(Plugin P, Sistemas S, UnturnedPlayer p, ComandoSistema cmd)
         {
-            // Pode ir pra safe (sempre fora de combate) se: está dentro de alguma safe, acabou de entrar no servidor ou acabou de morrer.
+            // Dentro de uma safe, logo depois de entrar ou de morrer: abre a lista pra escolher a safe (vai na hora).
+            // De qualquer outro lugar do mapa (pedido do dono em 10/11): vai pra safe mais perto, fora de combate e parado.
             if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
             int janela = Math.Max(1, S.WarpSafeAposMorrer);
             float morreu = P.SegundosDesdeRenascer(p), entrou = P.SegundosDesdeEntrar(p);
             bool naSafe = P.EmQualquerSafe(p);
             bool pode = naSafe || (morreu >= 0 && morreu <= janela) || (entrou >= 0 && entrou <= janela);
-            if (!pode) { Chat.Erro(p, $"O TP pra safe so funciona dentro de uma safe, ou ate {janela}s depois de entrar no servidor ou de morrer."); return; }
+            if (!pode)
+            {
+                if (!P.BaseSendoAtacada(p) && P.EmIntervalo(p, "safe", out var ri0)) { Chat.Erro(p, $"Espere {Chat.Tempo(ri0)} pra usar de novo."); return; }
+                var perto = P.SafeMaisPerto(p.Position);
+                if (perto == null) { Chat.Erro(p, "Ainda nao tem safe zone marcada."); return; }
+                var destino = perto.Value.pos;
+                P.AgendarTeleporte(p, "a safe " + Chat.Limpar(perto.Value.nome), S.WarpEspera,
+                    () => destino,
+                    () => P.IniciarIntervalo(p, "safe", S.WarpIntervalo));
+                return;
+            }
             // tem safes do mapa com ônibus: abre a lista pra escolher (a mesma do nascer)
             if (P.SafesComSpawn().Count > 0) { P.AbrirEscolhaSafe(p, true); return; }
             var zonas = P.Configuration.Instance.ZonasSeguras.Where(z => z.Definido).ToList();
@@ -94,7 +105,7 @@ namespace SobrevivenciaCore
             {
                 if (!BarricadeManager.tryGetBed(p.CSteamID, out _, out _))
                 { Chat.Erro(p, "Voce nao tem home. Coloque uma cama, fique do lado e use /sethome nome."); return; }
-                if (!ForaDeCombate(p) || !SemIntervalo(p, "home")) return;
+                if (!ForaDeCombate(p) || (!P.BaseSendoAtacada(p) && !SemIntervalo(p, "home"))) return;
                 P.AgendarTeleporte(p, "sua cama", S.HomeEspera,
                     () => BarricadeManager.tryGetBed(p.CSteamID, out var c, out _) ? c : (Vector3?)null,
                     () => P.IniciarIntervalo(p, "home", S.HomeIntervalo));
@@ -107,7 +118,7 @@ namespace SobrevivenciaCore
         internal static void IrPara(Plugin P, Sistemas S, UnturnedPlayer p, Casa casa)
         {
             if (P.EmCombate(p, out var r)) { Chat.Erro(p, $"Voce esta em combate. Espere {r}s."); return; }
-            if (P.EmIntervalo(p, "home", out var ri)) { Chat.Erro(p, $"Espere {Chat.Tempo(ri)} pra usar de novo."); return; }
+            if (!P.BaseSendoAtacada(p) && P.EmIntervalo(p, "home", out var ri)) { Chat.Erro(p, $"Espere {Chat.Tempo(ri)} pra usar de novo."); return; }
             var id = Plugin.Id(p);
             var minhas = P.Homes.De(id);
             var alvo = casa;
@@ -226,6 +237,10 @@ namespace SobrevivenciaCore
                 "Dentro da safe zone nao tem PvP, nao da pra construir e carros e bases ficam protegidos.",
                 "Fora dela o PvP e liberado. Use /safe pra voltar (fique parado; cancela se mexer).",
                 "Se levar ou der tiro, entra em modo de combate e nao pode teleportar por alguns segundos." }),
+            ("raid", "RAID", new[] {
+                "Sua base pode ser atacada a qualquer hora quando voce (ou alguem do seu grupo) esta online.",
+                "Se atacarem, chega no chat: Sua base esta sendo atacada! Use /home pra defender ou /safe pra fugir (sem esperar o intervalo).",
+                "Com a Claim Flag, a base fica protegida quando todo o grupo esta offline ha 10 min." }),
             ("atm", "DINHEIRO E ATM", new[] {
                 "O dinheiro e fisico: as notas ficam no inventario e caem quando voce morre.",
                 "Perto de um ATM: /depositar valor guarda no banco, /sacar valor tira, /saldo mostra.",
@@ -237,6 +252,8 @@ namespace SobrevivenciaCore
             ("kits", "KITS", new[] {
                 "/kits mostra seus kits. /kit nome pega um.",
                 "Kits livres tem tempo de espera. Kits de rank sao liberados por abates e dao bonus de XP.",
+                "Gratis: /kit base (casa 4x4 completa, a cada 2h) e /kit arqueiro (a cada 30 min). Voce ja nasce com o kit policial (Colt).",
+                "Se nao couber tudo, use /kit nome de novo pra pegar o resto (nao conta tempo).",
                 "Membros do Discord tem /kit discord." }),
             ("xp", "XP, NIVEL E PATENTE", new[] {
                 "Voce ganha XP matando jogadores (mais na cabeca), zumbis, megas e jogando.",
@@ -247,7 +264,7 @@ namespace SobrevivenciaCore
                 "/homes lista, /renamehome muda o nome, /delhome apaga.",
                 "/tpa nome pede pra ir ate um amigo; ele aceita com /tpaceitar." }),
             ("vault", "VAULT", new[] {
-                "/vault abre seu cofre pessoal (dentro da safe zone).",
+                "/vault abre seu cofre pessoal em qualquer lugar do mapa (fora de combate).",
                 "O que fica no vault nao se perde quando voce morre. VIPs tem vault maior." }),
             ("eventos", "EVENTOS E MISSOES", new[] {
                 "Airdrop a cada 30 min: caixa de armas ou equipamento longe da safe, com 8 zumbis.",
@@ -369,24 +386,29 @@ namespace SobrevivenciaCore
         internal static bool Pegar(Plugin P, UnturnedPlayer p, Kit k, out string msg)
         {
             var f = P.FichaDe(p);
+            // ficou resto do kit que não coube: entrega sem contar o tempo
+            if (P.TemRestoDoKit(Plugin.Id(p), k.Nome))
+            {
+                var resto = P.EntregarRestoKit(p);
+                msg = resto == "" ? $"Pronto, voce recebeu o resto do kit {k.Nome}." : "Entreguei o que coube." + resto;
+                return true;
+            }
             // admin com a permissao Kits pega qualquer kit, sem espera, sem abates e sem VIP (fica no log)
             if (P.Pode(p, "Kits"))
             {
-                foreach (var i in k.Itens ?? new List<ItemKit>())
-                    if (Itens.Existe(i.Id)) Itens.Dar(p, i.Id, i.Quantidade);
+                var r0 = P.EntregarKit(p, k);
                 P.LogAdmin(p, $"PEGOU KIT {k.Nome} (admin, sem espera)");
-                msg = $"Voce recebeu o kit {k.Nome} (admin).";
+                msg = $"Voce recebeu o kit {k.Nome} (admin)." + r0;
                 return true;
             }
             if (!P.TemPermissao(p, k.Permissao)) { msg = k.Permissao == "discord" ? "Vincule sua Steam no nosso Discord (canal #vincular) pra liberar esse kit." : "Esse kit e VIP. Veja a Loja VIP no site."; return false; }
             if (f.Abates < k.Abates) { msg = $"Precisa de {k.Abates} abates. Voce tem {f.Abates}."; return false; }
             var resta = P.Stats.UltimoUsoKit(f.Id, k.Nome) + k.Espera - Estatisticas.Agora;
             if (resta > 0) { msg = $"Espere {Chat.Tempo(resta)} pra pegar de novo."; return false; }
-            foreach (var i in k.Itens ?? new List<ItemKit>())
-                if (Itens.Existe(i.Id)) Itens.Dar(p, i.Id, i.Quantidade);
+            var r1 = P.EntregarKit(p, k);
             P.Stats.MarcarKit(f.Id, k.Nome);
             P.Stats.Salvar();
-            msg = $"Voce recebeu o kit {k.Nome}.";
+            msg = $"Voce recebeu o kit {k.Nome}." + r1;
             return true;
         }
     }

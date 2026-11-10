@@ -24,6 +24,12 @@ namespace SobrevivenciaCore
         readonly Dictionary<ulong, DateTime> claimRenovada = new Dictionary<ulong, DateTime>(); // instanceID -> quando
         readonly Dictionary<ulong, float> avisoRaid = new Dictionary<ulong, float>();
         readonly Dictionary<ulong, float> alertaDono = new Dictionary<ulong, float>();
+        // jogador -> até quando pode usar /home e /safe sem esperar o intervalo (a base dele está sendo atacada)
+        readonly Dictionary<ulong, float> baseAtacadaAte = new Dictionary<ulong, float>();
+
+        /// <summary>A base do jogador levou aviso de ataque há pouco (libera /home e /safe sem intervalo).</summary>
+        public bool BaseSendoAtacada(UnturnedPlayer p)
+            => baseAtacadaAte.TryGetValue(p.CSteamID.m_SteamID, out var ate) && Time.realtimeSinceStartup < ate;
         List<(Vector3 pos, ulong dono, ulong grupo, uint id)> claims = new List<(Vector3, ulong, ulong, uint)>();
         float proximoTickRaid, proximaVarreduraClaims;
         bool? raidAbertoAntes;
@@ -53,7 +59,7 @@ namespace SobrevivenciaCore
 
         public string TextoHorarioRaid()
         {
-            if (!S.RaidHorarioLigado) return "Raid liberado o dia todo.";
+            if (!S.RaidHorarioLigado) return "Raid liberado a qualquer hora quando o dono da base (ou alguem do grupo) esta online.";
             var dias = (S.RaidDias ?? "todos").ToLowerInvariant().Contains("todos") ? "todo dia" : S.RaidDias;
             return $"Raid de base liberado {dias}, das {S.RaidInicioHora}h as {S.RaidFimHora}h (horario de Brasilia).";
         }
@@ -159,7 +165,7 @@ namespace SobrevivenciaCore
             catch (Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             if (!alertaDono.TryGetValue(chave, out var prox) || Time.realtimeSinceStartup > prox)
             {
-                alertaDono[chave] = Time.realtimeSinceStartup + 120f;
+                alertaDono[chave] = Time.realtimeSinceStartup + Mathf.Max(10, S.RaidAvisoSegundos);
                 // alarme de base: dono, grupo e toda a facção dele (mesmo quem está em outro grupo) recebem aviso na tela e no chat
                 var facDono = FaccaoPorGrupo(grupo) ?? FaccaoDe(dono);
                 foreach (var c in Provider.clients)
@@ -168,8 +174,9 @@ namespace SobrevivenciaCore
                     var cid = c.playerID.steamID.m_SteamID;
                     bool avisa = cid == dono || (grupo != 0 && c.player.quests.groupID.m_SteamID == grupo) || (facDono != null && FaccaoDe(cid) == facDono);
                     if (!avisa || cid == quem.m_SteamID) continue;
-                    c.player.ServerShowHint($"<color=#FF4040><b>ALARME: SUA BASE ESTA SENDO ATACADA!</b></color>\n{sp.playerID.characterName} perto de X {pos.x:0} Z {pos.z:0}", 10f);
-                    Chat.Para(UnturnedPlayer.FromSteamPlayer(c), Chat.Cor("#FF4040", Chat.Forte("ALARME DE BASE: ")) + Chat.Cor("#FFFFFF", $"{Chat.Limpar(sp.playerID.characterName)} esta atacando sua base perto de X {pos.x:0} Z {pos.z:0}."));
+                    baseAtacadaAte[cid] = Time.realtimeSinceStartup + Mathf.Max(0, S.RaidLiberaTpSegundos);
+                    c.player.ServerShowHint($"<color=#FF4040><b>SUA BASE ESTA SENDO ATACADA!</b></color>\nPerto de X {pos.x:0} Z {pos.z:0}. Use /home pra defender ou /safe pra fugir.", 10f);
+                    Chat.Para(UnturnedPlayer.FromSteamPlayer(c), Chat.Cor("#FF4040", Chat.Forte("Sua base esta sendo atacada! ")) + Chat.Cor("#FFFFFF", $"{Chat.Limpar(sp.playerID.characterName)} esta perto de X {pos.x:0} Z {pos.z:0}. Use /home pra defender ou /safe pra ir pra safe."));
                 }
                 try
                 {
@@ -262,14 +269,15 @@ namespace SobrevivenciaCore
         void AvisarRaidAoEntrar(UnturnedPlayer p)
         {
             Chat.Para(p, Chat.Cor(S.CorDestaque, "RAID: ") + Chat.Cor(S.CorApagada, TextoHorarioRaid() +
-                (S.RaidProtecaoOffline ? $" Base com Claim Flag fica protegida com o grupo offline ha {S.RaidMinutosOffline} min (passe na base a cada {S.RaidDiasRenovarClaim} dias)." : "")));
+                (S.RaidProtecaoOffline ? $" Base com Claim Flag fica protegida quando todo o grupo esta offline ha {S.RaidMinutosOffline} min (passe na base a cada {S.RaidDiasRenovarClaim} dias)." : "") +
+                " Se atacarem sua base voce recebe aviso no chat."));
         }
     }
 
     public class CmdRaid : ComandoSistema
     {
         public override string Name => "raid";
-        public override string Help => "Mostra o horario de raid. Dono: /raid <inicio> <fim> [dias] ou /raid desligar|ligar";
+        public override string Help => "Mostra as regras do raid. Dono: /raid <inicio> <fim> [dias] (liga horario) ou /raid desligar|ligar";
         public override string Syntax => "[inicio fim [todos|sex,sab,dom]] | ligar | desligar";
         protected override void Rodar(UnturnedPlayer p, string[] a)
         {
@@ -291,7 +299,7 @@ namespace SobrevivenciaCore
                 }
             }
             bool aberto = P.RaidAberto(out var quando);
-            Chat.Para(p, Cor(aberto ? S.CorPerigo : S.CorOk, aberto ? "RAID LIBERADO AGORA. " : "Raid fechado agora. ") + Cor(S.CorApagada, quando));
+            Chat.Para(p, Cor(aberto ? S.CorPerigo : S.CorOk, aberto ? (S.RaidHorarioLigado ? "RAID LIBERADO AGORA. " : "RAID: ") : "Raid fechado agora. ") + Cor(S.CorApagada, quando));
             if (S.RaidProtecaoOffline)
                 Chat.Para(p, Cor(S.CorApagada, $"Protecao offline: base com Claim Flag fica protegida quando todo o grupo esta offline ha {S.RaidMinutosOffline} min. Passe perto da Claim Flag a cada {S.RaidDiasRenovarClaim} dias pra manter."));
         }
