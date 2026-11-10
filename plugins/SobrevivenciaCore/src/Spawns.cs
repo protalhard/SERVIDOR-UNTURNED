@@ -63,6 +63,26 @@ namespace SobrevivenciaCore
                 ?? nomes.FirstOrDefault(x => x.IndexOf(arg, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
+        /// <summary>A safe mais perto do ponto: o spawn do ônibus (se tiver) ou o centro da safe zone.</summary>
+        public (Vector3 pos, string nome)? SafeMaisPerto(Vector3 pos)
+        {
+            (Vector3 pos, string nome)? melhor = null; float d = float.MaxValue;
+            foreach (var s in Spawns)
+            {
+                var v = new Vector3(s.X, s.Y + .3f, s.Z);
+                var dd = (v - pos).sqrMagnitude;
+                if (dd < d) { d = dd; melhor = (v, s.Nome); }
+            }
+            if (melhor != null) return melhor;
+            foreach (var z in Configuration.Instance.ZonasSeguras.Where(z => z.Definido))
+            {
+                var v = new Vector3(z.X, z.Y, z.Z);
+                var dd = (v - pos).sqrMagnitude;
+                if (dd < d) { d = dd; melhor = (v, z.Nome); }
+            }
+            return melhor;
+        }
+
         public void IrPraSafe(UnturnedPlayer p, string nome)
         {
             var s = SpawnDa(nome);

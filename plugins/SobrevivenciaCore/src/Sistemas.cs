@@ -273,7 +273,7 @@ namespace SobrevivenciaCore
         // foto dos itens na loja ({id} = ID do item). Os PNGs ficam na pasta icones do site do servidor.
         public string IconeUrl = "http://54.94.93.87/icones/{id}.png";
         public string IconeVeiculoUrl = "http://54.94.93.87/icones/v{id}.png";
-        // Raid de base: só no horário (Brasília). Dias: "todos" ou "sex,sab,dom"...
+        // Raid de base: com o horário desligado (padrão desde 10/11) vale a qualquer hora com o dono online. Dias: "todos" ou "sex,sab,dom"...
         public bool RaidHorarioLigado = true;
         public int RaidInicioHora = 18;
         public int RaidFimHora = 23;
@@ -286,6 +286,21 @@ namespace SobrevivenciaCore
         public int VotacaoAvisoMinutos = 10;
         public float RaidRaioClaim = 32f;
         public bool RaidAdminIgnora = true;
+        /// <summary>Segundos entre um aviso "sua base esta sendo atacada" e outro, pro mesmo dono/grupo (não virar spam).</summary>
+        public int RaidAvisoSegundos = 120;
+        /// <summary>Depois do aviso de ataque, o dono pode usar /home e /safe sem esperar o intervalo por X segundos.</summary>
+        public int RaidLiberaTpSegundos = 300;
+
+        // Loot (LootExtra.cs). Tabelas de loot do mapa com esse texto no nome = militares (base militar e zumbi militar).
+        public string LootMilitarFiltro = "milit";
+        /// <summary>Cada ponto de loot militar nasce com X itens (10 = 10x). 1 = normal do jogo.</summary>
+        public int LootMilitarMultiplicador = 10;
+        /// <summary>Zona de gás (radiação): cada ponto ganha X itens top (armas do mercado negro, equipamento top, visão...).</summary>
+        public bool LootGasLigado = true;
+        public int LootGasItensTop = 2;
+        /// <summary>Zumbi militar: itens a mais da tabela dele e chance (%) de um item top (arma boa ou equipamento top).</summary>
+        public int LootZumbiMilitarExtra = 2;
+        public int LootZumbiMilitarChanceTop = 25;
         // /montar (antigo, sem uso desde os modelos)
         public ushort MontarCercaId = 7121;
         public float MontarCercaEspaco = 3.5f;
@@ -516,6 +531,22 @@ namespace SobrevivenciaCore
                 VersaoPadroes = 19;
                 mudou = true;
             }
+            // v20 (pedido do dono em 10/11): raid a qualquer hora com o dono online (base com Claim Flag fica protegida
+            // com o grupo offline) e o cofre (/vault) abre em qualquer lugar do mapa
+            if (VersaoPadroes < 20)
+            {
+                RaidHorarioLigado = false;
+                VaultSoNaSafe = false;
+                if (Anuncios != null) Anuncios = Anuncios.ConvertAll(x => x == "Seu cofre pessoal: /vault (dentro da safe zone)." ? "Seu cofre pessoal: /vault abre em qualquer lugar do mapa." : x);
+                var kr = Kits.Find(x => x.Nome == "raid");
+                if (kr != null && kr.Descricao != null) kr.Descricao = kr.Descricao.Replace(" (so funciona no horario de raid)", "");
+                if (Tutorial != null)
+                    for (int i = 0; i < Tutorial.Count; i++)
+                        if (Tutorial[i] != null && Tutorial[i].IndexOf("horario de raid", StringComparison.OrdinalIgnoreCase) >= 0)
+                            Tutorial[i] = "Raid: sua base pode ser atacada a qualquer hora quando voce (ou alguem do seu grupo) esta online. Com a Claim Flag, ela fica protegida quando todos saem.";
+                VersaoPadroes = 20;
+                mudou = true;
+            }
             // config antiga sem bônus/título nos kits de rank: copia do padrão
             var padrao = KitsPadrao();
             foreach (var k in Kits)
@@ -592,7 +623,7 @@ namespace SobrevivenciaCore
                 Itens = L(I(4812, 2), I(4021), I(6268), I(4414, 3)) },
             // especial
             new Kit { Nome = "raid", Titulo = "Raid", Permissao = "vip.raid,vip.supremo", Espera = 86400,
-                Descricao = "Explosivos pra raid (so funciona no horario de raid)",
+                Descricao = "Explosivos pra raid",
                 Itens = L(I(4091, 3), I(6064, 2)) },
         };
 
@@ -743,7 +774,7 @@ namespace SobrevivenciaCore
             "Digite /menu pra ver tudo que o servidor tem.",
             "Guarde seu dinheiro no ATM com /depositar. Dinheiro no bolso cai quando voce morre.",
             "Abates liberam kits melhores. Veja com /kits.",
-            "Seu cofre pessoal: /vault (dentro da safe zone).",
+            "Seu cofre pessoal: /vault abre em qualquer lugar do mapa.",
             "Perdido? /safe te leva pra safe zone (fique parado).",
             "Troque seu XP por equipamento na /lojaxp.",
             "Ranking dos melhores: /top",

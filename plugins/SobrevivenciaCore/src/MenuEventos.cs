@@ -105,7 +105,7 @@ namespace SobrevivenciaCore
             { "KITS E LOJA", "/kits  ver os kits e o que falta\n/kit nome  pegar um kit\n/lojaxp  trocar XP por equipamento\n/loja  /comprar  /vender  /vendertudo" },
             { "DINHEIRO", "/saldo  ver seu dinheiro\n/atm  caixa eletronico\n/depositar  /sacar\n/leilao  leilao entre jogadores" },
             { "BASE E COFRE", "/sethome nome  salvar home na cama\n/homes  /delhome  /renamehome\n/vault  seu cofre pessoal\n/garagem  seus veiculos" },
-            { "FACCAO", "/faccao  ajuda das faccoes\n/f mensagem  falar so com a faccao\n/raid  horario de raid\n/recompensa  colocar preco na cabeca" },
+            { "FACCAO", "/faccao  ajuda das faccoes\n/f mensagem  falar so com a faccao\n/raid  regras do raid\n/recompensa  colocar preco na cabeca" },
             { "INFO", "/menu  este menu\n/perfil  /top  suas stats e o ranking\n/missoes  missoes diarias\n/report nome motivo  denunciar hack\n/hud  esconder o painel de stats" },
         };
 

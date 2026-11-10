@@ -120,6 +120,7 @@ namespace SobrevivenciaCore
         public int VersaoCatalogo;
         public int VersaoEconomia;
         public int VersaoKits;
+        public int VersaoKitsNovos;
 
         public void LoadDefaults()
         {

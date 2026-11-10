@@ -40,6 +40,7 @@ namespace SobrevivenciaCore
             LigarCriaturas();
             LigarTelaMorte();
             LigarInterface();
+            LigarLootExtra();
             U.Events.OnPlayerConnected += AoConectar;
             PlayerInput.onPluginKeyTick += RelogioTecla;
             PlayerLife.OnPreDeath += RelogioAntesDeMorrer;
@@ -71,6 +72,7 @@ namespace SobrevivenciaCore
             DesligarSafeZone();
             PararSistemas();
             DamageTool.damagePlayerRequested -= AoDanoNoJogador;
+            try { DesligarLootExtra(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { DesligarInterface(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { DesligarTelaMorte(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { DesligarCriaturas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
@@ -121,6 +123,7 @@ namespace SobrevivenciaCore
             try { TickSistemas(); }
             catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickFaccoes(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
+            try { TickLootExtra(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickRaid(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickGaragem(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
             try { TickBombas(); } catch (System.Exception e) { Rocket.Core.Logging.Logger.LogException(e); }
